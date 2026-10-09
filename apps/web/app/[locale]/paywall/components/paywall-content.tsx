@@ -29,16 +29,16 @@ const PLANS: Plan[] = [
   {
     id: 'monthly',
     label: 'Monthly',
-    perMonth: '$40',
-    billedLine: 'Billed $40 monthly',
+    perMonth: '$80',
+    billedLine: 'Billed $80 monthly',
     badges: [{ text: 'Most popular', tone: 'primary' }],
   },
   {
     id: 'quarterly',
     label: '3 months',
-    perMonth: '$36.67',
-    billedLine: 'Billed $110 every 3 months',
-    badges: [{ text: 'Save 10%', tone: 'savings' }],
+    perMonth: '$43.33',
+    billedLine: 'Billed $130 every 3 months',
+    badges: [{ text: 'Save 46%', tone: 'savings' }],
   },
   {
     id: 'yearly',
@@ -47,7 +47,7 @@ const PLANS: Plan[] = [
     billedLine: 'Billed $400 yearly',
     badges: [
       { text: 'Best value', tone: 'primary' },
-      { text: 'Save 20%', tone: 'savings' },
+      { text: 'Save 58%', tone: 'savings' },
     ],
   },
 ];

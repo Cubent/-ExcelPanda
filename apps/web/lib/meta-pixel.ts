@@ -36,8 +36,8 @@ export type MetaPlanId = 'monthly' | 'quarterly' | 'yearly';
 
 // Price of each plan in USD, mirrored from the paywall.
 export const META_PLAN_VALUE: Record<MetaPlanId, number> = {
-  monthly: 40,
-  quarterly: 110,
+  monthly: 80,
+  quarterly: 130,
   yearly: 400,
 };
 

@@ -18,8 +18,15 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const PRODUCT_NAME = 'MedPrep Institute Membership';
 
 const PRICES = [
-  { key: 'MONTHLY', nickname: 'Monthly', unitAmount: 4000, interval: 'month', intervalCount: 1 },
-  { key: 'QUARTERLY', nickname: '3-Month', unitAmount: 11000, interval: 'month', intervalCount: 3 },
+  // Monthly and Quarterly got new nicknames so this creates fresh Price
+  // objects instead of matching (by nickname) the old $40 / $110 ones.
+  // Stripe Prices are immutable once created, so a price change always needs
+  // a new object, never an edit of the old one. The old prices are left
+  // alone (not archived) so any subscriber still on them keeps billing
+  // normally. Yearly is unchanged, so it keeps its original nickname and
+  // reuses the existing price.
+  { key: 'MONTHLY', nickname: 'Monthly v2 (2026-10)', unitAmount: 8000, interval: 'month', intervalCount: 1 },
+  { key: 'QUARTERLY', nickname: '3-Month v2 (2026-10)', unitAmount: 13000, interval: 'month', intervalCount: 3 },
   { key: 'YEARLY', nickname: 'Annual', unitAmount: 40000, interval: 'year', intervalCount: 1 },
 ];
 
