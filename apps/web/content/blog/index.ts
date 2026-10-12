@@ -2,6 +2,9 @@ import { post as abimStudyGuide } from './abim-study-guide';
 import { post as abimSyllabus } from './abim-syllabus';
 import { post as bestUsmleQuestionBanks } from './best-usmle-question-banks';
 import { post as eightThingsStep1 } from './8-things-to-know-usmle-step-1';
+import { post as step1PassFail } from './usmle-step-1-pass-fail-score';
+import { post as step2CkPercentile } from './usmle-step-2-ck-score-percentile';
+import { post as step2CkScoreBySpecialty } from './step-2-ck-score-by-specialty';
 import { post as step1ExamDates2026 } from './usmle-step-1-exam-dates-2026';
 import { post as step1StudyGuide } from './usmle-step-1-study-guide';
 import { post as step2CkExamDates2026 } from './usmle-step-2-ck-exam-dates-2026';
@@ -19,6 +22,9 @@ import { post as usmleStep3Syllabus } from './usmle-step-3-syllabus';
 import type { BlogPost } from './types';
 
 export const posts: BlogPost[] = [
+  step2CkPercentile,
+  step2CkScoreBySpecialty,
+  step1PassFail,
   bestUsmleQuestionBanks,
   twoPassesQbank,
   step1StudyGuide,
