@@ -5,6 +5,10 @@ import { post as eightThingsStep1 } from './8-things-to-know-usmle-step-1';
 import { post as step1PassFail } from './usmle-step-1-pass-fail-score';
 import { post as step2CkPercentile } from './usmle-step-2-ck-score-percentile';
 import { post as step2CkScoreBySpecialty } from './step-2-ck-score-by-specialty';
+import { post as step2CkSchedule } from './step-2-ck-study-schedule';
+import { post as step1Dedicated } from './usmle-step-1-dedicated-study-period';
+import { post as failedRetake } from './failed-usmle-step-retake-guide';
+import { post as imgGuide } from './usmle-for-imgs-step-1-step-2-ck';
 import { post as step1ExamDates2026 } from './usmle-step-1-exam-dates-2026';
 import { post as step1StudyGuide } from './usmle-step-1-study-guide';
 import { post as step2CkExamDates2026 } from './usmle-step-2-ck-exam-dates-2026';
@@ -22,6 +26,10 @@ import { post as usmleStep3Syllabus } from './usmle-step-3-syllabus';
 import type { BlogPost } from './types';
 
 export const posts: BlogPost[] = [
+  step2CkSchedule,
+  step1Dedicated,
+  failedRetake,
+  imgGuide,
   step2CkPercentile,
   step2CkScoreBySpecialty,
   step1PassFail,
