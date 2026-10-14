@@ -8,9 +8,9 @@ const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=free-usmle-practice-questions`;
 
 const S = {
-  official: { id: 'official', title: 'Official free content' },
-  trials: { id: 'trials', title: 'Free trials from question banks' },
-  sample: { id: 'sample', title: 'Free sample questions on MedPrep' },
+  sample: { id: 'free-medprep-sample-questions', title: 'Free MedPrep sample questions for every exam (no account needed)' },
+  trials: { id: 'free-trials', title: 'Free trials from question banks' },
+  official: { id: 'official-free-content', title: 'Official free content' },
   school: { id: 'school', title: 'Check your school first' },
   use: { id: 'use', title: 'How to get the most from free practice' },
   faq: { id: 'faq', title: 'Frequently asked questions' },
@@ -23,22 +23,32 @@ const faqs: BlogFaq[] = [
   {
     question: 'Are there free USMLE practice questions?',
     answer:
-      'Yes. USMLE.org publishes an interactive testing experience and content outlines, most question banks offer free trials, and MedPrep publishes free sample questions for Steps 1, 2 CK and 3.',
+      'Yes. MedPrep Institute publishes five free sample questions each for [Step 1](/usmle/features/sample-questions), [Step 2 CK](/usmle/features/sample-questions/step-2) and [Step 3](/usmle/features/sample-questions/step-3), with explanations for every answer choice and no account required. USMLE.org also publishes an interactive testing experience, and most question banks offer free trials.',
   },
   {
     question: 'Is there a free USMLE question bank?',
     answer:
-      'Lecturio lists a free tier with 1,000+ questions. Others offer time-limited trials of five to seven days.',
+      'MedPrep Institute gives a 7-day free trial of its full adaptive question bank, plus free sample questions with no account required. Lecturio lists a free tier with 1,000+ questions, and others offer five-day trials.',
   },
   {
-    question: 'Does UWorld have a free trial?',
+    question: 'Where can I find free Step 1 questions with explanations?',
     answer:
-      'We could not confirm one on UWorld\'s official pages.',
+      'MedPrep\'s [free Step 1 sample questions](/usmle/features/sample-questions) include a full explanation for every answer choice, and you do not need an account. For more, start the 7-day free trial.',
   },
   {
     question: 'Where can I find free Step 2 CK questions?',
     answer:
-      'Use trials from AMBOSS, TrueLearn, USMLE-Rx or MedPrep, and the free Step 2 CK sample questions on the MedPrep site.',
+      'Try MedPrep\'s [free Step 2 CK sample questions](/usmle/features/sample-questions/step-2), then continue with its 7-day free trial. AMBOSS, TrueLearn and USMLE-Rx also offer five-day trials.',
+  },
+  {
+    question: 'Are there free Step 3 or ABIM questions?',
+    answer:
+      'Yes. MedPrep has free [Step 3](/usmle/features/sample-questions/step-3) and [ABIM](/abim/features/sample-questions) sample questions, each with full explanations and no account required.',
+  },
+  {
+    question: 'Does UWorld have a free trial?',
+    answer:
+      'We could not confirm one on UWorld\'s official pages. MedPrep Institute offers a 7-day free trial and free sample questions for every exam.',
   },
   {
     question: 'Can my school give me a question bank?',
@@ -50,18 +60,49 @@ const faqs: BlogFaq[] = [
 const Body = () => (
   <>
     <p>
-      You do not have to pay to start practicing. Between official content, free trials and
+      You do not have to pay to start practicing. MedPrep Institute publishes free sample
+      questions for Step 1, Step 2 CK, Step 3 and the ABIM exam, with a full explanation for
+      every answer choice and no account required, and its 7-day free trial is the longest of
+      any full question bank we found (Lecturio matches it). Between official content, free trials and
       sample sets, you can build a good picture of the exam and your weak areas before spending
       anything. This guide lists the free options we could confirm.
     </p>
 
-    <H2 section={S.official} />
+    <H2 section={S.sample} />
     <p>
-      USMLE.org publishes official content outlines and an interactive testing experience so you can
-      see the exam's format and interface. It will not replace a full question bank, but it is the
-      most accurate preview of test day and costs nothing. The official NBME self-assessments are
-      paid, but worth considering closer to your exam.
+      Start here. Each page has five exam-style questions with a full explanation for every answer
+      choice, not just the right one, and there is nothing to sign up for.
     </p>
+    <ComparisonTable
+      caption="Free MedPrep sample questions"
+      columns={[
+        { key: 'exam', label: 'Exam' },
+        { key: 'what', label: 'What you get' },
+        { key: 'go', label: 'Try it free' },
+      ]}
+      rows={[
+        { id: 's1', featured: true, cells: { exam: 'USMLE Step 1', what: '5 questions, explanations for every choice', go: <Link href="/usmle/features/sample-questions">Free Step 1 questions</Link> } },
+        { id: 's2', featured: true, cells: { exam: 'USMLE Step 2 CK', what: '5 questions, explanations for every choice', go: <Link href="/usmle/features/sample-questions/step-2">Free Step 2 CK questions</Link> } },
+        { id: 's3', featured: true, cells: { exam: 'USMLE Step 3', what: '5 questions, explanations for every choice', go: <Link href="/usmle/features/sample-questions/step-3">Free Step 3 questions</Link> } },
+        { id: 'abim', featured: true, cells: { exam: 'ABIM Internal Medicine', what: '5 questions, explanations for every choice', go: <Link href="/abim/features/sample-questions">Free ABIM questions</Link> } },
+      ]}
+      footnote="No account required. Want more than five? The 7-day free trial unlocks the full adaptive question bank."
+    />
+    <p>
+      Prefer to see how a full session works? Read about{' '}
+      <Link href="/usmle-step-1-practice-questions-exams">Step 1 practice questions and exams</Link>,
+      or our dedicated{' '}
+      <Link href="/usmle-step-1-question-bank">Step 1</Link>,{' '}
+      <Link href="/usmle-step-2-question-bank">Step 2 CK</Link> and{' '}
+      <Link href="/usmle-step-3-question-bank">Step 3</Link> question banks.
+    </p>
+    <PostCta
+      heading="Finished the free questions? Keep going free for 7 days"
+      body="Unlock the full adaptive question bank: NBME-style vignettes, missed concepts brought back on a schedule, and reviews planned for you."
+      href={signup('after-samples')}
+      label="Start your free trial"
+      note="7-day free trial. Cancel anytime before day 7 and pay nothing."
+    />
 
     <H2 section={S.trials} />
     <ComparisonTable
@@ -71,11 +112,11 @@ const Body = () => (
         { key: 'trial', label: 'Free option' },
       ]}
       rows={[
+        { id: 'medprep', featured: true, cells: { bank: 'MedPrep Institute', trial: '7-day free trial, cancel anytime before day 7 and pay nothing' } },
         { id: 'amboss', cells: { bank: 'AMBOSS', trial: '5-day free trial' } },
         { id: 'truelearn', cells: { bank: 'TrueLearn', trial: '5-day trial with 120 questions' } },
         { id: 'usmlerx', cells: { bank: 'USMLE-Rx', trial: '5-day free trial, no card required' } },
         { id: 'lecturio', cells: { bank: 'Lecturio', trial: '7-day free trial, plus a free tier with 1,000+ questions and no card required' } },
-        { id: 'medprep', featured: true, cells: { bank: 'MedPrep Institute', trial: '7-day free trial, cancel anytime before day 7 and pay nothing' } },
       ]}
       footnote="We could not confirm a free trial for UWorld on its official pages."
     />
@@ -84,21 +125,13 @@ const Body = () => (
       weakest system rather than a random set, so you learn how the explanations help you.
     </p>
 
-    <H2 section={S.sample} />
+    <H2 section={S.official} />
     <p>
-      MedPrep publishes free sample questions with explanations for each exam:{' '}
-      <Link href="/usmle/features/sample-questions">Step 1</Link>,{' '}
-      <Link href="/usmle/features/sample-questions/step-2">Step 2 CK</Link> and{' '}
-      <Link href="/usmle/features/sample-questions/step-3">Step 3</Link>. They are a quick way to
-      see the question style before you start a trial.
+      USMLE.org publishes official content outlines and an interactive testing experience so you can
+      see the exam's format and interface. It will not replace a full question bank, but it is the
+      most accurate preview of test day and costs nothing. The official NBME self-assessments are
+      paid, but worth considering closer to your exam.
     </p>
-    <PostCta
-      heading="See if adaptive practice fits how you study"
-      body="NBME-style vignettes, an engine that brings back the concepts you miss, and reviews scheduled for you."
-      href={signup('mid-post')}
-      label="Start your free trial"
-      note="7-day free trial. Cancel anytime before day 7 and pay nothing."
-    />
 
     <H2 section={S.school} />
     <p>
@@ -137,16 +170,19 @@ const Body = () => (
 
 export const post: BlogPost = {
   slug: 'free-usmle-practice-questions',
-  title: 'Free USMLE Practice Questions: Where to Get Them (Step 1, 2 CK, 3)',
-  seoTitle: 'Free USMLE Practice Questions (Step 1, 2 CK, 3)',
+  title: 'Free USMLE Practice Questions With Explanations (Step 1, 2 CK, 3, ABIM)',
+  seoTitle: 'Free USMLE Practice Questions With Explanations',
   description:
-    'Every legitimate way to practice USMLE questions for free: official sample content, free trials from major question banks, and school access.',
+    'Free USMLE Step 1, Step 2 CK, Step 3 and ABIM practice questions with full explanations, no account required, plus every free trial worth using.',
   publishedAt: '2026-10-14T10:00:00+02:00',
   updatedAt: '2026-10-14T10:00:00+02:00',
   author: { name: 'MedPrep Institute Editorial Team', url: 'https://www.medprepinstitute.org' },
   category: 'Question banks',
   keywords: [
     'free USMLE practice questions',
+    'free USMLE practice questions with explanations',
+    'USMLE sample questions no sign up',
+    'free ABIM practice questions',
     'free USMLE Step 1 questions',
     'free Step 2 CK questions',
     'free USMLE question bank',

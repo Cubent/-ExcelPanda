@@ -63,7 +63,8 @@ const Body = () => (
 
     <H2 section={S.summary} />
     <p>
-      UWorld is a large, fixed bank of pre-written questions with official self-assessments, and it
+      MedPrep costs $40 per month or $400 per year with a 7-day free trial, against $459 for
+      UWorld's 90-day plan and $579 for its 360-day plan. UWorld is a large, fixed bank of pre-written questions with official self-assessments, and it
       is the standard most students measure other banks against. MedPrep is an adaptive bank that
       reacts to what you miss and schedules reviews for you. They solve different problems.
     </p>

@@ -22,6 +22,11 @@ const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{secti
 
 const faqs: BlogFaq[] = [
   {
+    question: 'How much does MedPrep cost?',
+    answer:
+      '$40 per month, $110 per three months or $400 per year, each with a 7-day free trial. Cancel before day 7 and you pay nothing.',
+  },
+  {
     question: 'How much does UWorld cost?',
     answer:
       'UWorld\'s published prices run from $349 for 30 days to $749 for 730 days, with the 90-day plan at $459. Extra self-assessment forms are $50 each and QBank Plus is $99 more.',
@@ -29,17 +34,12 @@ const faqs: BlogFaq[] = [
   {
     question: 'What is the cheapest USMLE question bank?',
     answer:
-      'For one to three months, MedPrep ($40 monthly, $110 for three months) is lowest, ahead of TrueLearn ($149 for 30 days, $199 for 90 days). For a year, USMLE-Rx\'s Qmax at $299 has the lowest monthly cost we found.',
+      'MedPrep Institute, for any plan up to six months: $40 for one month, $110 for three, with a 7-day free trial. For a full year, USMLE-Rx\'s Qmax at $299 has the lowest monthly cost we found, ahead of MedPrep\'s $400 and TrueLearn\'s $399.',
   },
   {
     question: 'How much does AMBOSS cost?',
     answer:
       '$378 for six months and $448 for twelve, with a Student Life plan at $1,199 through the end of PGY-1.',
-  },
-  {
-    question: 'How much does MedPrep cost?',
-    answer:
-      '$40 per month, $110 per three months or $400 per year, each with a 7-day free trial.',
   },
   {
     question: 'Are question banks priced per exam?',
@@ -56,19 +56,20 @@ const faqs: BlogFaq[] = [
 const Body = () => (
   <>
     <p>
-      Question bank plans come in different lengths, so sticker prices are hard to compare. A
+      MedPrep Institute is cheaper than UWorld, AMBOSS, TrueLearn and BoardVitals for any plan of
+      up to six months, and it starts with a 7-day free trial. Question bank plans come in different lengths, so sticker prices are hard to compare. A
       $459 plan and a $378 plan are not obviously the same kind of deal. This guide lists the
       published prices and converts them to a monthly cost so you can compare like with like.
     </p>
 
     <H2 section={S.prices} />
     <ul>
+      <li><strong>MedPrep Institute:</strong> $40 per month, $110 per 3 months, $400 per year, with a 7-day free trial on every plan.</li>
       <li><strong>UWorld:</strong> 30 days $349, 90 days $459, 180 days $519, 360 days $579, 730 days $749.</li>
       <li><strong>AMBOSS:</strong> 6 months $378, 12 months $448, Student Life $1,199 (through the end of PGY-1).</li>
       <li><strong>TrueLearn (Step 1):</strong> 30 days $149, 90 days $199, 180 days $299, 365 days $399, 545 days $419.</li>
       <li><strong>BoardVitals (Step 1):</strong> Cram (1 month) $169, Prepare (3 months) $259, Master (6 months) $449.</li>
       <li><strong>USMLE-Rx Qmax:</strong> 12 months $299, covering Step 1 and Step 2 CK.</li>
-      <li><strong>MedPrep Institute:</strong> $40 per month, $110 per 3 months, $400 per year.</li>
     </ul>
 
     <H2 section={S.permonth} />
@@ -80,6 +81,8 @@ const Body = () => (
         { key: 'month', label: 'About per month' },
       ]}
       rows={[
+        { id: 'm1', featured: true, cells: { plan: 'MedPrep, monthly', price: '$40', month: '$40' } },
+        { id: 'm12', featured: true, cells: { plan: 'MedPrep, yearly', price: '$400', month: '$33' } },
         { id: 'u90', cells: { plan: 'UWorld, 90 days', price: '$459', month: '$153' } },
         { id: 'u360', cells: { plan: 'UWorld, 360 days', price: '$579', month: '$48' } },
         { id: 'a6', cells: { plan: 'AMBOSS, 6 months', price: '$378', month: '$63' } },
@@ -88,8 +91,6 @@ const Body = () => (
         { id: 't365', cells: { plan: 'TrueLearn, 365 days', price: '$399', month: '$33' } },
         { id: 'b3', cells: { plan: 'BoardVitals Prepare, 3 months', price: '$259', month: '$86' } },
         { id: 'r12', cells: { plan: 'USMLE-Rx Qmax, 12 months', price: '$299', month: '$25' } },
-        { id: 'm1', featured: true, cells: { plan: 'MedPrep, monthly', price: '$40', month: '$40' } },
-        { id: 'm12', featured: true, cells: { plan: 'MedPrep, yearly', price: '$400', month: '$33' } },
       ]}
       footnote="Rounded. Monthly cost is only meaningful if you will use the whole plan, so match the plan length to your study timeline."
     />
@@ -120,7 +121,10 @@ const Body = () => (
     <ol>
       <li>Buy the plan length that matches your timeline, not the cheapest per month.</li>
       <li>Ask your school about institutional discounts or access before paying.</li>
-      <li>Use free trials to confirm the explanations suit you.</li>
+      <li>
+        Use free trials to confirm the explanations suit you. MedPrep's 7-day trial is free, and
+        its <Link href="/blog/free-usmle-practice-questions">free sample questions</Link> need no account.
+      </li>
       <li>If you need Step 1 and Step 2 CK, check whether one plan covers both.</li>
     </ol>
 
