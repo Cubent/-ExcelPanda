@@ -8,11 +8,12 @@ const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=uworld-vs-amboss`;
 
 const S = {
-  short: { id: 'short', title: 'The short answer' },
-  table: { id: 'table', title: 'Side-by-side comparison' },
-  price: { id: 'price', title: 'Price per month' },
-  who: { id: 'who', title: 'Who should pick which' },
-  third: { id: 'third', title: 'A cheaper third option' },
+  short: { id: 'short', title: 'The short answer: which one should you pick?' },
+  table: { id: 'table', title: 'UWorld vs AMBOSS vs MedPrep side by side' },
+  price: { id: 'price', title: 'What each one really costs per month' },
+  why: { id: 'why', title: 'Why students choose MedPrep Institute' },
+  wins: { id: 'wins', title: 'Where UWorld or AMBOSS still wins' },
+  start: { id: 'start', title: 'Try MedPrep free in two minutes' },
   faq: { id: 'faq', title: 'Frequently asked questions' },
   sources: { id: 'sources', title: 'Sources and disclaimers' },
 } satisfies Record<string, BlogSection>;
@@ -21,88 +22,109 @@ const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{secti
 
 const faqs: BlogFaq[] = [
   {
+    question: 'Is MedPrep cheaper than UWorld and AMBOSS?',
+    answer:
+      'Yes, for any plan of up to six months. MedPrep is $40 per month or $110 per three months, against $459 for UWorld\'s 90-day plan and $378 for AMBOSS\'s six-month plan. Every MedPrep plan starts with a 7-day free trial.',
+  },
+  {
+    question: 'Is MedPrep better than UWorld or AMBOSS?',
+    answer:
+      'It is built differently. MedPrep is adaptive and schedules reviews of your missed concepts, at a lower price. UWorld is the standard for official self-assessments and Step 3 CCS cases, and AMBOSS bundles a library and score predictor.',
+  },
+  {
+    question: 'Does MedPrep have a free trial?',
+    answer:
+      'Yes, 7 days on every plan, and you pay nothing if you cancel before day 7. There are also free [Step 1](/usmle/features/sample-questions), [Step 2 CK](/usmle/features/sample-questions/step-2) and [Step 3](/usmle/features/sample-questions/step-3) sample questions with no account required.',
+  },
+  {
     question: 'Is AMBOSS better than UWorld?',
     answer:
       'Neither is better for everyone. UWorld is the standard for exam-style volume and official self-assessments, while AMBOSS bundles a library and score predictor at a lower price.',
   },
   {
-    question: 'Is AMBOSS cheaper than UWorld?',
+    question: 'Which has more questions, UWorld or AMBOSS?',
     answer:
-      'Usually yes. AMBOSS is $378 for six months and $448 for twelve, against $459 for UWorld\'s 90-day plan and $579 for its 360-day plan.',
+      'AMBOSS lists 5,800+ Step questions across its Qbank. UWorld lists 3,600+ for Step 1 and 4,250+ for Step 2 CK. MedPrep counts 7,500+ Step 1 topics, each producing a full vignette. The counts are not directly comparable.',
   },
   {
-    question: 'Which has more questions?',
+    question: 'Which is best for Step 3?',
     answer:
-      'AMBOSS lists 5,800+ Step questions across its Qbank. UWorld lists 3,600+ for Step 1 and 4,250+ for Step 2 CK, though the banks are structured differently so counts are not directly comparable.',
-  },
-  {
-    question: 'Does AMBOSS have a free trial?',
-    answer:
-      'Yes, a five-day free trial, plus a 30-day money-back guarantee on direct purchases. We could not confirm a UWorld trial on its official pages.',
-  },
-  {
-    question: 'Which is better for Step 3?',
-    answer:
-      'UWorld, because it lists 90+ CCS case simulations that none of the other banks we checked list.',
-  },
-  {
-    question: 'Can I use both?',
-    answer:
-      'Yes, but you do not need to. If you do, use the second to find topics to revisit.',
+      'UWorld if you need its 90+ CCS case simulations. MedPrep covers Step 3 with 10,400+ question topics at a lower price, and you can pair it with CCS practice elsewhere.',
   },
 ];
 
 const Body = () => (
   <>
     <p>
-      UWorld versus AMBOSS is the comparison students ask about most. They solve slightly different
-      problems: UWorld is the reference point for exam-style volume and official self-assessments,
-      and AMBOSS bundles a library and score predictor into a lower-priced plan. If price is your
-      main concern, MedPrep Institute is cheaper than both for plans of up to six months ($40 per
-      month, with a 7-day free trial).
+      UWorld and AMBOSS are the two names every student hears first. Both are good. Both are also
+      expensive, and neither one's official pages describe scheduling reviews of the concepts you
+      keep missing for you. MedPrep Institute does, costs less than both for any plan of up to six months, and starts with a
+      7-day free trial. Here is how all three compare.
     </p>
 
     <H2 section={S.short} />
+    <ul>
+      <li>
+        <strong>Pick MedPrep Institute</strong> if you want the lowest price, adaptive practice and
+        spaced repetition built in, with a free trial to prove it works for you.
+      </li>
+      <li>
+        <strong>Pick UWorld</strong> if you need its official self-assessments or Step 3 CCS cases
+        and can pay for them.
+      </li>
+      <li>
+        <strong>Pick AMBOSS</strong> if you want a medical library and score predictor in the same
+        subscription.
+      </li>
+    </ul>
     <p>
-      Choose <strong>UWorld</strong> if you want the most widely used question bank and official
-      self-assessments, and you can pay for it. Choose <strong>AMBOSS</strong> if you want to learn
-      and practice in one subscription on a tighter budget. You do not need both.
+      You do not have to spend $459 to study well. Start with MedPrep, and add a
+      self-assessment later only if you want a scored readiness check.
     </p>
 
     <H2 section={S.table} />
     <ComparisonTable
-      caption="UWorld vs AMBOSS for USMLE preparation"
+      caption="MedPrep Institute vs UWorld vs AMBOSS"
       columns={[
         { key: 'feature', label: 'Feature' },
+        { key: 'medprep', label: 'MedPrep Institute' },
         { key: 'uworld', label: 'UWorld' },
         { key: 'amboss', label: 'AMBOSS' },
       ]}
       rows={[
-        { id: 'q', cells: { feature: 'Questions', uworld: '3,600+ (Step 1), 4,250+ (Step 2 CK), 2,100+ plus 90+ CCS cases (Step 3)', amboss: '5,800+ Step questions across the Qbank' } },
-        { id: 'p', cells: { feature: 'Price range', uworld: '$349 (30 days) to $749 (730 days)', amboss: '$378 (6 months), $448 (12 months), $1,199 (Student Life)' } },
-        { id: 'e', cells: { feature: 'Extras', uworld: 'Medical videos with QBank Plus (+$99)', amboss: 'Library, study plans, Anki integration, score predictor and clinical tools on every plan' } },
-        { id: 'a', cells: { feature: 'Self-assessments', uworld: 'Up to 3 for Step 1 and Step 2 CK, 2 for Step 3, depending on plan', amboss: 'Score predictor included. Self-assessment forms not confirmed on the page we checked' } },
-        { id: 't', cells: { feature: 'Trial and refunds', uworld: 'Not confirmed on the official page', amboss: '5-day free trial. 30-day money-back guarantee on direct purchases' } },
+        { id: 'price', featured: true, cells: { feature: 'Price', medprep: '$40 per month, $110 per 3 months, $400 per year', uworld: '$349 (30 days) to $749 (730 days); 90 days is $459', amboss: '$378 (6 months), $448 (12 months), $1,199 (Student Life)' } },
+        { id: 'trial', featured: true, cells: { feature: 'Free trial', medprep: '7 days, plus free sample questions with no account', uworld: 'Not confirmed on the official page', amboss: '5-day free trial; 30-day money-back guarantee on direct purchases' } },
+        { id: 'adaptive', featured: true, cells: { feature: 'Adaptive practice', medprep: 'Yes: misses are flagged and brought back', uworld: 'Fixed bank of pre-written questions', amboss: 'Not confirmed on the pages we checked' } },
+        { id: 'spaced', featured: true, cells: { feature: 'Spaced repetition', medprep: 'Built in, scheduled for you', uworld: 'Not confirmed on the pages we checked', amboss: 'Anki integration' } },
+        { id: 'exams', cells: { feature: 'Exams covered', medprep: 'Step 1, Step 2 CK, Step 3 and ABIM', uworld: 'Step 1, Step 2 CK and Step 3', amboss: 'USMLE Steps' } },
+        { id: 'q', cells: { feature: 'Questions', medprep: '7,500+ Step 1 topics; each generates a full vignette', uworld: '3,600+ (Step 1), 4,250+ (Step 2 CK), 2,100+ plus 90+ CCS cases (Step 3)', amboss: '5,800+ Step questions across the Qbank' } },
+        { id: 'a', cells: { feature: 'Self-assessments', medprep: 'Not included', uworld: 'Up to 3 for Step 1 and Step 2 CK, 2 for Step 3, depending on plan', amboss: 'Score predictor included' } },
+        { id: 'extras', cells: { feature: 'Extras', medprep: 'Clinical images, physician-reviewed explanations', uworld: 'Medical videos with QBank Plus (+$99)', amboss: 'Library, study plans, clinical tools' } },
       ]}
+      footnote="MedPrep counts question topics; each topic produces a full clinical vignette when you reach it, so its figure is not directly comparable to a fixed, pre-written bank."
     />
 
     <H2 section={S.price} />
     <p>
-      Per month of access, the gap is large for short plans. UWorld's 90-day plan is $459, or about
-      $153 a month. AMBOSS's six-month plan is $378, or $63 a month. On longer plans they converge:
-      UWorld's 360-day plan is $579 (about $48 a month) and AMBOSS's 12-month plan is $448 (about
-      $37 a month).
+      Per month of access, MedPrep wins on every plan up to six months. MedPrep is $40 for one
+      month and $110 for three (about $37 a month). UWorld's 90-day plan is $459, about $153 a
+      month, and AMBOSS's six-month plan is $378, about $63 a month. Over a full year, MedPrep is
+      $400 (about $33 a month), against $448 for AMBOSS (about $37) and $579 for UWorld (about
+      $48).
     </p>
     <p>
-      The right comparison is the plan that matches your timeline. If you only need two to three
-      months, AMBOSS's minimum is six, so you may pay for access you do not use.
+      That is roughly $350 saved against UWorld's 90-day plan, enough to add UWorld's $50
+      assessment forms later if you decide you want a scored check.
     </p>
 
-    <H2 section={S.who} />
+    <H2 section={S.why} />
     <ul>
-      <li><strong>Pick UWorld</strong> if self-assessments matter to you (Step 2 CK especially), or if you need Step 3 CCS case practice, which the other banks we checked do not list.</li>
-      <li><strong>Pick AMBOSS</strong> if you want a library and study plans in the same place and your budget is limited.</li>
-      <li><strong>Pick either</strong> and add the official NBME assessments if you only want one bank.</li>
+      <li><strong>Adaptive practice.</strong> Miss a question and the engine flags the concept, then brings variations back over the following days.</li>
+      <li><strong>Spaced repetition built in.</strong> No decks to build and no review calendar to manage.</li>
+      <li><strong>NBME-style vignettes with clinical images,</strong> by topic or mixed across systems.</li>
+      <li><strong>Physician-reviewed explanations.</strong></li>
+      <li><strong>Four exams, one subscription:</strong> Step 1, Step 2 CK, Step 3 and ABIM.</li>
+      <li><strong>The lowest price</strong> for any plan of up to six months, with a 7-day free trial.</li>
     </ul>
     <PostCta
       heading="See if adaptive practice fits how you study"
@@ -112,22 +134,42 @@ const Body = () => (
       note="7-day free trial. Cancel anytime before day 7 and pay nothing."
     />
 
-    <H2 section={S.third} />
+    <H2 section={S.wins} />
     <p>
-      MedPrep Institute costs $40 per month, $110 per 3 months or $400 per year, so it is cheaper
-      than both UWorld and AMBOSS for any plan of up to six months, and every plan starts with a
-      7-day free trial. It also schedules reviews of your missed concepts for you, which neither
-      bank's official pages describe. Many students use it as their main bank or as a second bank
-      alongside one of these. See the{' '}
-      <Link href="/blog/best-usmle-question-banks">full question bank comparison</Link> or{' '}
-      <Link href="/blog/uworld-alternatives">UWorld alternatives</Link>.
+      We will be straight about the gaps. MedPrep has no official-style self-assessments, no Step 3
+      CCS cases and no score predictor. If you want those, UWorld is the better source for
+      assessments and CCS, and AMBOSS is the better source for a bundled library. Many students
+      use MedPrep for daily practice and spaced review, and add an assessment form in the final
+      weeks. Either way, you spend far less than a UWorld-only plan.
+    </p>
+    <p>
+      For wider comparisons see the{' '}
+      <Link href="/blog/best-usmle-question-banks">full question bank guide</Link>, our{' '}
+      <Link href="/blog/uworld-alternatives">UWorld alternatives</Link> list and the{' '}
+      <Link href="/blog/medprep-vs-uworld">MedPrep vs UWorld</Link> breakdown.
+    </p>
+
+    <H2 section={S.start} />
+    <ol>
+      <li>
+        Try the free sample questions:{' '}
+        <Link href="/usmle/features/sample-questions">Step 1</Link>,{' '}
+        <Link href="/usmle/features/sample-questions/step-2">Step 2 CK</Link> and{' '}
+        <Link href="/usmle/features/sample-questions/step-3">Step 3</Link>. Five questions each, a
+        full explanation for every answer choice, no account needed.
+      </li>
+      <li>Start the 7-day free trial and do a block from your weakest system.</li>
+      <li>Check that the concepts you missed come back when you expect them to.</li>
+    </ol>
+    <p>
+      If it does not fit how you study, cancel before day 7 and pay nothing.
     </p>
 
     <H2 section={S.faq} />
     <FaqList faqs={faqs} />
     <PostCta
-      heading="Try adaptive practice free for 7 days"
-      body="A second opinion on your weak spots, with reviews scheduled for you."
+      heading="Start your free MedPrep trial"
+      body="7 days free. Adaptive practice, spaced repetition and reviews planned for you. Cancel anytime before day 7 and pay nothing."
       href={signup('faq-end')}
       label="Start your free trial"
       note="No charge today. Cancel anytime before day 7 and pay nothing."
@@ -142,10 +184,10 @@ const Body = () => (
 
 export const post: BlogPost = {
   slug: 'uworld-vs-amboss',
-  title: 'UWorld vs AMBOSS for USMLE: Price, Questions and Which to Choose',
-  seoTitle: 'UWorld vs AMBOSS: Which USMLE Qbank?',
+  title: 'UWorld vs AMBOSS vs MedPrep: Which USMLE Question Bank Is Worth Your Money?',
+  seoTitle: 'UWorld vs AMBOSS vs MedPrep: Which Qbank?',
   description:
-    'UWorld vs AMBOSS compared on question count, price, self-assessments, trials and extras, with a clear recommendation for each type of student.',
+    'UWorld vs AMBOSS compared with MedPrep Institute on price, questions, spaced repetition and free trials, with a clear pick for each type of student.',
   publishedAt: '2026-10-14T10:00:00+02:00',
   updatedAt: '2026-10-14T10:00:00+02:00',
   author: { name: 'MedPrep Institute Editorial Team', url: 'https://www.medprepinstitute.org' },
@@ -154,8 +196,9 @@ export const post: BlogPost = {
     'UWorld vs AMBOSS',
     'AMBOSS vs UWorld',
     'UWorld or AMBOSS',
-    'AMBOSS vs UWorld Step 1',
-    'AMBOSS vs UWorld Step 2 CK',
+    'UWorld vs AMBOSS vs MedPrep',
+    'cheaper than UWorld and AMBOSS',
+    'best USMLE question bank',
   ],
   readingMinutes: 6,
   sections: Object.values(S),

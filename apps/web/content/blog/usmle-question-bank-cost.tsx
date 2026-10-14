@@ -10,6 +10,7 @@ const signup = (medium: string) =>
 const S = {
   prices: { id: 'prices', title: 'What each bank costs' },
   permonth: { id: 'permonth', title: 'Price per month of access' },
+  whymedprep: { id: 'whymedprep', title: "What you get for MedPrep's price" },
   cheapest: { id: 'cheapest', title: 'What is the cheapest option?' },
   hidden: { id: 'hidden', title: 'Costs that are easy to miss' },
   save: { id: 'save', title: 'How to spend less' },
@@ -93,6 +94,30 @@ const Body = () => (
         { id: 'r12', cells: { plan: 'USMLE-Rx Qmax, 12 months', price: '$299', month: '$25' } },
       ]}
       footnote="Rounded. Monthly cost is only meaningful if you will use the whole plan, so match the plan length to your study timeline."
+    />
+
+    <H2 section={S.whymedprep} />
+    <ul>
+      <li><strong>Adaptive practice.</strong> Miss a question and the engine flags the concept, then brings variations back over the following days.</li>
+      <li><strong>Spaced repetition built in.</strong> No decks to build and no review calendar to manage.</li>
+      <li><strong>NBME-style vignettes with clinical images,</strong> by topic or mixed across systems.</li>
+      <li><strong>Physician-reviewed explanations.</strong></li>
+      <li><strong>Four exams, one subscription:</strong> Step 1, Step 2 CK, Step 3 and ABIM.</li>
+      <li><strong>The lowest price</strong> for any plan of up to six months: $40 per month, $110 per 3 months or $400 per year.</li>
+      <li>
+        <strong>Try it before you pay:</strong> free sample questions for{' '}
+        <Link href="/usmle/features/sample-questions">Step 1</Link>,{' '}
+        <Link href="/usmle/features/sample-questions/step-2">Step 2 CK</Link> and{' '}
+        <Link href="/usmle/features/sample-questions/step-3">Step 3</Link> with no account, then a
+        7-day free trial.
+      </li>
+    </ul>
+    <PostCta
+      heading="Get more for less: try MedPrep free for 7 days"
+      body="$40 per month, $110 per 3 months or $400 per year, with spaced repetition and adaptive practice built in."
+      href={signup('why-medprep')}
+      label="Start your free trial"
+      note="7-day free trial. Cancel anytime before day 7 and pay nothing."
     />
 
     <H2 section={S.cheapest} />
