@@ -11,6 +11,7 @@ const S = {
   summary: { id: 'summary', title: 'The short version' },
   how: { id: 'how', title: 'How they work differently' },
   table: { id: 'table', title: 'Side-by-side' },
+  whymedprep: { id: 'whymedprep', title: "Why students pick MedPrep" },
   gaps: { id: 'gaps', title: 'What MedPrep does not have' },
   together: { id: 'together', title: 'Using them together' },
   trial: { id: 'trial', title: 'How to test it yourself' },
@@ -107,6 +108,23 @@ const Body = () => (
       label="Start your free trial"
       note="7-day free trial. Cancel anytime before day 7 and pay nothing."
     />
+
+    <H2 section={S.whymedprep} />
+    <ul>
+      <li><strong>Adaptive practice.</strong> Miss a question and the engine flags the concept, then brings variations back over the following days.</li>
+      <li><strong>Spaced repetition built in.</strong> No decks to build and no review calendar to manage.</li>
+      <li><strong>NBME-style vignettes with clinical images,</strong> by topic or mixed across systems.</li>
+      <li><strong>Physician-reviewed explanations.</strong></li>
+      <li><strong>Four exams, one subscription:</strong> Step 1, Step 2 CK, Step 3 and ABIM.</li>
+      <li><strong>The lowest price</strong> for any plan of up to six months: $40 per month, $110 per 3 months or $400 per year.</li>
+      <li>
+        <strong>Try it before you pay:</strong> free sample questions for{' '}
+        <Link href="/usmle/features/sample-questions">Step 1</Link>,{' '}
+        <Link href="/usmle/features/sample-questions/step-2">Step 2 CK</Link> and{' '}
+        <Link href="/usmle/features/sample-questions/step-3">Step 3</Link> with no account, then a
+        7-day free trial.
+      </li>
+    </ul>
 
     <H2 section={S.gaps} />
     <p>

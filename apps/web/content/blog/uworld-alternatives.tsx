@@ -10,6 +10,7 @@ const signup = (medium: string) =>
 const S = {
   why: { id: 'why', title: 'Why students look for a UWorld alternative' },
   table: { id: 'table', title: 'The alternatives at a glance' },
+  whymedprep: { id: 'whymedprep', title: "Why MedPrep Institute is the first one to try" },
   picks: { id: 'picks', title: 'Which alternative fits which student' },
   both: { id: 'both', title: 'Should you use UWorld and an alternative together?' },
   decide: { id: 'decide', title: 'How to decide in five minutes' },
@@ -84,6 +85,30 @@ const Body = () => (
         { id: 'lecturio', cells: { bank: 'Lecturio', price: 'Not listed on the page we checked', questions: '2,200+', best: 'Video lectures alongside questions' } },
       ]}
       footnote="MedPrep counts question topics; each topic produces a full clinical vignette when you reach it, so its figure is not directly comparable to a fixed, pre-written bank."
+    />
+
+    <H2 section={S.whymedprep} />
+    <ul>
+      <li><strong>Adaptive practice.</strong> Miss a question and the engine flags the concept, then brings variations back over the following days.</li>
+      <li><strong>Spaced repetition built in.</strong> No decks to build and no review calendar to manage.</li>
+      <li><strong>NBME-style vignettes with clinical images,</strong> by topic or mixed across systems.</li>
+      <li><strong>Physician-reviewed explanations.</strong></li>
+      <li><strong>Four exams, one subscription:</strong> Step 1, Step 2 CK, Step 3 and ABIM.</li>
+      <li><strong>The lowest price</strong> for any plan of up to six months: $40 per month, $110 per 3 months or $400 per year.</li>
+      <li>
+        <strong>Try it before you pay:</strong> free sample questions for{' '}
+        <Link href="/usmle/features/sample-questions">Step 1</Link>,{' '}
+        <Link href="/usmle/features/sample-questions/step-2">Step 2 CK</Link> and{' '}
+        <Link href="/usmle/features/sample-questions/step-3">Step 3</Link> with no account, then a
+        7-day free trial.
+      </li>
+    </ul>
+    <PostCta
+      heading="Start your free MedPrep trial"
+      body="Adaptive practice, spaced repetition and reviews planned for you, cheaper than UWorld, AMBOSS, TrueLearn and BoardVitals for plans up to six months."
+      href={signup('why-medprep')}
+      label="Start your free trial"
+      note="7-day free trial. Cancel anytime before day 7 and pay nothing."
     />
 
     <H2 section={S.picks} />
