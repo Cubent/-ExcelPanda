@@ -1,8 +1,9 @@
 import { Callout } from '@/components/blog/callout';
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=step-1-study-guide`;
@@ -23,6 +24,59 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'What are the Step 1 exam dates in 2026?',
+    answer:
+      'There is no fixed date. You apply for a three-month eligibility period, then book an actual appointment inside it through Prometric. Registration and the block format both changed in 2026, and our [USMLE Step 1 exam dates guide](/blog/usmle-step-1-exam-dates-2026) covers what changed.',
+  },
+  {
+    question: 'What else should I know about Step 1 besides how to study for it?',
+    answer:
+      'A few rules and policies surprise people who only focus on content review: attempt limits, exam order, and how pass/fail actually affects residency applications. Our [8 things to know about Step 1](/blog/8-things-to-know-usmle-step-1) covers those details.',
+  },
+  {
+    question: 'How long should I study for Step 1?',
+    answer:
+      'Most students spend four to eight weeks in dedicated study, after building habits with a question bank and flashcards during coursework. The dedicated period is for review and timed practice, not a first encounter with the material.',
+  },
+  {
+    question: 'Is Step 1 still important if it is pass/fail?',
+    answer:
+      'Yes. You no longer need to chase a high score, but you do need to pass comfortably and actually retain the material, since Step 2 CK and your clerkships build directly on it. Step 2 CK is still scored, and we cover preparing for it in our [USMLE Step 2 CK study guide](/blog/usmle-step-2-ck-study-guide).',
+  },
+  {
+    question: 'How many questions should I do a day?',
+    answer:
+      'Two full 40-question blocks a day, with complete review of every explanation, is a realistic and sustainable pace for most students during dedicated study. Fewer, with full review, beats more blocks done superficially.',
+  },
+  {
+    question: 'When should I take my first self-assessment?',
+    answer:
+      'Many students take one early in dedicated study to get a baseline, then save the rest for the final two weeks, when the results best reflect your actual readiness.',
+  },
+  {
+    question: 'What if I am behind on my schedule?',
+    answer:
+      'Adjust the plan around your weakest areas rather than trying to cover everything equally. Triage: spend the most review time on concepts you missed that most other test-takers get right, since those represent the most reachable points.',
+  },
+  {
+    question: 'Does MedPrep Institute replace First Aid or Anki?',
+    answer:
+      'No. It is a question bank, meant to sit alongside a content review book and flashcards, not replace either.',
+  },
+  {
+    question: 'Which Step 1 question bank should I use?',
+    answer:
+      'It depends on your budget and where you are in your timeline. Our [Step 1 question bank comparison](/blog/top-usmle-step-1-question-banks) breaks down UWorld, AMBOSS, TrueLearn and every other major bank, with verified prices and exactly which plan to buy for your situation.',
+  },
+  {
+    question: 'What does Step 1 actually cover?',
+    answer:
+      'Our [Step 1 syllabus guide](/blog/usmle-step-1-syllabus) breaks down the official content outline by system, discipline and physician task, with the exact percentage ranges from USMLE.org.',
+  },
+];
 
 const Body = () => (
   <>
@@ -285,71 +339,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>What are the Step 1 exam dates in 2026?</h3>
-    <p>
-      There is no fixed date. You apply for a three-month eligibility period, then book an actual
-      appointment inside it through Prometric. Registration and the block format both changed in
-      2026, and our{' '}
-      <Link href="/blog/usmle-step-1-exam-dates-2026">USMLE Step 1 exam dates guide</Link> covers
-      what changed.
-    </p>
-    <h3>What else should I know about Step 1 besides how to study for it?</h3>
-    <p>
-      A few rules and policies surprise people who only focus on content review: attempt limits,
-      exam order, and how pass/fail actually affects residency applications. Our{' '}
-      <Link href="/blog/8-things-to-know-usmle-step-1">8 things to know about Step 1</Link> covers
-      those details.
-    </p>
-    <h3>How long should I study for Step 1?</h3>
-    <p>
-      Most students spend four to eight weeks in dedicated study, after building habits with a
-      question bank and flashcards during coursework. The dedicated period is for review and
-      timed practice, not a first encounter with the material.
-    </p>
-    <h3>Is Step 1 still important if it is pass/fail?</h3>
-    <p>
-      Yes. You no longer need to chase a high score, but you do need to pass comfortably and
-      actually retain the material, since Step 2 CK and your clerkships build directly on it. Step
-      2 CK is still scored, and we cover preparing for it in our{' '}
-      <Link href="/blog/usmle-step-2-ck-study-guide">USMLE Step 2 CK study guide</Link>.
-    </p>
-    <h3>How many questions should I do a day?</h3>
-    <p>
-      Two full 40-question blocks a day, with complete review of every explanation, is a realistic
-      and sustainable pace for most students during dedicated study. Fewer, with full review, beats
-      more blocks done superficially.
-    </p>
-    <h3>When should I take my first self-assessment?</h3>
-    <p>
-      Many students take one early in dedicated study to get a baseline, then save the rest for the
-      final two weeks, when the results best reflect your actual readiness.
-    </p>
-    <h3>What if I am behind on my schedule?</h3>
-    <p>
-      Adjust the plan around your weakest areas rather than trying to cover everything equally.
-      Triage: spend the most review time on concepts you missed that most other test-takers get
-      right, since those represent the most reachable points.
-    </p>
-    <h3>Does MedPrep Institute replace First Aid or Anki?</h3>
-    <p>
-      No. It is a question bank, meant to sit alongside a content review book and flashcards, not
-      replace either.
-    </p>
-    <h3>Which Step 1 question bank should I use?</h3>
-    <p>
-      It depends on your budget and where you are in your timeline. Our{' '}
-      <Link href="/blog/top-usmle-step-1-question-banks">
-        Step 1 question bank comparison
-      </Link>{' '}
-      breaks down UWorld, AMBOSS, TrueLearn and every other major bank, with verified prices and
-      exactly which plan to buy for your situation.
-    </p>
-    <h3>What does Step 1 actually cover?</h3>
-    <p>
-      Our <Link href="/blog/usmle-step-1-syllabus">Step 1 syllabus guide</Link> breaks down the
-      official content outline by system, discipline and physician task, with the exact
-      percentage ranges from USMLE.org.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Practice with an engine that remembers what you miss"
       body="Short daily sets, reviews scheduled for you, and your weakest systems prioritized automatically."
@@ -398,5 +388,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 10,
   sections: Object.values(S),
+  faqs,
   Body,
 };

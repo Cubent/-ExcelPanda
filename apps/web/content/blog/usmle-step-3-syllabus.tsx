@@ -1,8 +1,9 @@
 import { Callout } from '@/components/blog/callout';
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=usmle-step-3-syllabus`;
@@ -18,6 +19,44 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'Is "content outline" the same thing as "syllabus"?',
+    answer:
+      'Close enough for practical purposes. USMLE’s own term is the Content Outline and Specifications, published by the NBME and FSMB. Most students just call it the syllabus or the blueprint.',
+  },
+  {
+    question: 'Why do the percentages in different tables not add up to 100% together?',
+    answer:
+      'Because systems and physician tasks are two separate, overlapping ways of classifying the same set of multiple-choice questions, not two different sets of questions. Each table sums to roughly 100% on its own.',
+  },
+  {
+    question: 'What is the single most heavily tested system on Step 3?',
+    answer:
+      'Biostatistics & Epidemiology/Population Health & Interpretation of the Medical Literature, at 11 to 13%, though the spread across systems is relatively flat, so no single system dominates the way diagnosis and management dominate the physician task axis.',
+  },
+  {
+    question: 'Does the content outline tell you how much CCS is worth?',
+    answer:
+      'No. The official outline lists which systems the case simulations cover but does not publish a percentage weighting for CCS, unlike the systems and physician task tables above.',
+  },
+  {
+    question: 'How is this different from the Step 1 and Step 2 CK syllabus?',
+    answer:
+      'Step 3 drops Step 1’s discipline axis and Step 2 CK’s clinical science axis entirely, leaving only systems and physician tasks. The task axis also shifts dramatically: Diagnosis and Management together make up roughly two-thirds of Step 3, compared to 20 to 25% for diagnosis alone on Step 1. See our [Step 1 syllabus guide](/blog/usmle-step-1-syllabus) and [Step 2 CK syllabus guide](/blog/usmle-step-2-ck-syllabus) for the full comparison.',
+  },
+  {
+    question: 'What about after Step 3? Does ABIM publish a similar blueprint?',
+    answer:
+      'Yes. See our [ABIM syllabus guide](/blog/abim-syllabus) for the Internal Medicine Certification Exam blueprint most residents take after Step 3, which uses a single medical-content-category axis instead of Step 3’s system and physician task axes.',
+  },
+  {
+    question: 'Does the content outline ever change?',
+    answer:
+      'The NBME and FSMB can update it, so treat the figures here as a snapshot and confirm the current outline directly on USMLE.org before building a study plan around exact percentages.',
+  },
+];
 
 const Body = () => (
   <>
@@ -159,50 +198,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>Is "content outline" the same thing as "syllabus"?</h3>
-    <p>
-      Close enough for practical purposes. USMLE&rsquo;s own term is the Content Outline and
-      Specifications, published by the NBME and FSMB. Most students just call it the syllabus or
-      the blueprint.
-    </p>
-    <h3>Why do the percentages in different tables not add up to 100% together?</h3>
-    <p>
-      Because systems and physician tasks are two separate, overlapping ways of classifying the
-      same set of multiple-choice questions, not two different sets of questions. Each table sums
-      to roughly 100% on its own.
-    </p>
-    <h3>What is the single most heavily tested system on Step 3?</h3>
-    <p>
-      Biostatistics &amp; Epidemiology/Population Health &amp; Interpretation of the Medical
-      Literature, at 11 to 13%, though the spread across systems is relatively flat, so no single
-      system dominates the way diagnosis and management dominate the physician task axis.
-    </p>
-    <h3>Does the content outline tell you how much CCS is worth?</h3>
-    <p>
-      No. The official outline lists which systems the case simulations cover but does not publish
-      a percentage weighting for CCS, unlike the systems and physician task tables above.
-    </p>
-    <h3>How is this different from the Step 1 and Step 2 CK syllabus?</h3>
-    <p>
-      Step 3 drops Step 1&rsquo;s discipline axis and Step 2 CK&rsquo;s clinical science axis
-      entirely, leaving only systems and physician tasks. The task axis also shifts dramatically:
-      Diagnosis and Management together make up roughly two-thirds of Step 3, compared to 20 to 25%
-      for diagnosis alone on Step 1. See our{' '}
-      <Link href="/blog/usmle-step-1-syllabus">Step 1 syllabus guide</Link> and{' '}
-      <Link href="/blog/usmle-step-2-ck-syllabus">Step 2 CK syllabus guide</Link> for the full
-      comparison.
-    </p>
-    <h3>What about after Step 3? Does ABIM publish a similar blueprint?</h3>
-    <p>
-      Yes. See our <Link href="/blog/abim-syllabus">ABIM syllabus guide</Link> for the Internal
-      Medicine Certification Exam blueprint most residents take after Step 3, which uses a single
-      medical-content-category axis instead of Step 3&rsquo;s system and physician task axes.
-    </p>
-    <h3>Does the content outline ever change?</h3>
-    <p>
-      The NBME and FSMB can update it, so treat the figures here as a snapshot and confirm the
-      current outline directly on USMLE.org before building a study plan around exact percentages.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Try the adaptive Step 3 Qbank free for 7 days"
       body="Coverage across every system and physician task on the official outline, weighted toward whatever you keep missing."
@@ -249,5 +245,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 8,
   sections: Object.values(S),
+  faqs,
   Body,
 };

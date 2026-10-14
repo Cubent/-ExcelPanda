@@ -1,8 +1,9 @@
 import { Callout } from '@/components/blog/callout';
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=step-2-ck-study-guide`;
@@ -24,6 +25,54 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'What are the Step 2 CK exam dates in 2026?',
+    answer:
+      'There is no fixed date. You apply for a three-month eligibility period, then book an actual appointment inside it through Prometric. Registration and the block format both changed in 2026, and our [USMLE Step 2 CK exam dates guide](/blog/usmle-step-2-ck-exam-dates-2026) covers what changed.',
+  },
+  {
+    question: 'How long should I study for Step 2 CK?',
+    answer:
+      'Many students take two to six weeks of dedicated study after clerkships end, shorter than a typical Step 1 block, since clerkship experience already covers most of the content. Use question-bank practice during clerkships to make the dedicated period shorter.',
+  },
+  {
+    question: 'Is Step 2 CK pass/fail like Step 1?',
+    answer:
+      'No. Step 1 moved to pass/fail in 2022, but Step 2 CK still reports a three-digit score, and it is now the main standardized score most residency programs see from applicants.',
+  },
+  {
+    question: 'Should I take Step 2 CK before or after Step 3?',
+    answer:
+      'Step 2 CK comes before Step 3. Most students take it during medical school, after their core clerkships, well before Step 3, which is usually taken during residency. Our [USMLE Step 3 study guide](/blog/usmle-step-3-study-guide) covers that exam when you get there.',
+  },
+  {
+    question: 'How many questions should I do a day?',
+    answer:
+      'Two full mixed blocks a day, with complete review of every explanation, is a realistic and sustainable pace for most students during dedicated study.',
+  },
+  {
+    question: 'What is the biggest difference from studying for Step 1?',
+    answer:
+      'Vignettes are longer and center on management decisions rather than mechanisms, so practice should move to mixed, timed blocks earlier, and review should focus on why a management choice was right or wrong, not just on recalling a fact.',
+  },
+  {
+    question: 'Does MedPrep Institute replace clerkship study?',
+    answer:
+      'No. It is a question bank, meant to sit alongside your clerkship rotations and a concise review text, not replace either.',
+  },
+  {
+    question: 'Which Step 2 CK question bank should I use?',
+    answer:
+      'It depends on your budget and whether you want shelf-exam overlap. Our [Step 2 CK question bank comparison](/blog/top-usmle-step-2-ck-question-banks) breaks down UWorld, AMBOSS, TrueLearn and every other major bank, with verified prices and exactly which plan to buy for your situation.',
+  },
+  {
+    question: 'What does Step 2 CK actually cover?',
+    answer:
+      'Our [Step 2 CK syllabus guide](/blog/usmle-step-2-ck-syllabus) breaks down the official content outline by content area, clinical science and physician task, with the exact percentage ranges from USMLE.org.',
+  },
+];
 
 const Body = () => (
   <>
@@ -301,65 +350,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>What are the Step 2 CK exam dates in 2026?</h3>
-    <p>
-      There is no fixed date. You apply for a three-month eligibility period, then book an actual
-      appointment inside it through Prometric. Registration and the block format both changed in
-      2026, and our{' '}
-      <Link href="/blog/usmle-step-2-ck-exam-dates-2026">
-        USMLE Step 2 CK exam dates guide
-      </Link>{' '}
-      covers what changed.
-    </p>
-    <h3>How long should I study for Step 2 CK?</h3>
-    <p>
-      Many students take two to six weeks of dedicated study after clerkships end, shorter than a
-      typical Step 1 block, since clerkship experience already covers most of the content. Use
-      question-bank practice during clerkships to make the dedicated period shorter.
-    </p>
-    <h3>Is Step 2 CK pass/fail like Step 1?</h3>
-    <p>
-      No. Step 1 moved to pass/fail in 2022, but Step 2 CK still reports a three-digit score, and
-      it is now the main standardized score most residency programs see from applicants.
-    </p>
-    <h3>Should I take Step 2 CK before or after Step 3?</h3>
-    <p>
-      Step 2 CK comes before Step 3. Most students take it during medical school, after their core
-      clerkships, well before Step 3, which is usually taken during residency. Our{' '}
-      <Link href="/blog/usmle-step-3-study-guide">USMLE Step 3 study guide</Link> covers that exam
-      when you get there.
-    </p>
-    <h3>How many questions should I do a day?</h3>
-    <p>
-      Two full mixed blocks a day, with complete review of every explanation, is a realistic and
-      sustainable pace for most students during dedicated study.
-    </p>
-    <h3>What is the biggest difference from studying for Step 1?</h3>
-    <p>
-      Vignettes are longer and center on management decisions rather than mechanisms, so practice
-      should move to mixed, timed blocks earlier, and review should focus on why a management
-      choice was right or wrong, not just on recalling a fact.
-    </p>
-    <h3>Does MedPrep Institute replace clerkship study?</h3>
-    <p>
-      No. It is a question bank, meant to sit alongside your clerkship rotations and a concise
-      review text, not replace either.
-    </p>
-    <h3>Which Step 2 CK question bank should I use?</h3>
-    <p>
-      It depends on your budget and whether you want shelf-exam overlap. Our{' '}
-      <Link href="/blog/top-usmle-step-2-ck-question-banks">
-        Step 2 CK question bank comparison
-      </Link>{' '}
-      breaks down UWorld, AMBOSS, TrueLearn and every other major bank, with verified prices and
-      exactly which plan to buy for your situation.
-    </p>
-    <h3>What does Step 2 CK actually cover?</h3>
-    <p>
-      Our <Link href="/blog/usmle-step-2-ck-syllabus">Step 2 CK syllabus guide</Link> breaks down
-      the official content outline by content area, clinical science and physician task, with the
-      exact percentage ranges from USMLE.org.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Practice with an engine that remembers what you miss"
       body="Short daily sets, reviews scheduled for you, and your weakest specialties prioritized automatically."
@@ -409,5 +400,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 10,
   sections: Object.values(S),
+  faqs,
   Body,
 };

@@ -2,6 +2,12 @@ import type { ReactNode } from 'react';
 
 export type BlogSection = { id: string; title: string };
 
+export type BlogFaq = {
+  question: string;
+  /** Plain text. Use [text](/path) for links; schema output strips them to text. */
+  answer: string;
+};
+
 export type BlogPost = {
   slug: string;
   /** Visible H1. */
@@ -24,5 +30,7 @@ export type BlogPost = {
   readingMinutes: number;
   /** Drives the table of contents. Each id must match an <h2 id> in the body. */
   sections: BlogSection[];
+  /** Rendered by <FaqList> and emitted as FAQPage JSON-LD. Must match what is visible on the page. */
+  faqs?: BlogFaq[];
   Body: () => ReactNode;
 };

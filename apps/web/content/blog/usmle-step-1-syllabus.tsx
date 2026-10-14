@@ -1,8 +1,9 @@
 import { Callout } from '@/components/blog/callout';
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=usmle-step-1-syllabus`;
@@ -18,6 +19,44 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'Is "content outline" the same thing as "syllabus"?',
+    answer:
+      'Close enough for practical purposes. USMLE’s own term is the Content Outline and Specifications, published by the NBME and FSMB. Most students just call it the syllabus or the blueprint.',
+  },
+  {
+    question: 'Why do the percentages in different tables not add up to 100% together?',
+    answer:
+      'Because systems, disciplines and physician tasks are three separate, overlapping ways of classifying the same set of questions, not three different sets of questions. Each table sums to roughly 100% on its own.',
+  },
+  {
+    question: 'What is the single most heavily tested discipline on Step 1?',
+    answer:
+      'Pathology, at 45 to 55% of the exam, by a wide margin over every other discipline on the official outline.',
+  },
+  {
+    question: 'What is the single most heavily tested organ system on Step 1?',
+    answer:
+      'Reproductive & Endocrine Systems, at 12 to 16%, though the spread across systems is much flatter than the spread across disciplines, so no single system dominates the way Pathology does.',
+  },
+  {
+    question: 'What about the Step 2 CK syllabus?',
+    answer:
+      'See our [Step 2 CK syllabus guide](/blog/usmle-step-2-ck-syllabus) for the same breakdown applied to Step 2 CK, which replaces Step 1’s discipline axis with a clinical science axis organized by rotation.',
+  },
+  {
+    question: 'What about the Step 3 syllabus?',
+    answer:
+      'See our [Step 3 syllabus guide](/blog/usmle-step-3-syllabus) for the same breakdown applied to Step 3, which drops the discipline axis entirely and shifts heavily toward diagnosis and management instead of foundational science.',
+  },
+  {
+    question: 'Does the content outline ever change?',
+    answer:
+      'The NBME and FSMB can update it, so treat the figures here as a snapshot and confirm the current outline directly on USMLE.org before building a study plan around exact percentages.',
+  },
+];
 
 const Body = () => (
   <>
@@ -165,46 +204,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>Is "content outline" the same thing as "syllabus"?</h3>
-    <p>
-      Close enough for practical purposes. USMLE&rsquo;s own term is the Content Outline and
-      Specifications, published by the NBME and FSMB. Most students just call it the syllabus or
-      the blueprint.
-    </p>
-    <h3>Why do the percentages in different tables not add up to 100% together?</h3>
-    <p>
-      Because systems, disciplines and physician tasks are three separate, overlapping ways of
-      classifying the same set of questions, not three different sets of questions. Each table
-      sums to roughly 100% on its own.
-    </p>
-    <h3>What is the single most heavily tested discipline on Step 1?</h3>
-    <p>
-      Pathology, at 45 to 55% of the exam, by a wide margin over every other discipline on the
-      official outline.
-    </p>
-    <h3>What is the single most heavily tested organ system on Step 1?</h3>
-    <p>
-      Reproductive &amp; Endocrine Systems, at 12 to 16%, though the spread across systems is much
-      flatter than the spread across disciplines, so no single system dominates the way Pathology
-      does.
-    </p>
-    <h3>What about the Step 2 CK syllabus?</h3>
-    <p>
-      See our <Link href="/blog/usmle-step-2-ck-syllabus">Step 2 CK syllabus guide</Link> for the
-      same breakdown applied to Step 2 CK, which replaces Step 1&rsquo;s discipline axis with a
-      clinical science axis organized by rotation.
-    </p>
-    <h3>What about the Step 3 syllabus?</h3>
-    <p>
-      See our <Link href="/blog/usmle-step-3-syllabus">Step 3 syllabus guide</Link> for the same
-      breakdown applied to Step 3, which drops the discipline axis entirely and shifts heavily
-      toward diagnosis and management instead of foundational science.
-    </p>
-    <h3>Does the content outline ever change?</h3>
-    <p>
-      The NBME and FSMB can update it, so treat the figures here as a snapshot and confirm the
-      current outline directly on USMLE.org before building a study plan around exact percentages.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Try the adaptive Step 1 Qbank free for 7 days"
       body="Coverage across every system and discipline on the official outline, weighted toward whatever you keep missing."
@@ -251,5 +251,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 8,
   sections: Object.values(S),
+  faqs,
   Body,
 };

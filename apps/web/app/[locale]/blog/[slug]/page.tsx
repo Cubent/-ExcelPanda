@@ -1,3 +1,5 @@
+import { faqToPlainText } from '@/components/blog/faq-list';
+import { RelatedPosts } from '@/components/blog/related-posts';
 import { TableOfContents } from '@/components/blog/table-of-contents';
 import {
   SITE_URL,
@@ -9,6 +11,7 @@ import { JsonLd } from '@repo/seo/json-ld';
 import type {
   BlogPosting,
   BreadcrumbList,
+  FAQPage,
   WithContext,
 } from '@repo/seo/json-ld';
 import { createMetadata } from '@repo/seo/metadata';
@@ -94,9 +97,22 @@ const BlogPostPage = async ({ params }: BlogPostPageProperties) => {
     ],
   };
 
+  const faqPage: WithContext<FAQPage> | null = post.faqs?.length
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: post.faqs.map((faq) => ({
+          '@type': 'Question',
+          name: faq.question,
+          acceptedAnswer: { '@type': 'Answer', text: faqToPlainText(faq.answer) },
+        })),
+      }
+    : null;
+
   return (
     <div className="min-h-screen bg-white">
       <JsonLd code={article} />
+      {faqPage && <JsonLd code={faqPage} />}
       <JsonLd code={breadcrumbs} />
       <SiteHeader />
       <main>
@@ -186,6 +202,8 @@ const BlogPostPage = async ({ params }: BlogPostPageProperties) => {
             <div className="prose prose-lg max-w-none prose-headings:font-[family-name:var(--font-display)] prose-headings:font-bold prose-headings:text-[#06005A] prose-h2:mt-14 prose-h2:scroll-mt-24 prose-h3:mt-8 prose-h3:scroll-mt-24 prose-a:font-medium prose-a:text-[#C46B10] prose-a:no-underline hover:prose-a:underline prose-strong:text-[#000C3F] prose-li:my-1.5">
               <post.Body />
             </div>
+
+            <RelatedPosts slug={post.slug} category={post.category} />
           </div>
         </article>
       </main>

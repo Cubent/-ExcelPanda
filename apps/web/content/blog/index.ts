@@ -9,6 +9,14 @@ import { post as step2CkSchedule } from './step-2-ck-study-schedule';
 import { post as step1Dedicated } from './usmle-step-1-dedicated-study-period';
 import { post as failedRetake } from './failed-usmle-step-retake-guide';
 import { post as imgGuide } from './usmle-for-imgs-step-1-step-2-ck';
+import { post as uworldAlternatives } from './uworld-alternatives';
+import { post as uworldVsAmboss } from './uworld-vs-amboss';
+import { post as medprepVsUworld } from './medprep-vs-uworld';
+import { post as qbankCost } from './usmle-question-bank-cost';
+import { post as freeQuestions } from './free-usmle-practice-questions';
+import { post as howManyQuestions } from './how-many-practice-questions-usmle';
+import { post as ankiVsQbank } from './anki-vs-question-bank-usmle';
+import { post as reviewMissed } from './how-to-review-missed-usmle-questions';
 import { post as step1ExamDates2026 } from './usmle-step-1-exam-dates-2026';
 import { post as step1StudyGuide } from './usmle-step-1-study-guide';
 import { post as step2CkExamDates2026 } from './usmle-step-2-ck-exam-dates-2026';
@@ -26,6 +34,14 @@ import { post as usmleStep3Syllabus } from './usmle-step-3-syllabus';
 import type { BlogPost } from './types';
 
 export const posts: BlogPost[] = [
+  uworldAlternatives,
+  uworldVsAmboss,
+  medprepVsUworld,
+  qbankCost,
+  freeQuestions,
+  howManyQuestions,
+  ankiVsQbank,
+  reviewMissed,
   step2CkSchedule,
   step1Dedicated,
   failedRetake,

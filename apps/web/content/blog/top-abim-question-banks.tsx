@@ -1,9 +1,10 @@
 import { Callout } from '@/components/blog/callout';
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=top-abim-question-banks`;
@@ -60,6 +61,34 @@ const MEDPREP_PRICES = [
 ];
 const MEDPREP_ABIM_TOPICS = '10,400+';
 const MEDPREP_TRIAL = '7-day free trial, cancel anytime';
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'What is the single best question bank for the ABIM exam?',
+    answer:
+      'There is no single answer: MKSAP is the traditional standard and bundles a full text review for ACP members, UWorld has the newest interface and the largest confirmed question count, AMBOSS bundles a library and practice exams, and TrueLearn and BoardVitals offer lower-cost options with pass guarantees. MedPrep Institute adds adaptive weak-area review on top of any primary bank.',
+  },
+  {
+    question: 'Is MKSAP worth it if I am not an ACP member?',
+    answer:
+      'Compare the cost of ACP membership plus the member rate against the nonmember price ($849 for 1 year) before deciding. For many residents, membership plus the member rate works out cheaper than paying the nonmember price directly.',
+  },
+  {
+    question: 'Do I need a question bank with a pass guarantee?',
+    answer:
+      'A guarantee is not required to pass, but TrueLearn and BoardVitals both offer one on their standard plans at a lower price than UWorld or MKSAP’s nonmember rate, which can be worth the peace of mind if budget allows.',
+  },
+  {
+    question: 'Can I use more than one ABIM question bank?',
+    answer:
+      'Yes, and many residents do: a primary comprehensive resource like MKSAP or UWorld, plus a second bank or MedPrep’s adaptive review for additional weak-area practice. Use the second resource to find topics to revisit, not purely to raise your total question count.',
+  },
+  {
+    question: 'How is this different from the ABIM study guide?',
+    answer:
+      'Our [ABIM study guide](/blog/abim-study-guide) covers when to start, a sample schedule for your final year, and general exam-prep strategy. This guide is the question-bank comparison specifically: verified prices, question counts, and which plan to buy from each provider.',
+  },
+];
 
 const Body = () => (
   <>
@@ -436,40 +465,7 @@ const Body = () => (
     </ol>
 
     <H2 section={S.faq} />
-    <h3>What is the single best question bank for the ABIM exam?</h3>
-    <p>
-      There is no single answer: MKSAP is the traditional standard and bundles a full text review
-      for ACP members, UWorld has the newest interface and the largest confirmed question count,
-      AMBOSS bundles a library and practice exams, and TrueLearn and BoardVitals offer lower-cost
-      options with pass guarantees. MedPrep Institute adds adaptive weak-area review on top of any
-      primary bank.
-    </p>
-    <h3>Is MKSAP worth it if I am not an ACP member?</h3>
-    <p>
-      Compare the cost of ACP membership plus the member rate against the nonmember price ($849
-      for 1 year) before deciding. For many residents, membership plus the member rate works out
-      cheaper than paying the nonmember price directly.
-    </p>
-    <h3>Do I need a question bank with a pass guarantee?</h3>
-    <p>
-      A guarantee is not required to pass, but TrueLearn and BoardVitals both offer one on their
-      standard plans at a lower price than UWorld or MKSAP&rsquo;s nonmember rate, which can be
-      worth the peace of mind if budget allows.
-    </p>
-    <h3>Can I use more than one ABIM question bank?</h3>
-    <p>
-      Yes, and many residents do: a primary comprehensive resource like MKSAP or UWorld, plus a
-      second bank or MedPrep&rsquo;s adaptive review for additional weak-area practice. Use the
-      second resource to find topics to revisit, not purely to raise your total question count.
-    </p>
-    <h3>How is this different from the ABIM study guide?</h3>
-    <p>
-      Our <Link href="/blog/abim-study-guide">ABIM study guide</Link> covers when to start, a
-      sample schedule for your final year, and general exam-prep strategy. This guide is the
-      question-bank comparison specifically: verified prices, question counts, and which plan to
-      buy from each provider.
-    </p>
-
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Practice the concepts you actually miss"
       body="MedPrep Institute pairs board-style ABIM vignettes with an adaptive engine and built-in spaced repetition."
@@ -537,5 +533,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 12,
   sections: Object.values(S),
+  faqs,
   Body,
 };

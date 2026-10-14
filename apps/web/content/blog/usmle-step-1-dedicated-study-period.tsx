@@ -1,7 +1,8 @@
 import { Callout } from '@/components/blog/callout';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=step-1-dedicated-study-period`;
@@ -18,6 +19,34 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'How long should dedicated study for Step 1 be?',
+    answer:
+      'Commonly four to eight weeks of full-time study, depending on your baseline and goals.',
+  },
+  {
+    question: 'Is dedicated time enough on its own?',
+    answer:
+      'It works best on top of question practice during your courses.',
+  },
+  {
+    question: 'How many hours a day should I study?',
+    answer:
+      'Six to eight focused hours is sustainable for most students.',
+  },
+  {
+    question: 'When should I schedule the exam?',
+    answer:
+      'After a baseline assessment, once you can estimate how much time you need. Leave some flexibility.',
+  },
+  {
+    question: 'Does pass/fail mean I can study less?',
+    answer:
+      'You are aiming for a comfortable pass rather than a maximum score, but the knowledge still carries into Step 2 CK.',
+  },
+];
 
 const Body = () => (
   <>
@@ -119,26 +148,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>How long should dedicated study for Step 1 be?</h3>
-    <p>
-      Commonly four to eight weeks of full-time study, depending on your baseline and goals.
-    </p>
-    <h3>Is dedicated time enough on its own?</h3>
-    <p>
-      It works best on top of question practice during your courses.
-    </p>
-    <h3>How many hours a day should I study?</h3>
-    <p>Six to eight focused hours is sustainable for most students.</p>
-    <h3>When should I schedule the exam?</h3>
-    <p>
-      After a baseline assessment, once you can estimate how much time you need. Leave some
-      flexibility.
-    </p>
-    <h3>Does pass/fail mean I can study less?</h3>
-    <p>
-      You are aiming for a comfortable pass rather than a maximum score, but the knowledge still
-      carries into Step 2 CK.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Try the adaptive Step 1 Qbank free for 7 days"
       body="Short sets, reviews scheduled for you, and your weakest systems prioritized automatically."
@@ -178,5 +188,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 5,
   sections: Object.values(S),
+  faqs,
   Body,
 };

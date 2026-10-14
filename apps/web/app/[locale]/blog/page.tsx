@@ -11,7 +11,10 @@ export const metadata: Metadata = createMetadata({
     'Guides for USMLE Step 1, Step 2 CK and Step 3 preparation, including question bank comparisons, study strategy and how to use spaced repetition.',
   path: '/blog',
   keywords: ['USMLE study guides', 'USMLE question bank comparison', 'USMLE preparation blog'],
-  alternates: { canonical: `${SITE_URL}/blog` },
+  alternates: {
+    canonical: `${SITE_URL}/blog`,
+    types: { 'application/rss+xml': `${SITE_URL}/blog/feed.xml` },
+  },
 });
 
 const BlogIndexPage = () => {

@@ -1,8 +1,9 @@
 import { Callout } from '@/components/blog/callout';
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=abim-study-guide`;
@@ -23,6 +24,49 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'When should I take the ABIM exam?',
+    answer:
+      'Most residents take it in their final year of residency, once eligibility requirements are met. Registration deadlines fall well before the August test dates, so confirm your own program\'s timeline and register early.',
+  },
+  {
+    question: 'Is the ABIM exam the same as a USMLE Step?',
+    answer:
+      'No. It is a board certification exam from the American Board of Internal Medicine, separate from the USMLE Steps administered by the NBME and FSMB, and it is not a licensing requirement the way the Steps are.',
+  },
+  {
+    question: 'How many questions are on the exam?',
+    answer:
+      'The exam blueprint allows up to 240 single-best-answer questions across four timed sessions, with a portion of unscored pilot questions mixed in. Exact counts are set by ABIM and can change, so confirm on ABIM.org.',
+  },
+  {
+    question: 'What happens if I do not pass?',
+    answer:
+      'ABIM publishes its own retake policies and timelines. Since the exam is offered once a year, confirm the current policy directly with ABIM rather than assuming.',
+  },
+  {
+    question: 'What exactly does the ABIM exam cover?',
+    answer:
+      'See our [ABIM syllabus guide](/blog/abim-syllabus) for the full blueprint: all 18 medical content categories with their exact percentages, straight from ABIM’s official documentation.',
+  },
+  {
+    question: 'Which ABIM question bank should I use?',
+    answer:
+      'See our [ABIM question bank comparison](/blog/top-abim-question-banks) for verified prices and a full strengths-and-drawbacks breakdown of UWorld, MKSAP, AMBOSS, TrueLearn and BoardVitals.',
+  },
+  {
+    question: 'How is this different from studying for Step 3?',
+    answer:
+      'The content overlaps heavily with internal medicine topics from Step 3, but the exam is narrower, all internal medicine, rather than spanning every specialty, and it leans more on the judgment of a practicing internist than on multi-specialty breadth.',
+  },
+  {
+    question: 'Does MedPrep Institute replace a self-assessment exam?',
+    answer:
+      'No. It is a question bank, meant to sit alongside ABIM\'s own self-assessment options, not replace them.',
+  },
+];
 
 const Body = () => (
   <>
@@ -269,52 +313,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>When should I take the ABIM exam?</h3>
-    <p>
-      Most residents take it in their final year of residency, once eligibility requirements are
-      met. Registration deadlines fall well before the August test dates, so confirm your own
-      program's timeline and register early.
-    </p>
-    <h3>Is the ABIM exam the same as a USMLE Step?</h3>
-    <p>
-      No. It is a board certification exam from the American Board of Internal Medicine, separate
-      from the USMLE Steps administered by the NBME and FSMB, and it is not a licensing
-      requirement the way the Steps are.
-    </p>
-    <h3>How many questions are on the exam?</h3>
-    <p>
-      The exam blueprint allows up to 240 single-best-answer questions across four timed sessions,
-      with a portion of unscored pilot questions mixed in. Exact counts are set by ABIM and can
-      change, so confirm on ABIM.org.
-    </p>
-    <h3>What happens if I do not pass?</h3>
-    <p>
-      ABIM publishes its own retake policies and timelines. Since the exam is offered once a year,
-      confirm the current policy directly with ABIM rather than assuming.
-    </p>
-    <h3>What exactly does the ABIM exam cover?</h3>
-    <p>
-      See our <Link href="/blog/abim-syllabus">ABIM syllabus guide</Link> for the full blueprint:
-      all 18 medical content categories with their exact percentages, straight from ABIM&rsquo;s
-      official documentation.
-    </p>
-    <h3>Which ABIM question bank should I use?</h3>
-    <p>
-      See our <Link href="/blog/top-abim-question-banks">ABIM question bank comparison</Link> for
-      verified prices and a full strengths-and-drawbacks breakdown of UWorld, MKSAP, AMBOSS,
-      TrueLearn and BoardVitals.
-    </p>
-    <h3>How is this different from studying for Step 3?</h3>
-    <p>
-      The content overlaps heavily with internal medicine topics from Step 3, but the exam is
-      narrower, all internal medicine, rather than spanning every specialty, and it leans more on
-      the judgment of a practicing internist than on multi-specialty breadth.
-    </p>
-    <h3>Does MedPrep Institute replace a self-assessment exam?</h3>
-    <p>
-      No. It is a question bank, meant to sit alongside ABIM's own self-assessment options, not
-      replace them.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Practice with an engine that remembers what you miss"
       body="Short daily sets, reviews scheduled for you, and your weakest categories prioritized automatically."
@@ -363,5 +362,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 9,
   sections: Object.values(S),
+  faqs,
   Body,
 };

@@ -1,8 +1,9 @@
 import { Callout } from '@/components/blog/callout';
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=step-2-ck-exam-dates-2026`;
@@ -22,6 +23,44 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'Is there a fixed USMLE Step 2 CK exam date in 2026?',
+    answer:
+      'No. You apply for a roughly three-month eligibility period, then book an actual appointment inside that window through Prometric, on a first-come, first-served basis.',
+  },
+  {
+    question: 'What changed about Step 2 CK registration in 2026?',
+    answer:
+      'International applicants moved to registering through FSMB, starting January 12, 2026. US and Canadian applicants continue to register through NBME, as of a service transition on January 26, 2026.',
+  },
+  {
+    question: 'Did the Step 2 CK exam format change in 2026?',
+    answer:
+      'Yes. As of May 7, 2026, Step 2 CK moved from eight 60-minute blocks to sixteen 30-minute blocks, with more, shorter breaks. The total question count and testing day length stayed the same.',
+  },
+  {
+    question: 'Is Step 2 CK pass/fail like Step 1?',
+    answer:
+      'No. Step 1 moved to pass/fail in 2022, but Step 2 CK still reports a three-digit score.',
+  },
+  {
+    question: 'How long do Step 2 CK results take?',
+    answer:
+      'Typically within four weeks, though USMLE recommends allowing at least eight weeks before asking about a delayed report.',
+  },
+  {
+    question: 'Does the new block format change how I should study?',
+    answer:
+      'The content and total question count are unchanged, so what you study does not need to change. Practicing in shorter timed sets can help you adjust to the new block rhythm before test day.',
+  },
+  {
+    question: 'What about Step 3 exam dates?',
+    answer:
+      'Step 3 follows the same eligibility-period system, but it has its own prerequisites, fee and two-day format. See our [USMLE Step 3 exam dates guide](/blog/usmle-step-3-exam-dates-2026) for the specifics.',
+  },
+];
 
 const Body = () => (
   <>
@@ -181,45 +220,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>Is there a fixed USMLE Step 2 CK exam date in 2026?</h3>
-    <p>
-      No. You apply for a roughly three-month eligibility period, then book an actual appointment
-      inside that window through Prometric, on a first-come, first-served basis.
-    </p>
-    <h3>What changed about Step 2 CK registration in 2026?</h3>
-    <p>
-      International applicants moved to registering through FSMB, starting January 12, 2026. US
-      and Canadian applicants continue to register through NBME, as of a service transition on
-      January 26, 2026.
-    </p>
-    <h3>Did the Step 2 CK exam format change in 2026?</h3>
-    <p>
-      Yes. As of May 7, 2026, Step 2 CK moved from eight 60-minute blocks to sixteen 30-minute
-      blocks, with more, shorter breaks. The total question count and testing day length stayed
-      the same.
-    </p>
-    <h3>Is Step 2 CK pass/fail like Step 1?</h3>
-    <p>
-      No. Step 1 moved to pass/fail in 2022, but Step 2 CK still reports a three-digit score.
-    </p>
-    <h3>How long do Step 2 CK results take?</h3>
-    <p>
-      Typically within four weeks, though USMLE recommends allowing at least eight weeks before
-      asking about a delayed report.
-    </p>
-    <h3>Does the new block format change how I should study?</h3>
-    <p>
-      The content and total question count are unchanged, so what you study does not need to
-      change. Practicing in shorter timed sets can help you adjust to the new block rhythm before
-      test day.
-    </p>
-    <h3>What about Step 3 exam dates?</h3>
-    <p>
-      Step 3 follows the same eligibility-period system, but it has its own prerequisites, fee and
-      two-day format. See our{' '}
-      <Link href="/blog/usmle-step-3-exam-dates-2026">USMLE Step 3 exam dates guide</Link> for the
-      specifics.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Try the adaptive Step 2 CK Qbank free for 7 days"
       body="Short sets, reviews scheduled for you, and your weakest specialties prioritized automatically."
@@ -268,5 +269,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 8,
   sections: Object.values(S),
+  faqs,
   Body,
 };

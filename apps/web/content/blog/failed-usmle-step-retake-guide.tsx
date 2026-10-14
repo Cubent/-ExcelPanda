@@ -1,7 +1,8 @@
 import { Callout } from '@/components/blog/callout';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=failed-usmle-step-retake-guide`;
@@ -18,6 +19,34 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'Can I retake a USMLE Step after failing?',
+    answer:
+      'Yes, within the program\'s attempt limits and waiting periods.',
+  },
+  {
+    question: 'How long do I have to wait to retake?',
+    answer:
+      'There is a mandatory waiting period. Check USMLE.org for the current length.',
+  },
+  {
+    question: 'Will residency programs see my failed attempt?',
+    answer:
+      'Yes. All attempts appear on your transcript.',
+  },
+  {
+    question: 'Can I still match after failing a Step?',
+    answer:
+      'Many applicants do. Programs weigh the retake result and the rest of your application.',
+  },
+  {
+    question: 'What should I change for the retake?',
+    answer:
+      'Use your performance profile and practice data to find the cause, then change your review method, not just your hours.',
+  },
+];
 
 const Body = () => (
   <>
@@ -109,21 +138,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>Can I retake a USMLE Step after failing?</h3>
-    <p>Yes, within the program's attempt limits and waiting periods.</p>
-    <h3>How long do I have to wait to retake?</h3>
-    <p>There is a mandatory waiting period. Check USMLE.org for the current length.</p>
-    <h3>Will residency programs see my failed attempt?</h3>
-    <p>Yes. All attempts appear on your transcript.</p>
-    <h3>Can I still match after failing a Step?</h3>
-    <p>
-      Many applicants do. Programs weigh the retake result and the rest of your application.
-    </p>
-    <h3>What should I change for the retake?</h3>
-    <p>
-      Use your performance profile and practice data to find the cause, then change your review
-      method, not just your hours.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Start your retake prep with a free trial"
       body="Short sets, reviews scheduled for you, and your weakest areas prioritized automatically."
@@ -165,5 +180,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 5,
   sections: Object.values(S),
+  faqs,
   Body,
 };

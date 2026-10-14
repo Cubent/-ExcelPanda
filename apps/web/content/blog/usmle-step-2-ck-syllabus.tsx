@@ -1,8 +1,9 @@
 import { Callout } from '@/components/blog/callout';
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=usmle-step-2-ck-syllabus`;
@@ -18,6 +19,44 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'Is "content outline" the same thing as "syllabus"?',
+    answer:
+      'Close enough for practical purposes. USMLE’s own term is the Content Outline and Specifications, published by the NBME and FSMB. Most students just call it the syllabus or the blueprint.',
+  },
+  {
+    question: 'Why do the percentages in different tables not add up to 100% together?',
+    answer:
+      'Because content areas, clinical sciences and physician tasks are three separate, overlapping ways of classifying the same set of questions, not three different sets of questions. Each table sums to roughly 100% on its own.',
+  },
+  {
+    question: 'What is the single most heavily tested clinical science on Step 2 CK?',
+    answer:
+      'Medicine, at 55 to 65% of the exam, by a wide margin over Pediatrics, Obstetrics & Gynecology, Psychiatry and Surgery.',
+  },
+  {
+    question: 'What is the single most heavily tested content area on Step 2 CK?',
+    answer:
+      'Nutrition, at 15 to 20%, though the spread across content areas is much flatter than the spread across clinical sciences, so no single area dominates the way Medicine does.',
+  },
+  {
+    question: 'How is this different from the Step 1 syllabus?',
+    answer:
+      'Step 2 CK replaces Step 1’s discipline axis (Pathology, Physiology, Pharmacology, and so on) with a clinical science axis organized by rotation (Medicine, Pediatrics, OB/GYN, Psychiatry, Surgery), and its physician task list is far more granular, split across ten specific patient-care categories instead of Step 1’s four. See our [Step 1 syllabus guide](/blog/usmle-step-1-syllabus) for that breakdown.',
+  },
+  {
+    question: 'What about the Step 3 syllabus?',
+    answer:
+      'See our [Step 3 syllabus guide](/blog/usmle-step-3-syllabus) for the same breakdown applied to Step 3, which drops the clinical science axis entirely and shifts heavily toward diagnosis and management instead of foundational science.',
+  },
+  {
+    question: 'Does the content outline ever change?',
+    answer:
+      'The NBME and FSMB can update it, so treat the figures here as a snapshot and confirm the current outline directly on USMLE.org before building a study plan around exact percentages.',
+  },
+];
 
 const Body = () => (
   <>
@@ -182,47 +221,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>Is "content outline" the same thing as "syllabus"?</h3>
-    <p>
-      Close enough for practical purposes. USMLE&rsquo;s own term is the Content Outline and
-      Specifications, published by the NBME and FSMB. Most students just call it the syllabus or
-      the blueprint.
-    </p>
-    <h3>Why do the percentages in different tables not add up to 100% together?</h3>
-    <p>
-      Because content areas, clinical sciences and physician tasks are three separate, overlapping
-      ways of classifying the same set of questions, not three different sets of questions. Each
-      table sums to roughly 100% on its own.
-    </p>
-    <h3>What is the single most heavily tested clinical science on Step 2 CK?</h3>
-    <p>
-      Medicine, at 55 to 65% of the exam, by a wide margin over Pediatrics, Obstetrics &amp;
-      Gynecology, Psychiatry and Surgery.
-    </p>
-    <h3>What is the single most heavily tested content area on Step 2 CK?</h3>
-    <p>
-      Nutrition, at 15 to 20%, though the spread across content areas is much flatter than the
-      spread across clinical sciences, so no single area dominates the way Medicine does.
-    </p>
-    <h3>How is this different from the Step 1 syllabus?</h3>
-    <p>
-      Step 2 CK replaces Step 1&rsquo;s discipline axis (Pathology, Physiology, Pharmacology, and
-      so on) with a clinical science axis organized by rotation (Medicine, Pediatrics, OB/GYN,
-      Psychiatry, Surgery), and its physician task list is far more granular, split across ten
-      specific patient-care categories instead of Step 1&rsquo;s four. See our{' '}
-      <Link href="/blog/usmle-step-1-syllabus">Step 1 syllabus guide</Link> for that breakdown.
-    </p>
-    <h3>What about the Step 3 syllabus?</h3>
-    <p>
-      See our <Link href="/blog/usmle-step-3-syllabus">Step 3 syllabus guide</Link> for the same
-      breakdown applied to Step 3, which drops the clinical science axis entirely and shifts
-      heavily toward diagnosis and management instead of foundational science.
-    </p>
-    <h3>Does the content outline ever change?</h3>
-    <p>
-      The NBME and FSMB can update it, so treat the figures here as a snapshot and confirm the
-      current outline directly on USMLE.org before building a study plan around exact percentages.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Try the adaptive Step 2 CK Qbank free for 7 days"
       body="Coverage across every content area and rotation on the official outline, weighted toward whatever you keep missing."
@@ -269,5 +268,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 9,
   sections: Object.values(S),
+  faqs,
   Body,
 };

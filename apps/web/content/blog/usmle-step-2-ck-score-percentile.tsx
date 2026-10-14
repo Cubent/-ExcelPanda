@@ -1,8 +1,9 @@
 import { Callout } from '@/components/blog/callout';
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=step-2-ck-score-percentile`;
@@ -20,6 +21,39 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'What is the passing score for Step 2 CK?',
+    answer:
+      'The minimum passing standard is 214.',
+  },
+  {
+    question: 'What is the average Step 2 CK score?',
+    answer:
+      'Recent first-time US and Canadian MD examinees have averaged in the high 240s, with a standard deviation of about 15.',
+  },
+  {
+    question: 'Is there an official Step 2 CK percentile?',
+    answer:
+      'No. USMLE publishes score distributions but not an official percentile chart, so any conversion is an estimate.',
+  },
+  {
+    question: 'Is a 250 a good Step 2 CK score?',
+    answer:
+      'It is around or slightly above the average, which is solid for many specialties but may be below the typical match score for the most competitive ones.',
+  },
+  {
+    question: 'Is Step 2 CK pass/fail?',
+    answer:
+      'No. Step 2 CK reports a three-digit score and a pass/fail outcome.',
+  },
+  {
+    question: 'How long do results take?',
+    answer:
+      'Typically within four weeks of the test date. See our [Step 2 CK exam dates guide](/blog/usmle-step-2-ck-exam-dates-2026).',
+  },
+];
 
 const Body = () => (
   <>
@@ -137,30 +171,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>What is the passing score for Step 2 CK?</h3>
-    <p>The minimum passing standard is 214.</p>
-    <h3>What is the average Step 2 CK score?</h3>
-    <p>
-      Recent first-time US and Canadian MD examinees have averaged in the high 240s, with a
-      standard deviation of about 15.
-    </p>
-    <h3>Is there an official Step 2 CK percentile?</h3>
-    <p>
-      No. USMLE publishes score distributions but not an official percentile chart, so any
-      conversion is an estimate.
-    </p>
-    <h3>Is a 250 a good Step 2 CK score?</h3>
-    <p>
-      It is around or slightly above the average, which is solid for many specialties but may be
-      below the typical match score for the most competitive ones.
-    </p>
-    <h3>Is Step 2 CK pass/fail?</h3>
-    <p>No. Step 2 CK reports a three-digit score and a pass/fail outcome.</p>
-    <h3>How long do results take?</h3>
-    <p>
-      Typically within four weeks of the test date. See our{' '}
-      <Link href="/blog/usmle-step-2-ck-exam-dates-2026">Step 2 CK exam dates guide</Link>.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Try the adaptive Step 2 CK Qbank free for 7 days"
       body="Short sets, reviews scheduled for you, and your weakest specialties prioritized automatically."
@@ -204,5 +215,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 6,
   sections: Object.values(S),
+  faqs,
   Body,
 };

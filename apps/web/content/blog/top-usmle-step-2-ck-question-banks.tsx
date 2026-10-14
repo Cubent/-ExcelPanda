@@ -1,9 +1,10 @@
 import { Callout } from '@/components/blog/callout';
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=top-usmle-step-2-ck-question-banks`;
@@ -60,6 +61,39 @@ const MEDPREP_STEP2_TOPICS = '5,300+';
 const MEDPREP_TRIAL = '7-day free trial, cancel anytime';
 const NOT_CONFIRMED = 'Not confirmed on the official page';
 const NOT_LISTED = 'Not listed on the official page';
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'What is the single best question bank for USMLE Step 2 CK?',
+    answer:
+      'UWorld is the most widely used Step 2 CK bank, with 4,250+ pre-written questions and up to three official self-assessments on longer plans. AMBOSS is the main alternative if you want a library and score predictor in the same subscription, TrueLearn is the strongest choice if you want shelf-exam overlap, and MedPrep Institute adds adaptive weak-area review on top of any primary bank.',
+  },
+  {
+    question: 'Is UWorld worth the price for Step 2 CK?',
+    answer:
+      'For most students in dedicated study, yes, especially since Step 2 CK is still numerically scored and UWorld’s self-assessments are a real predictor of that score. If your budget is tighter, AMBOSS at $378 for six months covers similar question volume with different bundled extras.',
+  },
+  {
+    question: 'Should I start a Step 2 CK bank during clerkships or wait for dedicated study?',
+    answer:
+      'Start during clerkships. Doing questions that match your current rotation reinforces what you are learning clinically at the same time, and most banks, including UWorld, AMBOSS and MedPrep, carry your progress forward into a later dedicated period rather than resetting it.',
+  },
+  {
+    question: 'Can I use the same question bank account for Step 1 and Step 2 CK?',
+    answer:
+      'With UWorld, AMBOSS, TrueLearn and MedPrep Institute, yes, and your prior progress carries forward. USMLE-Rx’s Qmax is built specifically as a single Step 1 and Step 2 CK plan from the start.',
+  },
+  {
+    question: 'How is this different from the general USMLE question bank comparison?',
+    answer:
+      'Our [general comparison](/blog/best-usmle-question-banks) covers Step 1, Step 2 CK and Step 3 side by side using the same verified pricing data. This guide is the Step 2 CK-only version, with a full strengths, drawbacks and which-plan-to-buy breakdown for each bank, including the gaps we could not verify for a couple of them.',
+  },
+  {
+    question: 'What about Step 1 or Step 3 question banks?',
+    answer:
+      'See our [Step 1 question bank comparison](/blog/top-usmle-step-1-question-banks) and [Step 3 question bank comparison](/blog/top-usmle-step-3-question-banks) for the same depth of breakdown, applied to preclinical prep and residency.',
+  },
+];
 
 const Body = () => (
   <>
@@ -483,49 +517,7 @@ const Body = () => (
     </ol>
 
     <H2 section={S.faq} />
-    <h3>What is the single best question bank for USMLE Step 2 CK?</h3>
-    <p>
-      UWorld is the most widely used Step 2 CK bank, with 4,250+ pre-written questions and up to
-      three official self-assessments on longer plans. AMBOSS is the main alternative if you want
-      a library and score predictor in the same subscription, TrueLearn is the strongest choice if
-      you want shelf-exam overlap, and MedPrep Institute adds adaptive weak-area review on top of
-      any primary bank.
-    </p>
-    <h3>Is UWorld worth the price for Step 2 CK?</h3>
-    <p>
-      For most students in dedicated study, yes, especially since Step 2 CK is still numerically
-      scored and UWorld&rsquo;s self-assessments are a real predictor of that score. If your
-      budget is tighter, AMBOSS at $378 for six months covers similar question volume with
-      different bundled extras.
-    </p>
-    <h3>Should I start a Step 2 CK bank during clerkships or wait for dedicated study?</h3>
-    <p>
-      Start during clerkships. Doing questions that match your current rotation reinforces what
-      you are learning clinically at the same time, and most banks, including UWorld, AMBOSS and
-      MedPrep, carry your progress forward into a later dedicated period rather than resetting it.
-    </p>
-    <h3>Can I use the same question bank account for Step 1 and Step 2 CK?</h3>
-    <p>
-      With UWorld, AMBOSS, TrueLearn and MedPrep Institute, yes, and your prior progress carries
-      forward. USMLE-Rx&rsquo;s Qmax is built specifically as a single Step 1 and Step 2 CK plan
-      from the start.
-    </p>
-    <h3>How is this different from the general USMLE question bank comparison?</h3>
-    <p>
-      Our <Link href="/blog/best-usmle-question-banks">general comparison</Link> covers Step 1,
-      Step 2 CK and Step 3 side by side using the same verified pricing data. This guide is the
-      Step 2 CK-only version, with a full strengths, drawbacks and which-plan-to-buy breakdown for
-      each bank, including the gaps we could not verify for a couple of them.
-    </p>
-    <h3>What about Step 1 or Step 3 question banks?</h3>
-    <p>
-      See our{' '}
-      <Link href="/blog/top-usmle-step-1-question-banks">Step 1 question bank comparison</Link>{' '}
-      and{' '}
-      <Link href="/blog/top-usmle-step-3-question-banks">Step 3 question bank comparison</Link>{' '}
-      for the same depth of breakdown, applied to preclinical prep and residency.
-    </p>
-
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Practice the concepts you actually miss"
       body="MedPrep Institute pairs NBME-style Step 2 CK vignettes with an adaptive engine and built-in spaced repetition."
@@ -593,5 +585,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 12,
   sections: Object.values(S),
+  faqs,
   Body,
 };
