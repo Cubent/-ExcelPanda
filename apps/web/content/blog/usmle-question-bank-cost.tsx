@@ -121,7 +121,10 @@ const Body = () => (
     <ol>
       <li>Buy the plan length that matches your timeline, not the cheapest per month.</li>
       <li>Ask your school about institutional discounts or access before paying.</li>
-      <li>Use free trials to confirm the explanations suit you.</li>
+      <li>
+        Use free trials to confirm the explanations suit you. MedPrep's 7-day trial is free, and
+        its <Link href="/blog/free-usmle-practice-questions">free sample questions</Link> need no account.
+      </li>
       <li>If you need Step 1 and Step 2 CK, check whether one plan covers both.</li>
     </ol>
 

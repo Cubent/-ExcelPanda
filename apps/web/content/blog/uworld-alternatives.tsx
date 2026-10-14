@@ -141,7 +141,11 @@ const Body = () => (
     <ol>
       <li>Set your budget and the number of weeks you have.</li>
       <li>Check which banks sell a plan that matches that length.</li>
-      <li>Use the free trials (most banks offer five to seven days) on your top two.</li>
+      <li>
+        Use the free trials (most banks offer five to seven days) on your top two, and try
+        MedPrep's <Link href="/blog/free-usmle-practice-questions">free sample questions</Link>
+        first. They need no account.
+      </li>
       <li>Pick the one whose explanations you actually finish reading.</li>
     </ol>
 
