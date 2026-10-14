@@ -1,7 +1,8 @@
 import { Callout } from '@/components/blog/callout';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=usmle-for-imgs`;
@@ -19,6 +20,39 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'Which USMLE exams do IMGs need to take?',
+    answer:
+      'Step 1 and Step 2 CK for ECFMG certification, and Step 3 for licensure, usually during residency.',
+  },
+  {
+    question: 'Is Step 1 pass/fail for IMGs?',
+    answer:
+      'Yes. Pass/fail applies to all examinees.',
+  },
+  {
+    question: 'Where do IMGs register?',
+    answer:
+      'International applicants register through the FSMB.',
+  },
+  {
+    question: 'Should IMGs take Step 2 CK before applying?',
+    answer:
+      'Generally yes, because programs rely on the score. Plan so your result is available in time.',
+  },
+  {
+    question: 'Do IMGs need higher scores?',
+    answer:
+      'Often a higher score helps offset other factors, especially in competitive specialties.',
+  },
+  {
+    question: 'Can I take the exams outside my home country?',
+    answer:
+      'Yes, at Prometric centers worldwide, subject to availability and regional fees.',
+  },
+];
 
 const Body = () => (
   <>
@@ -118,27 +152,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>Which USMLE exams do IMGs need to take?</h3>
-    <p>
-      Step 1 and Step 2 CK for ECFMG certification, and Step 3 for licensure, usually during
-      residency.
-    </p>
-    <h3>Is Step 1 pass/fail for IMGs?</h3>
-    <p>Yes. Pass/fail applies to all examinees.</p>
-    <h3>Where do IMGs register?</h3>
-    <p>International applicants register through the FSMB.</p>
-    <h3>Should IMGs take Step 2 CK before applying?</h3>
-    <p>
-      Generally yes, because programs rely on the score. Plan so your result is available in time.
-    </p>
-    <h3>Do IMGs need higher scores?</h3>
-    <p>
-      Often a higher score helps offset other factors, especially in competitive specialties.
-    </p>
-    <h3>Can I take the exams outside my home country?</h3>
-    <p>
-      Yes, at Prometric centers worldwide, subject to availability and regional fees.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Try the adaptive Qbank free for 7 days"
       body="Short sets, reviews scheduled for you, and your weakest areas prioritized automatically."
@@ -183,5 +197,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 6,
   sections: Object.values(S),
+  faqs,
   Body,
 };

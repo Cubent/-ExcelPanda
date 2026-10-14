@@ -1,8 +1,9 @@
 import { Callout } from '@/components/blog/callout';
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=step-2-ck-score-by-specialty`;
@@ -19,6 +20,39 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'What Step 2 CK score do I need for dermatology?',
+    answer:
+      'Dermatology is among the most competitive fields, and matched applicants average in the mid to high 250s or above. Check the latest NRMP Charting Outcomes for the exact figure.',
+  },
+  {
+    question: 'What Step 2 CK score do I need for internal medicine?',
+    answer:
+      'Matched applicants cluster around the national average, with a wide range across programs.',
+  },
+  {
+    question: 'What Step 2 CK score do I need for family medicine?',
+    answer:
+      'Family medicine is generally less score-driven, and matched applicants average a few points below the national mean.',
+  },
+  {
+    question: 'Is there a Step 2 CK cutoff for residency?',
+    answer:
+      'Most programs do not publish one, though some screen on a minimum. A few points usually matter less than the rest of your application.',
+  },
+  {
+    question: 'Do DO students and IMGs need higher scores?',
+    answer:
+      'In competitive specialties, often yes. Their matched-applicant distributions differ, so use the figures for your group.',
+  },
+  {
+    question: 'Where can I find exact numbers?',
+    answer:
+      'The NRMP Charting Outcomes in the Match report, published for each specialty and applicant type.',
+  },
+];
 
 const Body = () => (
   <>
@@ -126,35 +160,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>What Step 2 CK score do I need for dermatology?</h3>
-    <p>
-      Dermatology is among the most competitive fields, and matched applicants average in the mid
-      to high 250s or above. Check the latest NRMP Charting Outcomes for the exact figure.
-    </p>
-    <h3>What Step 2 CK score do I need for internal medicine?</h3>
-    <p>
-      Matched applicants cluster around the national average, with a wide range across programs.
-    </p>
-    <h3>What Step 2 CK score do I need for family medicine?</h3>
-    <p>
-      Family medicine is generally less score-driven, and matched applicants average a few points
-      below the national mean.
-    </p>
-    <h3>Is there a Step 2 CK cutoff for residency?</h3>
-    <p>
-      Most programs do not publish one, though some screen on a minimum. A few points usually
-      matter less than the rest of your application.
-    </p>
-    <h3>Do DO students and IMGs need higher scores?</h3>
-    <p>
-      In competitive specialties, often yes. Their matched-applicant distributions differ, so use
-      the figures for your group.
-    </p>
-    <h3>Where can I find exact numbers?</h3>
-    <p>
-      The NRMP Charting Outcomes in the Match report, published for each specialty and applicant
-      type.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Try the adaptive Step 2 CK Qbank free for 7 days"
       body="Short sets, reviews scheduled for you, and your weakest specialties prioritized automatically."
@@ -193,5 +199,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 5,
   sections: Object.values(S),
+  faqs,
   Body,
 };

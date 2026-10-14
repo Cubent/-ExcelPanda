@@ -1,8 +1,9 @@
 import { Callout } from '@/components/blog/callout';
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=step-2-ck-study-schedule`;
@@ -20,6 +21,39 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'How many weeks should I study for Step 2 CK?',
+    answer:
+      'Four to eight weeks of dedicated time is common, longer if you are studying alongside other work. Choose the length that lets you finish a full question pass with time to review.',
+  },
+  {
+    question: 'How many questions should I do per day?',
+    answer:
+      'Roughly 40 to 80 on a dedicated schedule, fewer if you are balancing a rotation. Reviewing explanations thoroughly matters more than the count.',
+  },
+  {
+    question: 'Should I study by system or in mixed blocks?',
+    answer:
+      'Start by system if you need to rebuild knowledge, then move to timed, mixed blocks as the exam approaches.',
+  },
+  {
+    question: 'When should I take practice assessments?',
+    answer:
+      'One early as a baseline, and one or two in the final weeks to check readiness.',
+  },
+  {
+    question: 'Can I study during my clerkships?',
+    answer:
+      'Yes, and it is one of the most effective strategies. Match questions to your current rotation.',
+  },
+  {
+    question: 'What if I fall behind?',
+    answer:
+      'Cut low-yield material and protect review time, or move your exam date if the data says you are not ready.',
+  },
+];
 
 const Body = () => (
   <>
@@ -142,35 +176,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>How many weeks should I study for Step 2 CK?</h3>
-    <p>
-      Four to eight weeks of dedicated time is common, longer if you are studying alongside other
-      work. Choose the length that lets you finish a full question pass with time to review.
-    </p>
-    <h3>How many questions should I do per day?</h3>
-    <p>
-      Roughly 40 to 80 on a dedicated schedule, fewer if you are balancing a rotation. Reviewing
-      explanations thoroughly matters more than the count.
-    </p>
-    <h3>Should I study by system or in mixed blocks?</h3>
-    <p>
-      Start by system if you need to rebuild knowledge, then move to timed, mixed blocks as the
-      exam approaches.
-    </p>
-    <h3>When should I take practice assessments?</h3>
-    <p>
-      One early as a baseline, and one or two in the final weeks to check readiness.
-    </p>
-    <h3>Can I study during my clerkships?</h3>
-    <p>
-      Yes, and it is one of the most effective strategies. Match questions to your current
-      rotation.
-    </p>
-    <h3>What if I fall behind?</h3>
-    <p>
-      Cut low-yield material and protect review time, or move your exam date if the data says you
-      are not ready.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Try the adaptive Step 2 CK Qbank free for 7 days"
       body="Short sets, reviews scheduled for you, and your weakest specialties prioritized automatically."
@@ -211,5 +217,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 7,
   sections: Object.values(S),
+  faqs,
   Body,
 };

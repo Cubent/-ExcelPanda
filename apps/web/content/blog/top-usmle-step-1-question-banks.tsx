@@ -1,9 +1,10 @@
 import { Callout } from '@/components/blog/callout';
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=top-usmle-step-1-question-banks`;
@@ -67,6 +68,39 @@ const MEDPREP_PRICES = [
 const MEDPREP_STEP1_TOPICS = '7,500+';
 const MEDPREP_TRIAL = '7-day free trial, cancel anytime';
 const NOT_CONFIRMED = 'Not confirmed on the official page';
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'What is the single best question bank for USMLE Step 1?',
+    answer:
+      'UWorld is the most widely used Step 1 bank, with 3,600+ pre-written questions and up to three official self-assessments on longer plans. AMBOSS is the main alternative if you want a library and score predictor in the same subscription, TrueLearn and BoardVitals have lower entry prices, and MedPrep Institute adds adaptive weak-area review on top of any primary bank.',
+  },
+  {
+    question: 'Is UWorld worth the price for Step 1?',
+    answer:
+      'For most students in dedicated study, yes. The 90-day plan at $459 is the usual starting point. If your budget is tighter, AMBOSS at $378 for six months or TrueLearn at $199 for 90 days covers similar ground with different tradeoffs, mainly around self-assessments and bundled extras.',
+  },
+  {
+    question: 'Do I still need a question bank now that Step 1 is pass/fail?',
+    answer:
+      'Yes. Step 1 has been pass/fail since January 2022, but it is still an exam you must pass. Practice questions remain the most direct way to rehearse the exam’s format and find gaps, so a question bank matters less for chasing a specific score and more for building confidence that you will clear the passing standard.',
+  },
+  {
+    question: 'Can I use more than one Step 1 question bank?',
+    answer:
+      'Yes, and many students do: a primary bank for volume and self-assessments, plus a second for different question styles or adaptive weak-area review. Use the second bank to find topics to revisit rather than purely to raise your total question count.',
+  },
+  {
+    question: 'How is this different from the general USMLE question bank comparison?',
+    answer:
+      'Our [general comparison](/blog/best-usmle-question-banks) covers Step 1, Step 2 CK and Step 3 side by side using the same verified pricing data. This guide is the Step 1-only version, with a full strengths/drawbacks/which-plan-to-buy breakdown for each bank specifically for Step 1, instead of a shorter combined summary.',
+  },
+  {
+    question: 'What about Step 2 CK or Step 3 question banks?',
+    answer:
+      'See our [Step 2 CK question bank comparison](/blog/top-usmle-step-2-ck-question-banks) and [Step 3 question bank comparison](/blog/top-usmle-step-3-question-banks) for the same depth of breakdown, applied to clerkship year and residency.',
+  },
+];
 
 const Body = () => (
   <>
@@ -513,54 +547,7 @@ const Body = () => (
     </ol>
 
     <H2 section={S.faq} />
-    <h3>What is the single best question bank for USMLE Step 1?</h3>
-    <p>
-      UWorld is the most widely used Step 1 bank, with 3,600+ pre-written questions and up to
-      three official self-assessments on longer plans. AMBOSS is the main alternative if you want
-      a library and score predictor in the same subscription, TrueLearn and BoardVitals have lower
-      entry prices, and MedPrep Institute adds adaptive weak-area review on top of any primary
-      bank.
-    </p>
-    <h3>Is UWorld worth the price for Step 1?</h3>
-    <p>
-      For most students in dedicated study, yes. The 90-day plan at $459 is the usual starting
-      point. If your budget is tighter, AMBOSS at $378 for six months or TrueLearn at $199 for 90
-      days covers similar ground with different tradeoffs, mainly around self-assessments and
-      bundled extras.
-    </p>
-    <h3>Do I still need a question bank now that Step 1 is pass/fail?</h3>
-    <p>
-      Yes. Step 1 has been pass/fail since January 2022, but it is still an exam you must pass.
-      Practice questions remain the most direct way to rehearse the exam&rsquo;s format and find
-      gaps, so a question bank matters less for chasing a specific score and more for building
-      confidence that you will clear the passing standard.
-    </p>
-    <h3>Can I use more than one Step 1 question bank?</h3>
-    <p>
-      Yes, and many students do: a primary bank for volume and self-assessments, plus a second for
-      different question styles or adaptive weak-area review. Use the second bank to find topics
-      to revisit rather than purely to raise your total question count.
-    </p>
-    <h3>How is this different from the general USMLE question bank comparison?</h3>
-    <p>
-      Our <Link href="/blog/best-usmle-question-banks">general comparison</Link> covers Step 1,
-      Step 2 CK and Step 3 side by side using the same verified pricing data. This guide is the
-      Step 1-only version, with a full strengths/drawbacks/which-plan-to-buy breakdown for each
-      bank specifically for Step 1, instead of a shorter combined summary.
-    </p>
-    <h3>What about Step 2 CK or Step 3 question banks?</h3>
-    <p>
-      See our{' '}
-      <Link href="/blog/top-usmle-step-2-ck-question-banks">
-        Step 2 CK question bank comparison
-      </Link>{' '}
-      and{' '}
-      <Link href="/blog/top-usmle-step-3-question-banks">
-        Step 3 question bank comparison
-      </Link>{' '}
-      for the same depth of breakdown, applied to clerkship year and residency.
-    </p>
-
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Practice the concepts you actually miss"
       body="MedPrep Institute pairs NBME-style Step 1 vignettes with an adaptive engine and built-in spaced repetition."
@@ -631,5 +618,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 12,
   sections: Object.values(S),
+  faqs,
   Body,
 };

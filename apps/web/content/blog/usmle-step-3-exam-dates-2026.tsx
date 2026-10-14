@@ -1,7 +1,8 @@
 import { Callout } from '@/components/blog/callout';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=step-3-exam-dates-2026`;
@@ -21,6 +22,39 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'Is there a fixed USMLE Step 3 exam date in 2026?',
+    answer:
+      'No. You apply for a roughly three-month eligibility period, then book actual appointments inside that window through Prometric, on a first-come, first-served basis.',
+  },
+  {
+    question: 'Do I need to pass Step 1 and Step 2 CK before Step 3?',
+    answer:
+      'Yes. Step 3 eligibility requires having already passed both earlier Steps, and IMGs must also hold a valid, unexpired ECFMG Certificate.',
+  },
+  {
+    question: 'Did the Step 3 exam format change in 2026?',
+    answer:
+      'Yes. On March 10, 2026, Step 3 moved to updated test delivery software with more, shorter blocks across both test days. Total questions, seat time, scoring, content and the CCS format stayed the same.',
+  },
+  {
+    question: 'Is Step 3 pass/fail like Step 1?',
+    answer:
+      'No. Step 1 moved to pass/fail in 2022, but Step 3 still reports a three-digit score, the same as Step 2 CK.',
+  },
+  {
+    question: 'How long do Step 3 results take?',
+    answer:
+      'Typically within four weeks, though USMLE recommends allowing at least eight weeks before asking about a delayed report.',
+  },
+  {
+    question: 'What about Step 1 and Step 2 CK exam dates?',
+    answer:
+      'Both earlier Steps follow the same eligibility-period system, with their own 2026 format changes and fees. See our [USMLE Step 1 exam dates guide](/blog/usmle-step-1-exam-dates-2026) and [USMLE Step 2 CK exam dates guide](/blog/usmle-step-2-ck-exam-dates-2026) for the specifics.',
+  },
+];
 
 const Body = () => (
   <>
@@ -175,42 +209,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>Is there a fixed USMLE Step 3 exam date in 2026?</h3>
-    <p>
-      No. You apply for a roughly three-month eligibility period, then book actual appointments
-      inside that window through Prometric, on a first-come, first-served basis.
-    </p>
-    <h3>Do I need to pass Step 1 and Step 2 CK before Step 3?</h3>
-    <p>
-      Yes. Step 3 eligibility requires having already passed both earlier Steps, and IMGs must
-      also hold a valid, unexpired ECFMG Certificate.
-    </p>
-    <h3>Did the Step 3 exam format change in 2026?</h3>
-    <p>
-      Yes. On March 10, 2026, Step 3 moved to updated test delivery software with more, shorter
-      blocks across both test days. Total questions, seat time, scoring, content and the CCS
-      format stayed the same.
-    </p>
-    <h3>Is Step 3 pass/fail like Step 1?</h3>
-    <p>
-      No. Step 1 moved to pass/fail in 2022, but Step 3 still reports a three-digit score, the
-      same as Step 2 CK.
-    </p>
-    <h3>How long do Step 3 results take?</h3>
-    <p>
-      Typically within four weeks, though USMLE recommends allowing at least eight weeks before
-      asking about a delayed report.
-    </p>
-    <h3>What about Step 1 and Step 2 CK exam dates?</h3>
-    <p>
-      Both earlier Steps follow the same eligibility-period system, with their own 2026 format
-      changes and fees. See our{' '}
-      <Link href="/blog/usmle-step-1-exam-dates-2026">USMLE Step 1 exam dates guide</Link> and{' '}
-      <Link href="/blog/usmle-step-2-ck-exam-dates-2026">
-        USMLE Step 2 CK exam dates guide
-      </Link>{' '}
-      for the specifics.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Try the adaptive Step 3 Qbank free for 7 days"
       body="Short sets that fit between patients, with reviews scheduled for you and your weakest disciplines prioritized automatically."
@@ -263,5 +262,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 8,
   sections: Object.values(S),
+  faqs,
   Body,
 };

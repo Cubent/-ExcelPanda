@@ -1,7 +1,8 @@
 import { Callout } from '@/components/blog/callout';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=step-1-pass-fail-score`;
@@ -19,6 +20,44 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'Is USMLE Step 1 pass/fail?',
+    answer:
+      'Yes. Since January 26, 2022 it reports only pass or fail.',
+  },
+  {
+    question: 'What score do you need to pass Step 1?',
+    answer:
+      'The minimum passing standard is a three-digit score of 196, though examinees are not shown their own number.',
+  },
+  {
+    question: 'Can I see my Step 1 score?',
+    answer:
+      'No. You receive a pass or fail outcome and a performance profile by content area, not a numeric score.',
+  },
+  {
+    question: 'Do residency programs care about Step 1 now?',
+    answer:
+      'A pass is required and a fail is a red flag, but programs rely more on Step 2 CK, clerkship performance and other signals to compare applicants.',
+  },
+  {
+    question: 'Can I retake Step 1 if I pass?',
+    answer:
+      'No. Retakes are only allowed after a failed attempt.',
+  },
+  {
+    question: 'What happens to my old three-digit Step 1 score?',
+    answer:
+      'It stays on your transcript. Pass/fail applies only to exams taken after the change.',
+  },
+  {
+    question: 'Should I still take Step 1 seriously?',
+    answer:
+      'Yes. A pass is mandatory, and the knowledge carries into Step 2 CK, which does report a score.',
+  },
+];
 
 const Body = () => (
   <>
@@ -146,32 +185,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>Is USMLE Step 1 pass/fail?</h3>
-    <p>Yes. Since January 26, 2022 it reports only pass or fail.</p>
-    <h3>What score do you need to pass Step 1?</h3>
-    <p>
-      The minimum passing standard is a three-digit score of 196, though examinees are not shown
-      their own number.
-    </p>
-    <h3>Can I see my Step 1 score?</h3>
-    <p>
-      No. You receive a pass or fail outcome and a performance profile by content area, not a
-      numeric score.
-    </p>
-    <h3>Do residency programs care about Step 1 now?</h3>
-    <p>
-      A pass is required and a fail is a red flag, but programs rely more on Step 2 CK, clerkship
-      performance and other signals to compare applicants.
-    </p>
-    <h3>Can I retake Step 1 if I pass?</h3>
-    <p>No. Retakes are only allowed after a failed attempt.</p>
-    <h3>What happens to my old three-digit Step 1 score?</h3>
-    <p>It stays on your transcript. Pass/fail applies only to exams taken after the change.</p>
-    <h3>Should I still take Step 1 seriously?</h3>
-    <p>
-      Yes. A pass is mandatory, and the knowledge carries into Step 2 CK, which does report a
-      score.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Try the adaptive Step 1 Qbank free for 7 days"
       body="Short sets, reviews scheduled for you, and your weakest systems prioritized automatically."
@@ -213,5 +227,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 6,
   sections: Object.values(S),
+  faqs,
   Body,
 };

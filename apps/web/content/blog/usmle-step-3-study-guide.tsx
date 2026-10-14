@@ -1,8 +1,9 @@
 import { Callout } from '@/components/blog/callout';
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=step-3-study-guide`;
@@ -24,6 +25,59 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'When during residency should I take Step 3?',
+    answer:
+      'Most residents take it during PGY-1, often within a window set by their state medical board or residency program. Confirm your own program\'s timeline and your state\'s requirements early, since they vary.',
+  },
+  {
+    question: 'What are the Step 3 exam dates in 2026?',
+    answer:
+      'There is no single fixed date. You apply for a roughly three-month eligibility period, then book actual test days through Prometric. Our [USMLE Step 3 exam dates 2026 guide](/blog/usmle-step-3-exam-dates-2026) covers eligibility, registration, cost and the format change in detail.',
+  },
+  {
+    question: 'What does Step 3 actually cover?',
+    answer:
+      'See our [Step 3 syllabus guide](/blog/usmle-step-3-syllabus) for the exact percentage breakdown by system and physician task, straight from the official NBME/FSMB content outline.',
+  },
+  {
+    question: 'Is Step 3 pass/fail like Step 1?',
+    answer:
+      'No. Step 3 reports a three-digit score, the same as Step 2 CK. Only Step 1 moved to pass/fail, in 2022.',
+  },
+  {
+    question: 'Do I need to prepare for CCS separately?',
+    answer:
+      'Yes. Step 3\'s day two includes Computer-based Case Simulations, and most question banks, including ours, only cover multiple-choice practice. Pair your question bank with a dedicated CCS resource.',
+  },
+  {
+    question: 'How do I study for Step 3 without a dedicated block?',
+    answer:
+      'Spread a smaller daily habit across more weeks instead of assuming full days off. Short, consistent question sets between shifts, with full review of every explanation, work better than a plan that assumes free time you may not get.',
+  },
+  {
+    question: 'What comes after Step 3?',
+    answer:
+      'For internal medicine residents, the next major exam is board certification. Our [ABIM study guide](/blog/abim-study-guide) covers how to prepare for it.',
+  },
+  {
+    question: 'Does my Step 3 score affect fellowship matching?',
+    answer:
+      'By the time you take Step 3, you are already in residency, so it does not factor into matching the way Step 2 CK can. It can still matter for licensure and, at some programs, for things like moonlighting eligibility. Confirm specifics with your program and state board.',
+  },
+  {
+    question: 'Does MedPrep Institute replace CCS practice or self-assessments?',
+    answer:
+      'No. It is a multiple-choice question bank, meant to sit alongside a dedicated CCS resource and the official NBME self-assessments, not replace either.',
+  },
+  {
+    question: 'Which Step 3 question bank should I use?',
+    answer:
+      'Our [Step 3 question bank comparison](/blog/top-usmle-step-3-question-banks) breaks down which banks actually have Step 3 content, which ones include CCS case simulations, and exactly which plan to buy.',
+  },
+];
 
 const Body = () => (
   <>
@@ -291,64 +345,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>When during residency should I take Step 3?</h3>
-    <p>
-      Most residents take it during PGY-1, often within a window set by their state medical board
-      or residency program. Confirm your own program's timeline and your state's requirements
-      early, since they vary.
-    </p>
-    <h3>What are the Step 3 exam dates in 2026?</h3>
-    <p>
-      There is no single fixed date. You apply for a roughly three-month eligibility period, then
-      book actual test days through Prometric. Our{' '}
-      <Link href="/blog/usmle-step-3-exam-dates-2026">USMLE Step 3 exam dates 2026 guide</Link>{' '}
-      covers eligibility, registration, cost and the format change in detail.
-    </p>
-    <h3>What does Step 3 actually cover?</h3>
-    <p>
-      See our <Link href="/blog/usmle-step-3-syllabus">Step 3 syllabus guide</Link> for the exact
-      percentage breakdown by system and physician task, straight from the official NBME/FSMB
-      content outline.
-    </p>
-    <h3>Is Step 3 pass/fail like Step 1?</h3>
-    <p>
-      No. Step 3 reports a three-digit score, the same as Step 2 CK. Only Step 1 moved to
-      pass/fail, in 2022.
-    </p>
-    <h3>Do I need to prepare for CCS separately?</h3>
-    <p>
-      Yes. Step 3's day two includes Computer-based Case Simulations, and most question banks,
-      including ours, only cover multiple-choice practice. Pair your question bank with a
-      dedicated CCS resource.
-    </p>
-    <h3>How do I study for Step 3 without a dedicated block?</h3>
-    <p>
-      Spread a smaller daily habit across more weeks instead of assuming full days off. Short,
-      consistent question sets between shifts, with full review of every explanation, work better
-      than a plan that assumes free time you may not get.
-    </p>
-    <h3>What comes after Step 3?</h3>
-    <p>
-      For internal medicine residents, the next major exam is board certification. Our{' '}
-      <Link href="/blog/abim-study-guide">ABIM study guide</Link> covers how to prepare for it.
-    </p>
-    <h3>Does my Step 3 score affect fellowship matching?</h3>
-    <p>
-      By the time you take Step 3, you are already in residency, so it does not factor into
-      matching the way Step 2 CK can. It can still matter for licensure and, at some programs, for
-      things like moonlighting eligibility. Confirm specifics with your program and state board.
-    </p>
-    <h3>Does MedPrep Institute replace CCS practice or self-assessments?</h3>
-    <p>
-      No. It is a multiple-choice question bank, meant to sit alongside a dedicated CCS resource
-      and the official NBME self-assessments, not replace either.
-    </p>
-    <h3>Which Step 3 question bank should I use?</h3>
-    <p>
-      Our <Link href="/blog/top-usmle-step-3-question-banks">Step 3 question bank comparison</Link>{' '}
-      breaks down which banks actually have Step 3 content, which ones include CCS case
-      simulations, and exactly which plan to buy.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Practice with an engine that remembers what you miss"
       body="Short daily sets, reviews scheduled for you, and your weakest disciplines prioritized automatically."
@@ -399,5 +396,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 10,
   sections: Object.values(S),
+  faqs,
   Body,
 };

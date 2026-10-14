@@ -1,8 +1,9 @@
 import { Callout } from '@/components/blog/callout';
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=abim-syllabus`;
@@ -19,6 +20,39 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'Is "blueprint" the same thing as "syllabus" or "content outline"?',
+    answer:
+      'Close enough for practical purposes. ABIM’s own term is the Internal Medicine Blueprint. The USMLE Steps use the term Content Outline and Specifications for the same kind of document; most students call either one the syllabus or the blueprint.',
+  },
+  {
+    question: 'What is the single most heavily tested category on the ABIM exam?',
+    answer:
+      'Cardiovascular Disease, at 14% of the exam, the largest single category by several percentage points over the next tier.',
+  },
+  {
+    question: 'Does ABIM publish a physician task percentage breakdown like the USMLE Steps?',
+    answer:
+      'No. ABIM lists the kinds of reasoning questions test, diagnosis, test interpretation, treatment, risk and prognosis, and pathophysiology, but does not assign a published percentage to each the way the USMLE Step content outlines do.',
+  },
+  {
+    question: 'How is this different from the USMLE Step 3 syllabus?',
+    answer:
+      'Step 3 spans every specialty and classifies questions by both organ system and physician task, with published percentages for each. The ABIM blueprint is internal medicine only, and publishes percentages for medical content categories alone. See our [USMLE Step 3 syllabus guide](/blog/usmle-step-3-syllabus) for that comparison.',
+  },
+  {
+    question: 'Which ABIM question bank should I use?',
+    answer:
+      'See our [ABIM question bank comparison](/blog/top-abim-question-banks) for verified prices and a full breakdown of UWorld, MKSAP, AMBOSS, TrueLearn and BoardVitals.',
+  },
+  {
+    question: 'Does the blueprint ever change?',
+    answer:
+      'Yes. ABIM reviews and updates it annually based on surveys of trainees, program directors and certified practitioners, so treat the figures here as a snapshot and confirm the current blueprint directly on ABIM.org before building a study plan around exact percentages.',
+  },
+];
 
 const Body = () => (
   <>
@@ -165,42 +199,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>Is "blueprint" the same thing as "syllabus" or "content outline"?</h3>
-    <p>
-      Close enough for practical purposes. ABIM&rsquo;s own term is the Internal Medicine
-      Blueprint. The USMLE Steps use the term Content Outline and Specifications for the same kind
-      of document; most students call either one the syllabus or the blueprint.
-    </p>
-    <h3>What is the single most heavily tested category on the ABIM exam?</h3>
-    <p>
-      Cardiovascular Disease, at 14% of the exam, the largest single category by several
-      percentage points over the next tier.
-    </p>
-    <h3>Does ABIM publish a physician task percentage breakdown like the USMLE Steps?</h3>
-    <p>
-      No. ABIM lists the kinds of reasoning questions test, diagnosis, test interpretation,
-      treatment, risk and prognosis, and pathophysiology, but does not assign a published
-      percentage to each the way the USMLE Step content outlines do.
-    </p>
-    <h3>How is this different from the USMLE Step 3 syllabus?</h3>
-    <p>
-      Step 3 spans every specialty and classifies questions by both organ system and physician
-      task, with published percentages for each. The ABIM blueprint is internal medicine only, and
-      publishes percentages for medical content categories alone. See our{' '}
-      <Link href="/blog/usmle-step-3-syllabus">USMLE Step 3 syllabus guide</Link> for that
-      comparison.
-    </p>
-    <h3>Which ABIM question bank should I use?</h3>
-    <p>
-      See our <Link href="/blog/top-abim-question-banks">ABIM question bank comparison</Link> for
-      verified prices and a full breakdown of UWorld, MKSAP, AMBOSS, TrueLearn and BoardVitals.
-    </p>
-    <h3>Does the blueprint ever change?</h3>
-    <p>
-      Yes. ABIM reviews and updates it annually based on surveys of trainees, program directors and
-      certified practitioners, so treat the figures here as a snapshot and confirm the current
-      blueprint directly on ABIM.org before building a study plan around exact percentages.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Try the ABIM Qbank free for 7 days"
       body="Coverage across every category on the official blueprint, weighted toward whatever you keep missing."
@@ -247,5 +246,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 8,
   sections: Object.values(S),
+  faqs,
   Body,
 };

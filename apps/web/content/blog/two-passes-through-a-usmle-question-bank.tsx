@@ -1,7 +1,8 @@
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=two-passes-qbank`;
@@ -24,6 +25,44 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'Do I really need two passes through a question bank?',
+    answer:
+      'No, but it is a reliable way to make sure the first pass sticks. If your time is limited, one full pass plus a focused second pass over what you missed captures most of the benefit.',
+  },
+  {
+    question: 'When should I start the first pass?',
+    answer:
+      'Many students start in their pre-clinical years, alongside classes, in untimed topic mode. Starting earlier spreads the work over a longer period, so each day is small. Pick a plan length that matches when you will actually use it.',
+  },
+  {
+    question: 'How many questions should I do a day?',
+    answer:
+      'Divide the total number of questions by your real study days. During coursework that is often around 8 to 12 a day. During dedicated study it is often between 60 and 120, depending on how many weeks you have.',
+  },
+  {
+    question: 'Should I do timed or untimed questions?',
+    answer:
+      'Untimed while you are learning, timed and mixed during dedicated study. The exam is timed and unsorted, so your final weeks of practice should be too.',
+  },
+  {
+    question: 'How long should I spend reviewing explanations?',
+    answer:
+      'Match it to the question. Read missed questions you should have known in full, treat guesses as misses, and only skim the ones you got right with confidence. Do not shorten your daily quota to make room for review.',
+  },
+  {
+    question: 'Is Step 1 still worth this much effort now that it is pass/fail?',
+    answer:
+      'Step 1 is reported as pass/fail, so a comfortable margin matters more than a high score. The same planning still applies, and the concepts you learn carry into Step 2 CK, where a numeric score is still reported.',
+  },
+  {
+    question: 'Does MedPrep Institute replace a second pass?',
+    answer:
+      'For many students it covers the point of one. Missed concepts return on a spaced schedule from different angles, so you revisit what you struggle with without re-running everything. It does not include official self-assessment exams, so use those separately to check readiness.',
+  },
+];
 
 const Body = () => (
   <>
@@ -371,46 +410,7 @@ const Body = () => (
     />
 
     <H2 section={S.faq} />
-    <h3>Do I really need two passes through a question bank?</h3>
-    <p>
-      No, but it is a reliable way to make sure the first pass sticks. If your time is limited, one
-      full pass plus a focused second pass over what you missed captures most of the benefit.
-    </p>
-    <h3>When should I start the first pass?</h3>
-    <p>
-      Many students start in their pre-clinical years, alongside classes, in untimed topic mode.
-      Starting earlier spreads the work over a longer period, so each day is small. Pick a plan
-      length that matches when you will actually use it.
-    </p>
-    <h3>How many questions should I do a day?</h3>
-    <p>
-      Divide the total number of questions by your real study days. During coursework that is often
-      around 8 to 12 a day. During dedicated study it is often between 60 and 120, depending on how
-      many weeks you have.
-    </p>
-    <h3>Should I do timed or untimed questions?</h3>
-    <p>
-      Untimed while you are learning, timed and mixed during dedicated study. The exam is timed and
-      unsorted, so your final weeks of practice should be too.
-    </p>
-    <h3>How long should I spend reviewing explanations?</h3>
-    <p>
-      Match it to the question. Read missed questions you should have known in full, treat guesses
-      as misses, and only skim the ones you got right with confidence. Do not shorten your daily
-      quota to make room for review.
-    </p>
-    <h3>Is Step 1 still worth this much effort now that it is pass/fail?</h3>
-    <p>
-      Step 1 is reported as pass/fail, so a comfortable margin matters more than a high score. The
-      same planning still applies, and the concepts you learn carry into Step 2 CK, where a numeric
-      score is still reported.
-    </p>
-    <h3>Does MedPrep Institute replace a second pass?</h3>
-    <p>
-      For many students it covers the point of one. Missed concepts return on a spaced schedule from
-      different angles, so you revisit what you struggle with without re-running everything. It does
-      not include official self-assessment exams, so use those separately to check readiness.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Try the adaptive question bank free for 7 days"
       body="Short daily sets, reviews scheduled for you, and a personalized study guide built from what you miss."
@@ -455,5 +455,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 9,
   sections: Object.values(S),
+  faqs,
   Body,
 };

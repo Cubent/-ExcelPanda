@@ -1,8 +1,9 @@
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=best-usmle-question-banks`;
@@ -78,6 +79,44 @@ const MEDPREP_TOPICS_NOTE =
 const MEDPREP_TRIAL = '7-day free trial, cancel anytime';
 const NOT_CONFIRMED = 'Not confirmed on the official page';
 const NOT_LISTED = 'Not listed on the official page';
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'What is the best question bank for USMLE Step 1?',
+    answer:
+      'UWorld is the most widely used Step 1 bank, with 3,600+ pre-written questions and up to three official self-assessments. AMBOSS is the main alternative if you want a library and score predictor in one plan, TrueLearn and BoardVitals have lower entry prices, and MedPrep Institute adds adaptive weak-area review.',
+  },
+  {
+    question: 'Is UWorld worth it for Step 1?',
+    answer:
+      'For most students it works well as a primary bank during dedicated study, with the 90-day plan at $459 as the usual starting point. If money is tight, AMBOSS at $378 for six months or TrueLearn at $199 for 90 days covers similar ground with different tradeoffs.',
+  },
+  {
+    question: 'Do I need a question bank now that Step 1 is pass/fail?',
+    answer:
+      'Step 1 has been pass/fail since 2022, but it is still an exam you must pass. Practice questions are the most direct way to rehearse the format and find gaps, so a question bank matters less for chasing a score and more for confidence that you will clear the standard.',
+  },
+  {
+    question: 'What is the best question bank for Step 2 CK?',
+    answer:
+      'UWorld’s 4,250+ question bank is the default choice, and TrueLearn’s 4,100+ question Step 2 CK and shelf bank is the main alternative, especially if you want shelf practice in the same subscription. USMLE-Rx’s Qmax is worth a look if you also want your Step 1 review in the same plan. Step 2 CK is scored, so self-assessments matter more.',
+  },
+  {
+    question: 'What is the best question bank for Step 3?',
+    answer:
+      'UWorld, because its Step 3 page lists 90+ CCS case simulations alongside 2,100+ questions, and none of the other banks we checked list CCS cases. BoardVitals is a budget multiple-choice option if you already have CCS practice elsewhere.',
+  },
+  {
+    question: 'Are there free USMLE question banks?',
+    answer:
+      'Yes. TrueLearn and AMBOSS each offer a 5-day free trial, Lecturio and MedPrep Institute each offer a 7-day free trial, USMLE-Rx offers a 5-day free trial, and USMLE.org publishes official content outlines and an interactive testing experience. Also ask your school about institutional access before paying.',
+  },
+  {
+    question: 'Can I use more than one question bank?',
+    answer:
+      'Yes, and many students do: a primary bank for volume, plus a second for different question styles or adaptive weak-area review. Use the second bank to find topics to revisit rather than only to raise your question count.',
+  },
+];
 
 const Body = () => (
   <>
@@ -704,52 +743,7 @@ const Body = () => (
     </ol>
 
     <H2 section={S.faq} />
-    <h3>What is the best question bank for USMLE Step 1?</h3>
-    <p>
-      UWorld is the most widely used Step 1 bank, with 3,600+ pre-written questions and up to three
-      official self-assessments. AMBOSS is the main alternative if you want a library and score predictor in one
-      plan, TrueLearn and BoardVitals have lower entry prices, and MedPrep Institute adds adaptive
-      weak-area review.
-    </p>
-    <h3>Is UWorld worth it for Step 1?</h3>
-    <p>
-      For most students it works well as a primary bank during dedicated study, with the 90-day plan
-      at $459 as the usual starting point. If money is tight, AMBOSS at $378 for six months or
-      TrueLearn at $199 for 90 days covers similar ground with different tradeoffs.
-    </p>
-    <h3>Do I need a question bank now that Step 1 is pass/fail?</h3>
-    <p>
-      Step 1 has been pass/fail since 2022, but it is still an exam you must pass. Practice
-      questions are the most direct way to rehearse the format and find gaps, so a question bank
-      matters less for chasing a score and more for confidence that you will clear the standard.
-    </p>
-    <h3>What is the best question bank for Step 2 CK?</h3>
-    <p>
-      UWorld&rsquo;s 4,250+ question bank is the default choice, and TrueLearn&rsquo;s 4,100+
-      question Step 2 CK and shelf bank is the main alternative, especially if you want shelf
-      practice in the same subscription. USMLE-Rx&rsquo;s Qmax is worth a look if you also want your
-      Step 1 review in the same plan. Step 2 CK is scored, so self-assessments matter more.
-    </p>
-    <h3>What is the best question bank for Step 3?</h3>
-    <p>
-      UWorld, because its Step 3 page lists 90+ CCS case simulations alongside 2,100+ questions,
-      and none of the other banks we checked list CCS cases. BoardVitals is a budget multiple-choice
-      option if you already have CCS practice elsewhere.
-    </p>
-    <h3>Are there free USMLE question banks?</h3>
-    <p>
-      Yes. TrueLearn and AMBOSS each offer a 5-day free trial, Lecturio and MedPrep Institute each
-      offer a 7-day free trial, USMLE-Rx offers a 5-day free trial, and USMLE.org publishes official
-      content outlines and an interactive testing experience. Also ask your school about
-      institutional access before paying.
-    </p>
-    <h3>Can I use more than one question bank?</h3>
-    <p>
-      Yes, and many students do: a primary bank for volume, plus a second for different question
-      styles or adaptive weak-area review. Use the second bank to find topics to revisit rather
-      than only to raise your question count.
-    </p>
-
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Practice the concepts you actually miss"
       body="MedPrep Institute pairs NBME-style vignettes with an adaptive engine and built-in spaced repetition, for Step 1, Step 2 CK, Step 3 and the ABIM exam."
@@ -825,5 +819,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 14,
   sections: Object.values(S),
+  faqs,
   Body,
 };

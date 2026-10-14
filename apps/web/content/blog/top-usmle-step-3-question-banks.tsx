@@ -1,9 +1,10 @@
 import { Callout } from '@/components/blog/callout';
 import { ComparisonTable } from '@/components/blog/comparison-table';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=top-usmle-step-3-question-banks`;
@@ -52,6 +53,34 @@ const MEDPREP_STEP3_TOPICS = '10,400+';
 const MEDPREP_TRIAL = '7-day free trial, cancel anytime';
 const NOT_CONFIRMED = 'Not confirmed on the official page';
 const NOT_LISTED = 'Not listed on the official page';
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'What is the single best question bank for USMLE Step 3?',
+    answer:
+      'UWorld, since it is the most established Step 3 bank in this comparison, with 2,100+ multiple-choice questions and official self-assessments included on every plan. If you already have AMBOSS from an earlier Step, it covers Step 3 multiple-choice practice at no extra cost.',
+  },
+  {
+    question: 'Do TrueLearn, Lecturio or USMLE-Rx cover Step 3?',
+    answer:
+      'No. None of their official pages we checked list a Step 3 product. If you used one of them for Step 1 or Step 2 CK, plan on a different bank for Step 3.',
+  },
+  {
+    question: 'When during residency should I take Step 3?',
+    answer:
+      'Most residents take it during PGY-1, often within a window set by their state medical board or residency program. Confirm your own program’s timeline and your state’s requirements early, since they vary.',
+  },
+  {
+    question: 'How is this different from the general USMLE question bank comparison?',
+    answer:
+      'Our [general comparison](/blog/best-usmle-question-banks) covers Step 1, Step 2 CK and Step 3 side by side using the same verified pricing data. This guide is the Step 3-only version, with a full strengths, drawbacks and which-plan-to-buy breakdown for each bank that actually has Step 3 content, plus honest notes on which banks do not.',
+  },
+  {
+    question: 'What about Step 1 or Step 2 CK question banks?',
+    answer:
+      'See our [Step 1 question bank comparison](/blog/top-usmle-step-1-question-banks) and [Step 2 CK question bank comparison](/blog/top-usmle-step-2-ck-question-banks) for the same depth of breakdown, applied to preclinical prep and clerkship year.',
+  },
+];
 
 const Body = () => (
   <>
@@ -398,42 +427,7 @@ const Body = () => (
     </ol>
 
     <H2 section={S.faq} />
-    <h3>What is the single best question bank for USMLE Step 3?</h3>
-    <p>
-      UWorld, since it is the most established Step 3 bank in this comparison, with 2,100+
-      multiple-choice questions and official self-assessments included on every plan. If you
-      already have AMBOSS from an earlier Step, it covers Step 3 multiple-choice practice at no
-      extra cost.
-    </p>
-    <h3>Do TrueLearn, Lecturio or USMLE-Rx cover Step 3?</h3>
-    <p>
-      No. None of their official pages we checked list a Step 3 product. If you used one of them
-      for Step 1 or Step 2 CK, plan on a different bank for Step 3.
-    </p>
-    <h3>When during residency should I take Step 3?</h3>
-    <p>
-      Most residents take it during PGY-1, often within a window set by their state medical board
-      or residency program. Confirm your own program&rsquo;s timeline and your state&rsquo;s
-      requirements early, since they vary.
-    </p>
-    <h3>How is this different from the general USMLE question bank comparison?</h3>
-    <p>
-      Our <Link href="/blog/best-usmle-question-banks">general comparison</Link> covers Step 1,
-      Step 2 CK and Step 3 side by side using the same verified pricing data. This guide is the
-      Step 3-only version, with a full strengths, drawbacks and which-plan-to-buy breakdown for
-      each bank that actually has Step 3 content, plus honest notes on which banks do not.
-    </p>
-    <h3>What about Step 1 or Step 2 CK question banks?</h3>
-    <p>
-      See our{' '}
-      <Link href="/blog/top-usmle-step-1-question-banks">Step 1 question bank comparison</Link>{' '}
-      and{' '}
-      <Link href="/blog/top-usmle-step-2-ck-question-banks">
-        Step 2 CK question bank comparison
-      </Link>{' '}
-      for the same depth of breakdown, applied to preclinical prep and clerkship year.
-    </p>
-
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Practice the concepts you actually miss"
       body="MedPrep Institute pairs NBME-style Step 3 vignettes with an adaptive engine and built-in spaced repetition."
@@ -495,5 +489,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 11,
   sections: Object.values(S),
+  faqs,
   Body,
 };

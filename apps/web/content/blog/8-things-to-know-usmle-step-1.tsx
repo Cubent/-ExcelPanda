@@ -1,7 +1,8 @@
 import { Callout } from '@/components/blog/callout';
+import { FaqList } from '@/components/blog/faq-list';
 import { PostCta } from '@/components/blog/post-cta';
 import Link from 'next/link';
-import type { BlogPost, BlogSection } from './types';
+import type { BlogFaq, BlogPost, BlogSection } from './types';
 
 const signup = (medium: string) =>
   `/sign-up?utm_source=blog&utm_medium=${medium}&utm_campaign=8-things-step-1`;
@@ -20,6 +21,34 @@ const S = {
 } satisfies Record<string, BlogSection>;
 
 const H2 = ({ section }: { section: BlogSection }) => <h2 id={section.id}>{section.title}</h2>;
+
+const faqs: BlogFaq[] = [
+  {
+    question: 'Does Step 1 still matter if it\'s pass/fail?',
+    answer:
+      'Yes. You still have to pass it to progress, your attempt history is still visible to residency programs, and how comfortably you pass can still shape decisions like away rotations or specialty choice, even without a score attached.',
+  },
+  {
+    question: 'Can I take Step 2 CK before Step 1?',
+    answer:
+      'There is no USMLE rule against it, though almost no one does, and your own medical school may have its own policy requiring a specific order. Confirm with your school before assuming you have flexibility here.',
+  },
+  {
+    question: 'How many times can I take Step 1?',
+    answer:
+      'Four attempts total, with restrictions on timing between them: no more than three attempts in any 12-month period, and a fourth attempt only after at least 12 months from your first attempt and 6 months from your most recent one.',
+  },
+  {
+    question: 'Do residency programs see how many times I took Step 1?',
+    answer:
+      'Yes. Your USMLE transcript reports every attempt, and this is visible to programs through ERAS, even though the pass itself does not come with a score.',
+  },
+  {
+    question: 'What does Step 1 actually cover?',
+    answer:
+      'Our [Step 1 syllabus guide](/blog/usmle-step-1-syllabus) breaks down the official content outline by system, discipline and physician task, with the exact percentage ranges from USMLE.org.',
+  },
+];
 
 const Body = () => (
   <>
@@ -142,35 +171,7 @@ const Body = () => (
     </p>
 
     <H2 section={S.faq} />
-    <h3>Does Step 1 still matter if it's pass/fail?</h3>
-    <p>
-      Yes. You still have to pass it to progress, your attempt history is still visible to
-      residency programs, and how comfortably you pass can still shape decisions like away
-      rotations or specialty choice, even without a score attached.
-    </p>
-    <h3>Can I take Step 2 CK before Step 1?</h3>
-    <p>
-      There is no USMLE rule against it, though almost no one does, and your own medical school
-      may have its own policy requiring a specific order. Confirm with your school before
-      assuming you have flexibility here.
-    </p>
-    <h3>How many times can I take Step 1?</h3>
-    <p>
-      Four attempts total, with restrictions on timing between them: no more than three attempts
-      in any 12-month period, and a fourth attempt only after at least 12 months from your first
-      attempt and 6 months from your most recent one.
-    </p>
-    <h3>Do residency programs see how many times I took Step 1?</h3>
-    <p>
-      Yes. Your USMLE transcript reports every attempt, and this is visible to programs through
-      ERAS, even though the pass itself does not come with a score.
-    </p>
-    <h3>What does Step 1 actually cover?</h3>
-    <p>
-      Our <Link href="/blog/usmle-step-1-syllabus">Step 1 syllabus guide</Link> breaks down the
-      official content outline by system, discipline and physician task, with the exact
-      percentage ranges from USMLE.org.
-    </p>
+    <FaqList faqs={faqs} />
     <PostCta
       heading="Try the adaptive Step 1 Qbank free for 7 days"
       body="Short sets, reviews scheduled for you, and your weakest systems prioritized automatically."
@@ -216,5 +217,6 @@ export const post: BlogPost = {
   ],
   readingMinutes: 8,
   sections: Object.values(S),
+  faqs,
   Body,
 };
