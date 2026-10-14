@@ -50,7 +50,8 @@ const faqs: BlogFaq[] = [
 const Body = () => (
   <>
     <p>
-      You do not have to pay to start practicing. Between official content, free trials and
+      You do not have to pay to start practicing, and MedPrep Institute's 7-day free trial is the
+      longest trial of any full question bank we found (Lecturio matches it). Between official content, free trials and
       sample sets, you can build a good picture of the exam and your weak areas before spending
       anything. This guide lists the free options we could confirm.
     </p>
@@ -71,11 +72,11 @@ const Body = () => (
         { key: 'trial', label: 'Free option' },
       ]}
       rows={[
+        { id: 'medprep', featured: true, cells: { bank: 'MedPrep Institute', trial: '7-day free trial, cancel anytime before day 7 and pay nothing' } },
         { id: 'amboss', cells: { bank: 'AMBOSS', trial: '5-day free trial' } },
         { id: 'truelearn', cells: { bank: 'TrueLearn', trial: '5-day trial with 120 questions' } },
         { id: 'usmlerx', cells: { bank: 'USMLE-Rx', trial: '5-day free trial, no card required' } },
         { id: 'lecturio', cells: { bank: 'Lecturio', trial: '7-day free trial, plus a free tier with 1,000+ questions and no card required' } },
-        { id: 'medprep', featured: true, cells: { bank: 'MedPrep Institute', trial: '7-day free trial, cancel anytime before day 7 and pay nothing' } },
       ]}
       footnote="We could not confirm a free trial for UWorld on its official pages."
     />

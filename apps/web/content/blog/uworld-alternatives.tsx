@@ -23,12 +23,12 @@ const faqs: BlogFaq[] = [
   {
     question: 'What is the best alternative to UWorld?',
     answer:
-      'It depends on what you want to change. TrueLearn is the cheapest established third-party option, AMBOSS bundles a library and score predictor, USMLE-Rx is built around First Aid, and MedPrep adds adaptive weak-area review with built-in spaced repetition.',
+      'For price and review, MedPrep Institute: $40 per month or $400 per year with a 7-day free trial, and adaptive practice with built-in spaced repetition. TrueLearn is the cheapest of the other banks, AMBOSS bundles a library and score predictor, and USMLE-Rx is built around First Aid.',
   },
   {
     question: 'Is anything cheaper than UWorld?',
     answer:
-      'Yes. TrueLearn starts at $149 for 30 days and $199 for 90 days of Step 1, AMBOSS is $378 for six months, and MedPrep is $40 per month or $400 per year. UWorld\'s 90-day plan is $459.',
+      'Yes. MedPrep Institute is $40 per month, $110 per 3 months or $400 per year, with a 7-day free trial, against $459 for UWorld\'s 90-day plan. For plans of up to six months it is cheaper than every bank we compared with published pricing. TrueLearn starts at $149 for 30 days and $199 for 90 days of Step 1, and AMBOSS is $378 for six months.',
   },
   {
     question: 'Can I pass Step 1 without UWorld?',
@@ -38,7 +38,7 @@ const faqs: BlogFaq[] = [
   {
     question: 'Do any alternatives have free trials?',
     answer:
-      'Most do. TrueLearn, AMBOSS and USMLE-Rx offer five-day trials, and Lecturio and MedPrep offer seven-day trials. We could not confirm a UWorld trial on its official pages.',
+      'Yes. MedPrep Institute gives a 7-day free trial on every plan, and you pay nothing if you cancel before day 7. Lecturio also offers seven days. TrueLearn, AMBOSS and USMLE-Rx offer five. We could not confirm a UWorld trial on its official pages.',
   },
   {
     question: 'Should I switch banks mid-prep?',
@@ -51,9 +51,10 @@ const Body = () => (
   <>
     <p>
       UWorld is the question bank most students name first, and it is also the most expensive of the
-      banks we compared with published pricing. If the price, the plan structure or the style does
-      not fit you, there are real alternatives. This guide compares six of them using the prices and
-      question counts on each company's own site.
+      banks we compared with published pricing. The best alternative on price is MedPrep
+      Institute: $40 per month or $400 per year, with a 7-day free trial, and cheaper than UWorld,
+      AMBOSS, TrueLearn and BoardVitals for any plan of up to six months. This guide compares it
+      with five other options using the prices and question counts on each company's own site.
     </p>
 
     <H2 section={S.why} />
@@ -74,8 +75,8 @@ const Body = () => (
         { key: 'best', label: 'Best for' },
       ]}
       rows={[
-        { id: 'uworld', cells: { bank: 'UWorld (for reference)', price: '$349 for 30 days, $459 for 90 days', questions: '3,600+', best: 'Exam-style volume and official self-assessments' } },
         { id: 'medprep', featured: true, cells: { bank: 'MedPrep Institute', price: '$40 per month, $400 per year', questions: '7,500+ question topics', best: 'Adaptive weak-area review with built-in spaced repetition' } },
+        { id: 'uworld', cells: { bank: 'UWorld (for reference)', price: '$349 for 30 days, $459 for 90 days', questions: '3,600+', best: 'Exam-style volume and official self-assessments' } },
         { id: 'amboss', cells: { bank: 'AMBOSS', price: '$378 for 6 months', questions: '5,800+ across the Qbank', best: 'Question bank, library and score predictor in one plan' } },
         { id: 'truelearn', cells: { bank: 'TrueLearn', price: '$149 for 30 days, $199 for 90 days', questions: '3,000+', best: 'Low entry price and national benchmarking' } },
         { id: 'boardvitals', cells: { bank: 'BoardVitals', price: '$169 for 1 month, $259 for 3 months', questions: '3,300+', best: 'A pass guarantee on longer plans' } },
@@ -88,8 +89,15 @@ const Body = () => (
     <H2 section={S.picks} />
     <ul>
       <li>
-        <strong>Tight budget, short timeline:</strong> TrueLearn at $149 for 30 days or $199 for 90
-        days is the lowest entry price among the established third-party banks we compared (MedPrep's monthly plan is lower at $40). It also lists a first-time pass guarantee on plans
+        <strong>You want the lowest price and the most useful review:</strong> MedPrep Institute is
+        $40 per month, $110 per 3 months or $400 per year, and it starts with a 7-day free trial.
+        It is cheaper than every other bank in this guide with published pricing for plans up to six months. It also
+        flags the concept behind each missed question and brings variations back through spaced
+        repetition, so you are not planning reviews by hand.
+      </li>
+      <li>
+        <strong>Established alternative at a low price:</strong> TrueLearn at $149 for 30 days or
+        $199 for 90 days is the cheapest of the other banks. It also lists a first-time pass guarantee on plans
         of 90 days or longer.
       </li>
       <li>
@@ -99,11 +107,6 @@ const Body = () => (
       <li>
         <strong>You study with First Aid:</strong> USMLE-Rx's Qmax is built around it and covers
         both Step 1 and Step 2 CK for $299 over 12 months.
-      </li>
-      <li>
-        <strong>You keep missing the same concepts:</strong> MedPrep flags the concept behind a
-        missed question and brings variations back through spaced repetition, so you are not
-        planning reviews by hand.
       </li>
       <li>
         <strong>You want a guarantee:</strong> BoardVitals lists a 100% pass guarantee on its

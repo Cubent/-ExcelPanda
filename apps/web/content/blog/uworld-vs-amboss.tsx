@@ -12,7 +12,7 @@ const S = {
   table: { id: 'table', title: 'Side-by-side comparison' },
   price: { id: 'price', title: 'Price per month' },
   who: { id: 'who', title: 'Who should pick which' },
-  third: { id: 'third', title: 'Where a third option fits' },
+  third: { id: 'third', title: 'A cheaper third option' },
   faq: { id: 'faq', title: 'Frequently asked questions' },
   sources: { id: 'sources', title: 'Sources and disclaimers' },
 } satisfies Record<string, BlogSection>;
@@ -57,7 +57,9 @@ const Body = () => (
     <p>
       UWorld versus AMBOSS is the comparison students ask about most. They solve slightly different
       problems: UWorld is the reference point for exam-style volume and official self-assessments,
-      and AMBOSS bundles a library and score predictor into a lower-priced plan.
+      and AMBOSS bundles a library and score predictor into a lower-priced plan. If price is your
+      main concern, MedPrep Institute is cheaper than both for plans of up to six months ($40 per
+      month, with a 7-day free trial).
     </p>
 
     <H2 section={S.short} />
@@ -112,8 +114,11 @@ const Body = () => (
 
     <H2 section={S.third} />
     <p>
-      If your real problem is repeating the same mistakes, neither bank's official pages describe scheduling reviews of your missed concepts for you. MedPrep Institute does, at $40 per month or $400 per year, and it
-      pairs well with either as a second bank. See the{' '}
+      MedPrep Institute costs $40 per month, $110 per 3 months or $400 per year, so it is cheaper
+      than both UWorld and AMBOSS for any plan of up to six months, and every plan starts with a
+      7-day free trial. It also schedules reviews of your missed concepts for you, which neither
+      bank's official pages describe. Many students use it as their main bank or as a second bank
+      alongside one of these. See the{' '}
       <Link href="/blog/best-usmle-question-banks">full question bank comparison</Link> or{' '}
       <Link href="/blog/uworld-alternatives">UWorld alternatives</Link>.
     </p>
