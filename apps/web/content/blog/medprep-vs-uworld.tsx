@@ -98,7 +98,7 @@ const Body = () => (
         { id: 'exams', cells: { feature: 'Exams covered', medprep: 'Step 1, Step 2 CK, Step 3 and ABIM', uworld: 'Step 1, Step 2 CK and Step 3' } },
         { id: 'assess', cells: { feature: 'Self-assessments', medprep: 'Not included', uworld: 'Up to 3 on longer Step 1 and Step 2 CK plans' } },
         { id: 'ccs', cells: { feature: 'Step 3 CCS cases', medprep: 'Not included', uworld: '90+ CCS case simulations' } },
-        { id: 'trial', cells: { feature: 'Free trial', medprep: '7 days, cancel anytime', uworld: 'Not confirmed on the official page' } },
+        { id: 'trial', cells: { feature: 'Free trial', medprep: '7 days, cancel anytime', uworld: 'Listed on its Step 1 page; check its site for terms' } },
       ]}
     />
     <PostCta

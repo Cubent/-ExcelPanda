@@ -93,7 +93,7 @@ const Body = () => (
       ]}
       rows={[
         { id: 'price', featured: true, cells: { feature: 'Price', medprep: '$40 per month, $110 per 3 months, $400 per year', uworld: '$349 (30 days) to $749 (730 days); 90 days is $459', amboss: '$378 (6 months), $448 (12 months), $1,199 (Student Life)' } },
-        { id: 'trial', featured: true, cells: { feature: 'Free trial', medprep: '7 days, plus free sample questions with no account', uworld: 'Not confirmed on the official page', amboss: '5-day free trial; 30-day money-back guarantee on direct purchases' } },
+        { id: 'trial', featured: true, cells: { feature: 'Free trial', medprep: '7 days, plus free sample questions with no account', uworld: 'Listed on its Step 1 page; check its site for terms', amboss: '5-day free trial; 30-day money-back guarantee on direct purchases' } },
         { id: 'adaptive', featured: true, cells: { feature: 'Adaptive practice', medprep: 'Yes: misses are flagged and brought back', uworld: 'Fixed bank of pre-written questions', amboss: 'Not confirmed on the pages we checked' } },
         { id: 'spaced', featured: true, cells: { feature: 'Spaced repetition', medprep: 'Built in, scheduled for you', uworld: 'Not confirmed on the pages we checked', amboss: 'Anki integration' } },
         { id: 'exams', cells: { feature: 'Exams covered', medprep: 'Step 1, Step 2 CK, Step 3 and ABIM', uworld: 'Step 1, Step 2 CK and Step 3', amboss: 'USMLE Steps' } },

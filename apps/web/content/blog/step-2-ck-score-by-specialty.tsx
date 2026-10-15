@@ -80,12 +80,12 @@ const Body = () => (
         { key: 'range', label: 'Approximate range' },
       ]}
       rows={[
-        { id: 'high', cells: { tier: 'Most competitive', fields: 'Dermatology, plastic surgery, neurosurgery, orthopedic surgery, otolaryngology', range: 'mid to high 250s' } },
+        { id: 'high', cells: { tier: 'Most competitive', fields: 'Dermatology, plastic surgery, neurosurgery, orthopedic surgery, otolaryngology', range: 'about 255 to 265' } },
         { id: 'upper', cells: { tier: 'Competitive', fields: 'Radiology, anesthesiology, ophthalmology, urology, general surgery', range: 'low to mid 250s' } },
         { id: 'mid', cells: { tier: 'Moderate', fields: 'Internal medicine, pediatrics, emergency medicine, neurology, OB/GYN', range: 'about 245 to 252' } },
         { id: 'broad', cells: { tier: 'Less score-driven', fields: 'Family medicine, psychiatry, pathology, PM&R', range: 'about 240 to 248' } },
       ]}
-      footnote="Rounded, approximate and grouped for readability. Use the NRMP Charting Outcomes report for exact figures by specialty and year."
+      footnote="Rounded, approximate and grouped for readability from secondary summaries of NRMP data. Across all specialties, US MD seniors who matched to their preferred specialty averaged 250.4 (SD 13.2) in the 2024 Charting Outcomes. Use the NRMP report itself for exact figures by specialty and year."
     />
 
     <H2 section={S.read} />

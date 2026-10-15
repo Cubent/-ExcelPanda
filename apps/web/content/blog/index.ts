@@ -17,6 +17,16 @@ import { post as freeQuestions } from './free-usmle-practice-questions';
 import { post as howManyQuestions } from './how-many-practice-questions-usmle';
 import { post as ankiVsQbank } from './anki-vs-question-bank-usmle';
 import { post as reviewMissed } from './how-to-review-missed-usmle-questions';
+import { post as nbmeCount } from './how-many-nbme-practice-exams-step-2-ck';
+import { post as free120 } from './free-120-step-2-ck';
+import { post as passingScores } from './usmle-passing-scores-2026';
+import { post as attemptLimits } from './usmle-attempt-limits-retake-rules';
+import { post as step3Plan } from './step-3-study-plan-intern-year';
+import { post as timedVsTutor } from './usmle-timed-vs-tutor-mode';
+import { post as uworldEnough } from './is-uworld-enough-step-2-ck';
+import { post as goodUworldPct } from './what-is-a-good-uworld-percentage';
+import { post as imgScores } from './img-step-2-ck-score-internal-medicine-family-medicine';
+import { post as aiTutor } from './ai-tutor-for-usmle';
 import { post as step1ExamDates2026 } from './usmle-step-1-exam-dates-2026';
 import { post as step1StudyGuide } from './usmle-step-1-study-guide';
 import { post as step2CkExamDates2026 } from './usmle-step-2-ck-exam-dates-2026';
@@ -34,6 +44,16 @@ import { post as usmleStep3Syllabus } from './usmle-step-3-syllabus';
 import type { BlogPost } from './types';
 
 export const posts: BlogPost[] = [
+  nbmeCount,
+  free120,
+  passingScores,
+  attemptLimits,
+  step3Plan,
+  timedVsTutor,
+  uworldEnough,
+  goodUworldPct,
+  imgScores,
+  aiTutor,
   uworldAlternatives,
   uworldVsAmboss,
   medprepVsUworld,

@@ -48,7 +48,7 @@ const faqs: BlogFaq[] = [
   {
     question: 'Does UWorld have a free trial?',
     answer:
-      'We could not confirm one on UWorld\'s official pages. MedPrep Institute offers a 7-day free trial and free sample questions for every exam.',
+      'UWorld\'s site lists a free trial for its Step 1 QBank, so check its page for current terms. MedPrep Institute offers a 7-day free trial plus free sample questions for every exam, with no account needed for the samples.',
   },
   {
     question: 'Can my school give me a question bank?',
@@ -62,8 +62,7 @@ const Body = () => (
     <p>
       You do not have to pay to start practicing. MedPrep Institute publishes free sample
       questions for Step 1, Step 2 CK, Step 3 and the ABIM exam, with a full explanation for
-      every answer choice and no account required, and its 7-day free trial is the longest of
-      any full question bank we found (Lecturio matches it). Between official content, free trials and
+      every answer choice and no account required, and a 7-day free trial of the full adaptive question bank. Between official content, free trials and
       sample sets, you can build a good picture of the exam and your weak areas before spending
       anything. This guide lists the free options we could confirm.
     </p>
@@ -118,7 +117,7 @@ const Body = () => (
         { id: 'usmlerx', cells: { bank: 'USMLE-Rx', trial: '5-day free trial, no card required' } },
         { id: 'lecturio', cells: { bank: 'Lecturio', trial: '7-day free trial, plus a free tier with 1,000+ questions and no card required' } },
       ]}
-      footnote="We could not confirm a free trial for UWorld on its official pages."
+      footnote="UWorld's site also lists a free trial for its Step 1 QBank. Check its page for current terms."
     />
     <p>
       Trials are short, so start them when you can study daily. Use them on a block from your

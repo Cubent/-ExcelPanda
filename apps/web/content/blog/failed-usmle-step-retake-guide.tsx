@@ -24,12 +24,12 @@ const faqs: BlogFaq[] = [
   {
     question: 'Can I retake a USMLE Step after failing?',
     answer:
-      'Yes, within the program\'s attempt limits and waiting periods.',
+      'Yes, within the limit of four attempts per Step and the spacing rules.',
   },
   {
     question: 'How long do I have to wait to retake?',
     answer:
-      'There is a mandatory waiting period. Check USMLE.org for the current length.',
+      'Yes, there are rules on spacing: no more than three attempts at the same exam in 12 months, and a fourth attempt must come at least 12 months after your first and six months after your latest. Confirm the current policy on USMLE.org.',
   },
   {
     question: 'Will residency programs see my failed attempt?',
@@ -66,15 +66,36 @@ const Body = () => (
 
     <H2 section={S.rules} />
     <p>
-      The USMLE program limits how often and how quickly you can retake a Step. In general, there
-      is a cap on the total number of attempts for each Step, a cap on attempts within a 12-month
-      period, and a mandatory wait between attempts. Further attempts after the limit carry
-      additional timing requirements, and some licensing boards set their own rules on top.
+      As we last checked, the main rules are:
+    </p>
+    <ul>
+      <li>
+        <strong>Four attempts per Step.</strong> Incomplete attempts count, and attempts at the
+        formerly administered Step 2 CS count toward the limit. After four unsuccessful attempts you
+        are ineligible to apply for any Step.
+      </li>
+      <li>
+        <strong>No more than three attempts in 12 months</strong> at the same exam.
+      </li>
+      <li>
+        <strong>A longer wait before a fourth attempt.</strong> ECFMG's booklet lists at least 12
+        months after your first attempt at that exam and at least six months after your most recent
+        one.
+      </li>
+      <li>You generally cannot retake a Step you have already passed.</li>
+      <li>
+        State licensing boards may set their own, stricter limits on attempts. The FSMB site lists
+        state-specific details.
+      </li>
+    </ul>
+    <p>
+      We cover these in more detail in our{' '}
+      <Link href="/blog/usmle-attempt-limits-retake-rules">USMLE attempt limits guide</Link>.
     </p>
     <Callout title="Check the current policy" tone="disclosure">
       <p>
-        The exact numbers change from time to time. Read the current attempt limits and waiting
-        periods on USMLE.org, and check your state licensing board, before you schedule.
+        These rules change from time to time, and older guides still list a six-attempt limit.
+        Confirm the current policy on USMLE.org and with your state board before you schedule.
       </p>
     </Callout>
 
