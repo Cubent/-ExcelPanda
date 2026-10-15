@@ -39,7 +39,7 @@ const faqs: BlogFaq[] = [
   {
     question: 'Do any alternatives have free trials?',
     answer:
-      'Yes. MedPrep Institute gives a 7-day free trial on every plan, and you pay nothing if you cancel before day 7. Lecturio also offers seven days. TrueLearn, AMBOSS and USMLE-Rx offer five. We could not confirm a UWorld trial on its official pages.',
+      'Yes. MedPrep Institute gives a 7-day free trial on every plan, and you pay nothing if you cancel before day 7. Lecturio also offers seven days. TrueLearn, AMBOSS and USMLE-Rx offer five. UWorld\'s site also lists a free trial for its Step 1 QBank.',
   },
   {
     question: 'Should I switch banks mid-prep?',

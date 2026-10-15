@@ -26,12 +26,12 @@ const faqs: BlogFaq[] = [
   {
     question: 'What is the passing score for Step 2 CK?',
     answer:
-      'The minimum passing standard is 214.',
+      'The minimum passing standard is 218 for exams taken on or after July 1, 2025. It was 214 before that.',
   },
   {
     question: 'What is the average Step 2 CK score?',
     answer:
-      'Recent first-time US and Canadian MD examinees have averaged in the high 240s, with a standard deviation of about 15.',
+      'First-time US MD examinees averaged about 250 in 2024 to 2025, with a standard deviation of about 15.',
   },
   {
     question: 'Is there an official Step 2 CK percentile?',
@@ -41,7 +41,7 @@ const faqs: BlogFaq[] = [
   {
     question: 'Is a 250 a good Step 2 CK score?',
     answer:
-      'It is around or slightly above the average, which is solid for many specialties but may be below the typical match score for the most competitive ones.',
+      'It is right at the average for first-time US MD examinees, which is solid for many specialties but may be below the typical match score for the most competitive ones.',
   },
   {
     question: 'Is Step 2 CK pass/fail?',
@@ -74,43 +74,46 @@ const Body = () => (
 
     <H2 section={S.passing} />
     <p>
-      The minimum passing standard for Step 2 CK is 214. The USMLE program reviews passing
-      standards periodically and can revise them, so confirm the current figure on USMLE.org.
+      The minimum passing standard for Step 2 CK is 218 on the three-digit scale, for exams taken on
+      or after July 1, 2025. The USMLE Management Committee announced the four-point increase from
+      214 on June 16, 2025, and it applies to retakers as well as first-time examinees. Standards
+      are reviewed every few years, so confirm the current number on USMLE.org.
     </p>
 
     <H2 section={S.average} />
     <p>
-      Recent first-time examinees from US and Canadian MD programs have averaged in the high 240s,
-      with a standard deviation of roughly 15 points. Averages for DO students and international
-      graduates differ, and the numbers shift slightly from year to year. USMLE publishes
-      performance data by examinee group, which is the right place to check the latest mean and
-      spread.
+      First-time examinees from US MD programs averaged about 250 in 2024 to 2025, with a standard
+      deviation of about 15. Reports citing USMLE data show the mean rising from 248 in 2022 to
+      2023 and 249 in 2023 to 2024. Among US MD seniors who matched to their preferred specialty,
+      the NRMP's 2024 Charting Outcomes reports a mean of 250.4 (SD 13.2). Averages for DO
+      students and international graduates differ, so check USMLE's performance data for your
+      group.
     </p>
 
     <H2 section={S.percentile} />
     <p>
       USMLE does not publish an official score-to-percentile chart. What you can do is estimate. If
-      you assume a mean near 248 and a standard deviation near 15, the table below gives a rough
+      you assume a mean near 250 and a standard deviation near 15, the table below gives a rough
       sense of where a score sits. Real score distributions are not perfectly bell-shaped, and the
       comparison group matters, so treat the numbers as planning aids rather than facts.
     </p>
     <ComparisonTable
-      caption="Approximate Step 2 CK percentile by score (estimate, mean 248, SD 15)"
+      caption="Approximate Step 2 CK percentile by score (estimate, mean 250, SD 15)"
       columns={[
         { key: 'score', label: 'Score' },
         { key: 'pct', label: 'Approximate percentile' },
         { key: 'read', label: 'Rough interpretation' },
       ]}
       rows={[
-        { id: '214', cells: { score: '214', pct: 'about 1st', read: 'At the passing standard' } },
-        { id: '225', cells: { score: '225', pct: 'about 6th', read: 'Passing, below average' } },
-        { id: '235', cells: { score: '235', pct: 'about 19th', read: 'Passing, below average' } },
-        { id: '245', cells: { score: '245', pct: 'about 42nd', read: 'Near average' } },
-        { id: '250', cells: { score: '250', pct: 'about 55th', read: 'Near or slightly above average' } },
-        { id: '255', cells: { score: '255', pct: 'about 68th', read: 'Above average' } },
-        { id: '260', cells: { score: '260', pct: 'about 79th', read: 'Strong' } },
-        { id: '265', cells: { score: '265', pct: 'about 87th', read: 'Strong' } },
-        { id: '270', cells: { score: '270', pct: 'about 93rd', read: 'Very strong' } },
+        { id: '218', cells: { score: '218', pct: 'about 2nd', read: 'At the passing standard' } },
+        { id: '225', cells: { score: '225', pct: 'about 5th', read: 'Passing, below average' } },
+        { id: '235', cells: { score: '235', pct: 'about 16th', read: 'Passing, below average' } },
+        { id: '245', cells: { score: '245', pct: 'about 37th', read: 'Slightly below average' } },
+        { id: '250', cells: { score: '250', pct: 'about 50th', read: 'Average' } },
+        { id: '255', cells: { score: '255', pct: 'about 63rd', read: 'Above average' } },
+        { id: '260', cells: { score: '260', pct: 'about 75th', read: 'Strong' } },
+        { id: '265', cells: { score: '265', pct: 'about 84th', read: 'Strong' } },
+        { id: '270', cells: { score: '270', pct: 'about 91st', read: 'Very strong' } },
         { id: '280', cells: { score: '280', pct: 'about 98th', read: 'Exceptional' } },
       ]}
       footnote="Normal-distribution estimate for planning only. Not an official USMLE conversion."
@@ -118,7 +121,7 @@ const Body = () => (
 
     <H2 section={S.good} />
     <p>
-      "Good" depends on the goal. For passing, anything at or above 214 is good enough. For
+      "Good" depends on the goal. For passing, anything at or above 218 is good enough. For
       competitiveness, the target depends on your specialty and the rest of your application. A
       score around or above the mean rarely hurts in less score-sensitive specialties, while the
       most competitive specialties tend to match applicants well above the average. Our{' '}

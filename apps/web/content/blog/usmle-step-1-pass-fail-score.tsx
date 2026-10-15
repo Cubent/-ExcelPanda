@@ -30,7 +30,7 @@ const faqs: BlogFaq[] = [
   {
     question: 'What score do you need to pass Step 1?',
     answer:
-      'The minimum passing standard is a three-digit score of 196, though examinees are not shown their own number.',
+      'The last published three-digit passing standard was 196, but USMLE no longer reports Step 1 numerically, so you only see pass or fail.',
   },
   {
     question: 'Can I see my Step 1 score?',
@@ -82,14 +82,15 @@ const Body = () => (
 
     <H2 section={S.passing} />
     <p>
-      The minimum passing standard for Step 1 is a three-digit score of 196. You will not see your
-      own score, but the pass/fail decision is made against that standard. It is reviewed
-      periodically by the USMLE program and can be revised.
+      The last published passing standard for Step 1 on the three-digit scale was 196, set before
+      the exam moved to pass/fail. USMLE no longer reports Step 1 standards as three-digit numbers,
+      so you will not see your own score and future reviews of the standard will not be published
+      that way. The standard is still reviewed periodically by the USMLE Management Committee.
     </p>
     <Callout title="Confirm the current standard" tone="disclosure">
       <p>
-        Passing standards are set by the USMLE program and can change. Check the performance data
-        and passing-standard pages on USMLE.org for the current number before you rely on it.
+        Passing standards are set by the USMLE program and can change. Check USMLE.org before you
+        rely on any number, including the ones in this post.
       </p>
     </Callout>
 
