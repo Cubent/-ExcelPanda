@@ -28,7 +28,7 @@ const signals = {
 
 const render = async () => {
   const { default: Page } = await import('../app/[locale]/dashboard/predictor/page');
-  return renderToStaticMarkup(await Page());
+  return renderToStaticMarkup(await Page({}));
 };
 
 describe('Score Predictor page', () => {

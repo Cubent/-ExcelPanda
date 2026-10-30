@@ -181,7 +181,8 @@ const MockPredictor = ({ name }: { name?: string }) => {
   );
 };
 
-const PredictorPage = async ({ searchParams }: { searchParams?: Promise<{ mock?: string }> } = {}) => {
+// No default for the props object: Next's build-time page type check rejects an `| undefined` first parameter.
+const PredictorPage = async ({ searchParams }: { searchParams?: Promise<{ mock?: string }> }) => {
   // Local debugging only (see lib/debug-bypass.ts): never true in a deployed build.
   if (debugBypass()) {
     const { mock } = (await searchParams) ?? {};
