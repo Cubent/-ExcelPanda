@@ -61,9 +61,14 @@ export const EstimateCard = ({
               and show where it sits against the passing standard. Two or three exams, spaced over several weeks, give the
               most useful picture.
             </p>
-            <a href="#practice-exams" className="mt-3 inline-block text-xs font-medium text-[#C46B10] hover:underline">
-              Add your first practice exam &darr;
-            </a>
+            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs font-medium">
+              <a href="#practice-exams" className="text-[#C46B10] hover:underline">
+                Add your first practice exam &darr;
+              </a>
+              <a href="?sample=rising" className="text-white/70 hover:text-white hover:underline">
+                See an example with sample data &rarr;
+              </a>
+            </div>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#C46B10]/15 text-[#C46B10]">
             <Sparkles className="size-4" />

@@ -28,7 +28,7 @@ const signals = {
 
 const render = async () => {
   const { default: Page } = await import('../app/[locale]/dashboard/predictor/page');
-  return renderToStaticMarkup(await Page());
+  return renderToStaticMarkup(await Page({}));
 };
 
 describe('Score Predictor page', () => {
@@ -117,3 +117,94 @@ describe('Score Predictor page', () => {
     await expect(render()).rejects.toThrow('connection lost');
   });
 });
+
+describe('Score Predictor page, sample data', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    authMock.mockResolvedValue({ userId: 'user_1' });
+    findPreference.mockResolvedValue({ exam: 'STEP_2_CK' });
+  });
+
+  const renderSample = async (sample?: string) => {
+    const { default: Page } = await import('../app/[locale]/dashboard/predictor/page');
+    return renderToStaticMarkup(await Page({ searchParams: Promise.resolve({ sample }) }));
+  };
+
+  it('shows labelled sample data without reading or writing the user\'s own records', async () => {
+    const html = await renderSample('rising');
+    expect(html).toContain('Sample data: these are example numbers, not your results');
+    expect(html).toContain('Step 2 CK score estimate');
+    expect(html).toContain('NBME 12');
+    expect(html).toContain('passing standard (218)');
+    expect(getPredictorSignals).not.toHaveBeenCalled();
+    expect(listPracticeAssessments).not.toHaveBeenCalled();
+    expect(getLatestExamOutcome).not.toHaveBeenCalled();
+  });
+
+  it('is read-only: no logging form, no delete buttons and no real-result form', async () => {
+    const html = await renderSample('rising');
+    expect(html).not.toContain('Add practice exam');
+    expect(html).not.toContain('Remove NBME');
+    expect(html).not.toContain('Save my result');
+    expect(html).not.toContain('Already taken your exam?');
+    expect(html).toContain('Back to my data');
+  });
+
+  it.each([
+    ['borderline', 'NBME 11', 'below it'],
+    ['stale', 'UWSA 2', 'days ago'],
+  ])('scenario %s renders its story', async (name, label, text) => {
+    const html = await renderSample(name);
+    expect(html).toContain(label);
+    expect(html).toContain(text);
+    expect(html).not.toContain('NaN');
+    expect(html).not.toContain('undefined');
+  });
+
+  it('keeps each scenario\'s margin the same for Step 3 by shifting scores to its own passing standard', async () => {
+    findPreference.mockResolvedValue({ exam: 'STEP_3' });
+    const html = await renderSample('rising');
+    expect(html).toContain('Step 3 score estimate');
+    expect(html).toContain('passing standard (200)');
+    expect(html).toContain('Practice exam 3'); // generic labels for Step 3
+    expect(html).toContain('229'); // 247 shifted by (200 - 218)
+    expect(html).not.toContain('NBME 12');
+  });
+
+  it('for pass/fail exams shows sample signals only, with no score and no scenario switcher', async () => {
+    findPreference.mockResolvedValue({ exam: 'STEP_1' });
+    const html = await renderSample('rising');
+    expect(html).toContain('Sample data');
+    expect(html).toContain('Step 1 is pass/fail');
+    expect(html).toContain('How your MedPrep practice is going');
+    expect(html).not.toContain('score estimate');
+    expect(html).not.toContain('Close to the line');
+  });
+
+  it('ignores an unknown sample name and shows the user\'s real page', async () => {
+    getPredictorSignals.mockResolvedValue(signals);
+    listPracticeAssessments.mockResolvedValue([]);
+    getLatestExamOutcome.mockResolvedValue(null);
+    const html = await renderSample('nonsense');
+    expect(html).not.toContain('Sample data');
+    expect(html).toContain('Log a practice exam to get your estimate');
+    expect(listPracticeAssessments).toHaveBeenCalled();
+  });
+
+  it('does not replace the sign-in check: a signed-out visitor gets nothing, even with ?sample', async () => {
+    authMock.mockResolvedValue({ userId: null });
+    expect(await renderSample('rising')).toBe('');
+  });
+
+  it('offers a link to the sample from the empty state, and no sample banner on the normal page', async () => {
+    getPredictorSignals.mockResolvedValue(signals);
+    listPracticeAssessments.mockResolvedValue([]);
+    getLatestExamOutcome.mockResolvedValue(null);
+    const html = await renderSample(undefined);
+    expect(html).toContain('href="?sample=rising"');
+    expect(html).toContain('See an example with sample data');
+    expect(html).not.toContain('Sample data: these are example numbers');
+    expect(html).toContain('Add practice exam');
+  });
+});
+

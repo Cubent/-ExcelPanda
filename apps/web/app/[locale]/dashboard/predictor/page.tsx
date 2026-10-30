@@ -5,6 +5,7 @@ import { Play, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { estimateScore, isScoredExam, PASSING_STANDARD } from '@/lib/score-predictor';
+import { getSample, isSampleName, SAMPLE_LABELS, SAMPLE_SCENARIOS, type SampleName } from '@/lib/score-predictor.sample';
 import { AssessmentLogger } from './components/assessment-logger';
 import { EstimateCard } from './components/estimate-card';
 import { ExamOutcomeForm } from './components/exam-outcome-form';
@@ -28,6 +29,8 @@ type ViewProps = {
   outcome: { score: number | null; passed: boolean; takenAt: Date } | null;
   setupPending: boolean;
   estimate: ReturnType<typeof estimateScore>;
+  /** When set, the page shows read-only sample data and nothing can be logged or saved. */
+  sample?: SampleName;
 };
 
 /** A dark hero card for the page's single most important message, like the Overview's Study Guide card. */
@@ -46,12 +49,53 @@ const HeroNotice = ({ kicker, title, children }: { kicker: string; title: string
   </div>
 );
 
-const PredictorView = ({ exam, assessments: serialized, signals, outcome, setupPending, estimate }: ViewProps) => {
+const SampleBanner = ({ exam, current }: { exam: ViewProps['exam']; current: SampleName }) => (
+  <div className="mb-6 rounded-xl border border-[#C46B10]/40 bg-[#C46B10]/10 p-4 text-sm text-[#8a4a0b] dark:text-[#e8a35a]">
+    <p className="font-semibold">Sample data: these are example numbers, not your results.</p>
+    <p className="mt-1">Nothing here is saved. Log your own practice exams to replace it.</p>
+    <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+      <Link href="/dashboard/predictor" className="font-bold underline">
+        Back to my data
+      </Link>
+      {isScoredExam(exam) &&
+        SAMPLE_SCENARIOS.map((name) => (
+          <Link
+            key={name}
+            href={`/dashboard/predictor?sample=${name}`}
+            className={name === current ? 'font-bold underline' : 'underline'}
+          >
+            {SAMPLE_LABELS[name]}
+          </Link>
+        ))}
+    </p>
+  </div>
+);
+
+/** Read-only list used in sample mode, so the logging form can never write against sample numbers. */
+const SampleExamList = ({ assessments }: { assessments: ViewProps['assessments'] }) => (
+  <ul className="divide-y divide-gray-100 dark:divide-white/10">
+    {assessments.map((a) => (
+      <li key={a.id} className="flex items-center justify-between gap-3 py-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-[#06005A] dark:text-white">{a.label}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {new Date(a.takenAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
+          </p>
+        </div>
+        <span className="font-[family-name:var(--font-display)] text-xl font-bold text-[#06005A] dark:text-white">{a.score}</span>
+      </li>
+    ))}
+  </ul>
+);
+
+const PredictorView = ({ exam, assessments: serialized, signals, outcome, setupPending, estimate, sample }: ViewProps) => {
   const scored = isScoredExam(exam);
   const showLogger = scored && !setupPending;
 
   return (
     <div>
+      {sample && <SampleBanner exam={exam} current={sample} />}
+
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gray-500 dark:text-gray-400">Dashboard</p>
@@ -114,7 +158,7 @@ const PredictorView = ({ exam, assessments: serialized, signals, outcome, setupP
               passing={PASSING_STANDARD[exam]}
             />
             <div className="mt-4">
-              <AssessmentLogger assessments={serialized} />
+              {sample ? <SampleExamList assessments={serialized} /> : <AssessmentLogger assessments={serialized} />}
             </div>
           </div>
         )}
@@ -122,7 +166,7 @@ const PredictorView = ({ exam, assessments: serialized, signals, outcome, setupP
         <PracticeSignals signals={signals} wide={!showLogger} />
       </div>
 
-      {!setupPending && (
+      {!setupPending && !sample && (
         <div className={`${CARD_CLASS} mt-6`}>
           <p className="text-sm font-semibold text-[#06005A] dark:text-white">Already taken your exam?</p>
           {outcome ? (
@@ -147,7 +191,8 @@ const PredictorView = ({ exam, assessments: serialized, signals, outcome, setupP
   );
 };
 
-const PredictorPage = async () => {
+// No default for the props object: Next's build-time page type check rejects an `| undefined` first parameter.
+const PredictorPage = async ({ searchParams }: { searchParams?: Promise<{ sample?: string }> }) => {
   const { userId } = await auth();
   if (!userId) return null;
 
@@ -156,6 +201,26 @@ const PredictorPage = async () => {
 
   const exam = preference.exam;
   const scored = isScoredExam(exam);
+
+  // ?sample=<name> shows read-only example data. It sits after the auth and
+  // exam checks, and the dashboard layout's own gates run before this page, so
+  // it is only ever shown to a signed-in user who is allowed to be here.
+  const requested = (await searchParams)?.sample;
+  if (isSampleName(requested)) {
+    const { assessments, signals } = getSample(requested, exam);
+    const estimate = isScoredExam(exam) ? estimateScore(exam, assessments) : null;
+    return (
+      <PredictorView
+        exam={exam}
+        assessments={assessments.map((a) => ({ ...a, takenAt: a.takenAt.toISOString() }))}
+        signals={signals}
+        outcome={null}
+        setupPending={false}
+        estimate={estimate}
+        sample={requested}
+      />
+    );
+  }
 
   let setupPending = false;
   const guard = async <T,>(run: () => Promise<T>, fallback: T): Promise<T> => {
