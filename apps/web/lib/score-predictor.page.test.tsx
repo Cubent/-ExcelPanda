@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const authMock = vi.fn();
 const findPreference = vi.fn();
@@ -115,5 +115,58 @@ describe('Score Predictor page', () => {
     findPreference.mockResolvedValue({ exam: 'STEP_2_CK' });
     listPracticeAssessments.mockRejectedValue(Object.assign(new Error('connection lost'), { code: 'P1001' }));
     await expect(render()).rejects.toThrow('connection lost');
+  });
+});
+
+describe('Score Predictor page, local debug mock mode', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('DASHBOARD_DEBUG_BYPASS', '1');
+  });
+  afterEach(() => vi.unstubAllEnvs());
+
+  const renderMock = async (mock?: string) => {
+    const { default: Page } = await import('../app/[locale]/dashboard/predictor/page');
+    return renderToStaticMarkup(await Page({ searchParams: Promise.resolve({ mock }) }));
+  };
+
+  it('renders from mock data without touching auth or the database', async () => {
+    const html = await renderMock('rising');
+    expect(html).toContain('DEBUG: mock data');
+    expect(html).toContain('scenario: rising');
+    expect(html).toContain('NBME 12');
+    expect(html).toContain('passing standard (218)');
+    expect(authMock).not.toHaveBeenCalled();
+    expect(findPreference).not.toHaveBeenCalled();
+    expect(getPredictorSignals).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['borderline', 'NBME 11', 'below'],
+    ['stale', 'days ago', 'UWSA 2'],
+    ['empty', 'Log a practice exam to get your estimate', 'No answers in the last 30 days'],
+    ['step3', 'Step 3 score estimate', 'passing standard (200)'],
+    ['step1', 'Step 1 is pass/fail', 'How your MedPrep practice is going'],
+    ['abim', 'ABIM reports pass or fail', 'How your MedPrep practice is going'],
+    ['outcome', 'a score of 249', 'NBME 10'],
+    ['setup', 'Practice exam logging is being set up', 'How your MedPrep practice is going'],
+  ])('scenario %s renders its expected content', async (name, a, b) => {
+    const html = await renderMock(name);
+    expect(html).toContain(a);
+    expect(html).toContain(b);
+    expect(html).not.toContain('NaN');
+    expect(html).not.toContain('undefined');
+  });
+
+  it('falls back to the default scenario for an unknown name', async () => {
+    expect(await renderMock('nonsense')).toContain('scenario: rising');
+  });
+
+  it('is NOT used in production, even with the flag: real path runs and signed-out users get nothing', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    authMock.mockResolvedValue({ userId: null });
+    expect(await renderMock('rising')).toBe('');
+    expect(authMock).toHaveBeenCalled();
   });
 });
