@@ -1,5 +1,4 @@
 import { env } from '@/env';
-import { debugBypass } from '@/lib/debug-bypass';
 import { clerkMiddleware } from '@clerk/nextjs/server';
 import { internationalizationMiddleware } from '@repo/internationalization/middleware';
 import {
@@ -45,8 +44,7 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   // Gate onboarding and dashboard behind auth. This must run before the i18n
   // middleware below, since i18n may return a rewrite response (not just a
   // redirect) that would otherwise short-circuit this check entirely.
-  // debugBypass() is false everywhere except a local `next dev` with DASHBOARD_DEBUG_BYPASS=1.
-  if (isProtectedRoute(request.nextUrl.pathname) && !debugBypass()) {
+  if (isProtectedRoute(request.nextUrl.pathname)) {
     const { userId } = await auth();
     if (!userId) {
       const signInUrl = new URL('/sign-in', request.url);

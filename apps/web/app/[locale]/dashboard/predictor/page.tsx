@@ -4,9 +4,7 @@ import { getLatestExamOutcome, getPredictorSignals, listPracticeAssessments } fr
 import { Play, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { debugBypass } from '@/lib/debug-bypass';
 import { estimateScore, isScoredExam, PASSING_STANDARD } from '@/lib/score-predictor';
-import { getMockScenario, MOCK_SCENARIOS } from '@/lib/score-predictor.mock';
 import { AssessmentLogger } from './components/assessment-logger';
 import { EstimateCard } from './components/estimate-card';
 import { ExamOutcomeForm } from './components/exam-outcome-form';
@@ -30,7 +28,6 @@ type ViewProps = {
   outcome: { score: number | null; passed: boolean; takenAt: Date } | null;
   setupPending: boolean;
   estimate: ReturnType<typeof estimateScore>;
-  debugBanner?: ReactNode;
 };
 
 /** A dark hero card for the page's single most important message, like the Overview's Study Guide card. */
@@ -49,14 +46,12 @@ const HeroNotice = ({ kicker, title, children }: { kicker: string; title: string
   </div>
 );
 
-const PredictorView = ({ exam, assessments: serialized, signals, outcome, setupPending, estimate, debugBanner }: ViewProps) => {
+const PredictorView = ({ exam, assessments: serialized, signals, outcome, setupPending, estimate }: ViewProps) => {
   const scored = isScoredExam(exam);
   const showLogger = scored && !setupPending;
 
   return (
     <div>
-      {debugBanner}
-
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gray-500 dark:text-gray-400">Dashboard</p>
@@ -152,43 +147,7 @@ const PredictorView = ({ exam, assessments: serialized, signals, outcome, setupP
   );
 };
 
-/** LOCAL DEBUGGING ONLY: renders the real view from fixtures in lib/score-predictor.mock.ts. */
-const MockPredictor = ({ name }: { name?: string }) => {
-  const { name: picked, data } = getMockScenario(name);
-  const estimate = isScoredExam(data.exam) ? estimateScore(data.exam, data.assessments) : null;
-  return (
-    <PredictorView
-      exam={data.exam}
-      assessments={data.assessments.map((a) => ({ ...a, takenAt: a.takenAt.toISOString() }))}
-      signals={data.signals}
-      outcome={data.outcome}
-      setupPending={data.setupPending}
-      estimate={estimate}
-      debugBanner={
-        <div className="mb-6 rounded-xl border-2 border-dashed border-[#C46B10] bg-[#C46B10]/10 p-4 text-sm text-[#8a4a0b] dark:text-[#e8a35a]">
-          <p className="font-semibold">DEBUG: mock data, auth bypassed (scenario: {picked})</p>
-          <p className="mt-1">Nothing here is saved, and the forms will fail because there is no signed-in user.</p>
-          <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-            {MOCK_SCENARIOS.map((m) => (
-              <Link key={m} href={`/dashboard/predictor?mock=${m}`} className={m === picked ? 'font-bold underline' : 'underline'}>
-                {m}
-              </Link>
-            ))}
-          </p>
-        </div>
-      }
-    />
-  );
-};
-
-// No default for the props object: Next's build-time page type check rejects an `| undefined` first parameter.
-const PredictorPage = async ({ searchParams }: { searchParams?: Promise<{ mock?: string }> }) => {
-  // Local debugging only (see lib/debug-bypass.ts): never true in a deployed build.
-  if (debugBypass()) {
-    const { mock } = (await searchParams) ?? {};
-    return <MockPredictor name={mock} />;
-  }
-
+const PredictorPage = async () => {
   const { userId } = await auth();
   if (!userId) return null;
 

@@ -23,41 +23,38 @@ const run = async (path: string) => {
   return (middleware as unknown as (r: unknown) => Promise<Response>)(new NextRequest(`http://localhost${path}`));
 };
 
-describe('dashboard auth gate in middleware', () => {
+const PROTECTED = ['/dashboard', '/dashboard/predictor', '/onboarding/trial', '/paywall', '/checkout/success'];
+
+describe('auth gate in middleware', () => {
   beforeEach(() => {
     vi.resetModules();
     authMock.mockResolvedValue({ userId: null });
   });
   afterEach(() => vi.unstubAllEnvs());
 
-  it('redirects a signed-out visitor away from /dashboard (normal behaviour)', async () => {
-    vi.stubEnv('NODE_ENV', 'test');
-    const res = await run('/dashboard/predictor');
+  it.each(PROTECTED)('redirects a signed-out visitor from %s to sign-in', async (path) => {
+    const res = await run(path);
     expect(res.status).toBe(307);
     expect(res.headers.get('location')).toContain('/sign-in');
   });
 
-  it('STILL redirects in production even if the bypass variable is set', async () => {
-    vi.stubEnv('NODE_ENV', 'production');
-    vi.stubEnv('DASHBOARD_DEBUG_BYPASS', '1');
-    const res = await run('/dashboard/predictor');
-    expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toContain('/sign-in');
+  it('lets a signed-in user through', async () => {
+    authMock.mockResolvedValue({ userId: 'user_1' });
+    expect((await run('/dashboard/predictor')).status).toBe(200);
   });
 
-  it('protects onboarding and paywall too when the bypass is off', async () => {
-    vi.stubEnv('NODE_ENV', 'production');
-    vi.stubEnv('DASHBOARD_DEBUG_BYPASS', '1');
-    for (const path of ['/onboarding/trial', '/paywall', '/checkout/success']) {
-      expect((await run(path)).status).toBe(307);
+  it('does not gate public pages', async () => {
+    expect((await run('/blog')).status).toBe(200);
+  });
+
+  it.each(['development', 'production', 'test'])(
+    'ignores any leftover debug variable: still redirects in %s',
+    async (env) => {
+      vi.stubEnv('NODE_ENV', env);
+      vi.stubEnv('DASHBOARD_DEBUG_BYPASS', '1');
+      for (const path of PROTECTED) {
+        expect((await run(path)).status).toBe(307);
+      }
     }
-  });
-
-  it('lets a signed-out visitor through only in local development with the flag', async () => {
-    vi.stubEnv('NODE_ENV', 'development');
-    vi.stubEnv('DASHBOARD_DEBUG_BYPASS', '1');
-    const res = await run('/dashboard/predictor');
-    expect(res.status).toBe(200);
-    expect(res.headers.get('location')).toBeNull();
-  });
+  );
 });
