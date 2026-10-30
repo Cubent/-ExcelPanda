@@ -31,6 +31,8 @@ type ViewProps = {
   estimate: ReturnType<typeof estimateScore>;
   /** When set, the page shows read-only sample data and nothing can be logged or saved. */
   sample?: SampleName;
+  /** 'requested' = the user opened ?sample=; 'setup' = the logging tables are not available yet. */
+  sampleReason?: 'requested' | 'setup';
 };
 
 /** A dark hero card for the page's single most important message, like the Overview's Study Guide card. */
@@ -49,25 +51,45 @@ const HeroNotice = ({ kicker, title, children }: { kicker: string; title: string
   </div>
 );
 
-const SampleBanner = ({ exam, current }: { exam: ViewProps['exam']; current: SampleName }) => (
+const SampleBanner = ({
+  exam,
+  current,
+  reason,
+}: {
+  exam: ViewProps['exam'];
+  current: SampleName;
+  reason: 'requested' | 'setup';
+}) => (
   <div className="mb-6 rounded-xl border border-[#C46B10]/40 bg-[#C46B10]/10 p-4 text-sm text-[#8a4a0b] dark:text-[#e8a35a]">
-    <p className="font-semibold">Sample data: these are example numbers, not your results.</p>
-    <p className="mt-1">Nothing here is saved. Log your own practice exams to replace it.</p>
-    <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-      <Link href="/dashboard/predictor" className="font-bold underline">
-        Back to my data
-      </Link>
-      {isScoredExam(exam) &&
-        SAMPLE_SCENARIOS.map((name) => (
-          <Link
-            key={name}
-            href={`/dashboard/predictor?sample=${name}`}
-            className={name === current ? 'font-bold underline' : 'underline'}
-          >
-            {SAMPLE_LABELS[name]}
+    {reason === 'setup' ? (
+      <>
+        <p className="font-semibold">Practice exam logging is being set up.</p>
+        <p className="mt-1">
+          You are seeing sample data so you can preview this page. These are example numbers, not your results, and your
+          own estimate will appear here once logging is available.
+        </p>
+      </>
+    ) : (
+      <>
+        <p className="font-semibold">Sample data: these are example numbers, not your results.</p>
+        <p className="mt-1">Nothing here is saved. Log your own practice exams to replace it.</p>
+        <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <Link href="/dashboard/predictor" className="font-bold underline">
+            Back to my data
           </Link>
-        ))}
-    </p>
+          {isScoredExam(exam) &&
+            SAMPLE_SCENARIOS.map((name) => (
+              <Link
+                key={name}
+                href={`/dashboard/predictor?sample=${name}`}
+                className={name === current ? 'font-bold underline' : 'underline'}
+              >
+                {SAMPLE_LABELS[name]}
+              </Link>
+            ))}
+        </p>
+      </>
+    )}
   </div>
 );
 
@@ -88,13 +110,13 @@ const SampleExamList = ({ assessments }: { assessments: ViewProps['assessments']
   </ul>
 );
 
-const PredictorView = ({ exam, assessments: serialized, signals, outcome, setupPending, estimate, sample }: ViewProps) => {
+const PredictorView = ({ exam, assessments: serialized, signals, outcome, setupPending, estimate, sample, sampleReason = 'requested' }: ViewProps) => {
   const scored = isScoredExam(exam);
   const showLogger = scored && !setupPending;
 
   return (
     <div>
-      {sample && <SampleBanner exam={exam} current={sample} />}
+      {sample && <SampleBanner exam={exam} current={sample} reason={sampleReason} />}
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -117,13 +139,8 @@ const PredictorView = ({ exam, assessments: serialized, signals, outcome, setupP
         </Link>
       </div>
 
-      <div className="mt-8">
-        {setupPending && (
-          <HeroNotice kicker="Score estimate" title="Practice exam logging is being set up">
-            Your score estimate will be available here shortly. In the meantime, your practice signals are below.
-          </HeroNotice>
-        )}
-
+      {/* flex + gap so any stack of hero cards is always spaced apart */}
+      <div className="mt-8 flex flex-col gap-6">
         {showLogger && isScoredExam(exam) && <EstimateCard exam={exam} estimate={estimate} />}
 
         {!scored && (
@@ -191,6 +208,24 @@ const PredictorView = ({ exam, assessments: serialized, signals, outcome, setupP
   );
 };
 
+/** Read-only sample data for this user's exam. Never reads or writes their own records. */
+const sampleView = (exam: ViewProps['exam'], name: SampleName, reason: 'requested' | 'setup') => {
+  const { assessments, signals } = getSample(name, exam);
+  const estimate = isScoredExam(exam) ? estimateScore(exam, assessments) : null;
+  return (
+    <PredictorView
+      exam={exam}
+      assessments={assessments.map((a) => ({ ...a, takenAt: a.takenAt.toISOString() }))}
+      signals={signals}
+      outcome={null}
+      setupPending={false}
+      estimate={estimate}
+      sample={name}
+      sampleReason={reason}
+    />
+  );
+};
+
 // No default for the props object: Next's build-time page type check rejects an `| undefined` first parameter.
 const PredictorPage = async ({ searchParams }: { searchParams?: Promise<{ sample?: string }> }) => {
   const { userId } = await auth();
@@ -206,21 +241,7 @@ const PredictorPage = async ({ searchParams }: { searchParams?: Promise<{ sample
   // exam checks, and the dashboard layout's own gates run before this page, so
   // it is only ever shown to a signed-in user who is allowed to be here.
   const requested = (await searchParams)?.sample;
-  if (isSampleName(requested)) {
-    const { assessments, signals } = getSample(requested, exam);
-    const estimate = isScoredExam(exam) ? estimateScore(exam, assessments) : null;
-    return (
-      <PredictorView
-        exam={exam}
-        assessments={assessments.map((a) => ({ ...a, takenAt: a.takenAt.toISOString() }))}
-        signals={signals}
-        outcome={null}
-        setupPending={false}
-        estimate={estimate}
-        sample={requested}
-      />
-    );
-  }
+  if (isSampleName(requested)) return sampleView(exam, requested, 'requested');
 
   let setupPending = false;
   const guard = async <T,>(run: () => Promise<T>, fallback: T): Promise<T> => {
@@ -238,6 +259,11 @@ const PredictorPage = async ({ searchParams }: { searchParams?: Promise<{ sample
     scored ? guard(() => listPracticeAssessments(userId, exam), []) : Promise.resolve([]),
     guard(() => getLatestExamOutcome(userId, exam), null),
   ]);
+
+  // The logging tables ship in a migration applied separately from the code deploy. Until it
+  // lands, a student on a scored exam gets a clearly labelled sample instead of an empty page.
+  // Pass/fail exams have no estimate to preview, so they just lose the optional result form.
+  if (setupPending && scored) return sampleView(exam, 'rising', 'setup');
 
   const estimate = isScoredExam(exam) ? estimateScore(exam, assessments) : null;
   const serialized = assessments.map((a) => ({

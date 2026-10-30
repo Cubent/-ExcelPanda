@@ -32,7 +32,11 @@ export const PracticeSignals = ({ signals, wide = false }: { signals: Signals; w
             <Link href="/dashboard/practice" className="font-semibold text-[#06005A] hover:underline dark:text-[#C46B10]">
               Start a set
             </Link>{' '}
-            to see your signals.
+            to see your signals, or{' '}
+            <Link href="/dashboard/predictor?sample=rising" className="font-semibold text-[#06005A] hover:underline dark:text-[#C46B10]">
+              see an example with sample data
+            </Link>
+            .
           </p>
         ) : (
           <div className="mt-6 grid grid-cols-2 gap-6">

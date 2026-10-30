@@ -99,16 +99,33 @@ describe('Score Predictor page', () => {
     expect(html).not.toContain('Save my result');
   });
 
-  it('degrades gracefully, without erroring, when the migration has not been applied yet', async () => {
+  const missingTable = () => Object.assign(new Error('The table `public.practice_assessments` does not exist'), { code: 'P2021' });
+
+  it('scored exam, migration not applied: shows a clearly labelled sample instead of an empty page', async () => {
     findPreference.mockResolvedValue({ exam: 'STEP_2_CK' });
-    const missing = Object.assign(new Error('The table `public.practice_assessments` does not exist'), { code: 'P2021' });
-    listPracticeAssessments.mockRejectedValue(missing);
-    getLatestExamOutcome.mockRejectedValue(missing);
+    listPracticeAssessments.mockRejectedValue(missingTable());
+    getLatestExamOutcome.mockRejectedValue(missingTable());
     const html = await render();
     expect(html).toContain('Practice exam logging is being set up');
+    expect(html).toContain('example numbers, not your results');
+    expect(html).toContain('Step 2 CK score estimate'); // the populated sample
+    expect(html).toContain('NBME 12');
     expect(html).toContain('How your MedPrep practice is going');
     expect(html).not.toContain('Add practice exam');
     expect(html).not.toContain('Save my result');
+    expect(html).not.toContain('Back to my data'); // there is no real data to go back to yet
+    expect(html).not.toContain('NaN');
+  });
+
+  it('pass/fail exam, migration not applied: no irrelevant "being set up" notice, just the one pass/fail notice', async () => {
+    findPreference.mockResolvedValue({ exam: 'STEP_1' });
+    getPredictorSignals.mockResolvedValue(signals);
+    getLatestExamOutcome.mockRejectedValue(missingTable());
+    const html = await render();
+    expect(html).not.toContain('being set up');
+    expect(html.match(/Step 1 is pass\/fail/g)?.length).toBe(1);
+    expect(html).not.toContain('Already taken your exam?'); // optional form hidden until the tables exist
+    expect(html).toContain('How your MedPrep practice is going');
   });
 
   it('still surfaces unrelated database errors instead of hiding them', async () => {
@@ -205,6 +222,35 @@ describe('Score Predictor page, sample data', () => {
     expect(html).toContain('See an example with sample data');
     expect(html).not.toContain('Sample data: these are example numbers');
     expect(html).toContain('Add practice exam');
+  });
+});
+
+describe('Score Predictor page, layout', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    authMock.mockResolvedValue({ userId: 'user_1' });
+    getPredictorSignals.mockResolvedValue(signals);
+    listPracticeAssessments.mockResolvedValue([]);
+    getLatestExamOutcome.mockResolvedValue(null);
+  });
+
+  it('spaces the hero cards apart (flex column with a gap), so stacked notices never touch', async () => {
+    for (const exam of ['STEP_2_CK', 'STEP_1', 'ABIM']) {
+      findPreference.mockResolvedValue({ exam });
+      const { default: Page } = await import('../app/[locale]/dashboard/predictor/page');
+      const html = renderToStaticMarkup(await Page({}));
+      expect(html, exam).toContain('mt-8 flex flex-col gap-6');
+    }
+  });
+
+  it('an account with no practice yet is offered the sample from the signals card', async () => {
+    findPreference.mockResolvedValue({ exam: 'STEP_1' });
+    getPredictorSignals.mockResolvedValue({ ...signals, recent: { pct: 0, correct: 0, total: 0 }, questionsAnswered: 0, weakestSystems: [] });
+    const { default: Page } = await import('../app/[locale]/dashboard/predictor/page');
+    const html = renderToStaticMarkup(await Page({}));
+    expect(html).toContain('No answers in the last 30 days');
+    expect(html).toContain('see an example with sample data');
+    expect(html).toContain('/dashboard/predictor?sample=rising');
   });
 });
 
