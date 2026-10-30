@@ -91,6 +91,16 @@ enum ErrorType {
   TIME
 }
 
+// Where a logged practice-exam score came from. Used only to label it back to
+// the user; the score predictor deliberately does not weight sources
+// differently (we have no data to justify doing so).
+enum AssessmentSource {
+  NBME
+  UWSA
+  FREE_120
+  OTHER
+}
+
 enum SessionMode {
   SEMESTER
   DEDICATED
@@ -307,4 +317,41 @@ model UserBookmark {
 
   @@unique([clerkUserId, questionId])
   @@map("user_bookmarks")
+}
+
+// A practice-exam result the user logs by hand (an NBME form, UWSA, the Free
+// 120, ...). These are the only inputs to the numeric score estimate on
+// /dashboard/predictor: MedPrep's own question accuracy is never converted
+// into a three-digit score, because its AI-generated vignettes have no
+// validated mapping to real exam scores. `score` is the three-digit score
+// (1-300) for exams that report one.
+model PracticeAssessment {
+  id          String           @id @default(cuid())
+  clerkUserId String
+  examType    ExamType
+  source      AssessmentSource
+  label       String
+  score       Int
+  takenAt     DateTime
+  createdAt   DateTime         @default(now())
+
+  @@index([clerkUserId, examType, takenAt])
+  @@map("practice_assessments")
+}
+
+// The user's real exam result, entered voluntarily after test day. This is
+// the ground truth a future calibrated predictor needs; until enough of it
+// exists the estimate on /dashboard/predictor stays a wide, unvalidated
+// range. `score` is null for pass/fail exams (Step 1, ABIM).
+model ExamOutcome {
+  id          String   @id @default(cuid())
+  clerkUserId String
+  examType    ExamType
+  score       Int?
+  passed      Boolean
+  takenAt     DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([clerkUserId, examType])
+  @@map("exam_outcomes")
 }

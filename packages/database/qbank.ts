@@ -1,6 +1,6 @@
 import { AI_SYSTEM_NAME, getOrCreateAiSystem } from './ai-practice';
 import { database } from './index';
-import { ExamType, ObjectiveStatus, SessionMode } from '@prisma/client';
+import { AssessmentSource, ExamType, ObjectiveStatus, SessionMode } from '@prisma/client';
 
 const CONSECUTIVE_QUESTIONS_BEFORE_SWITCH = 3;
 export const SET_SIZE = 5;
@@ -1238,5 +1238,123 @@ export async function markStudyGuideReviewed(clerkUserId: string, entryId: strin
   return database.studyGuideEntry.update({
     where: { id: entryId },
     data: { isReviewed: true, reviewedAtMissCount: entry.missedCount },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Score predictor (/dashboard/predictor)
+// ---------------------------------------------------------------------------
+
+const SIGNAL_WINDOW_DAYS = 30;
+/** A system needs at least this many recent attempts before it can be called a weak spot. */
+const MIN_SYSTEM_ATTEMPTS_FOR_SIGNAL = 8;
+/** Below this many attempts in the prior window, a trend against it would be noise. */
+const MIN_PRIOR_ATTEMPTS_FOR_TREND = 10;
+const WEAK_SYSTEMS_SHOWN = 3;
+export const MAX_ASSESSMENTS_PER_EXAM = 50;
+
+/**
+ * Real practice signals from the user's own MedPrep attempts: recent accuracy,
+ * its change against the previous window, spaced-review accuracy, and the
+ * weakest systems. These describe how practice is going; they are never turned
+ * into a three-digit score (see apps/web/lib/score-predictor.ts for why).
+ */
+export async function getPredictorSignals(clerkUserId: string, examType: ExamType) {
+  const now = new Date();
+  const windowStart = new Date(now);
+  windowStart.setDate(now.getDate() - SIGNAL_WINDOW_DAYS);
+  const priorStart = new Date(now);
+  priorStart.setDate(now.getDate() - SIGNAL_WINDOW_DAYS * 2);
+
+  const [questionsAnswered, attempts] = await Promise.all([
+    database.userQuestionAttempt.count({ where: { clerkUserId, question: { learningObjective: { examType } } } }),
+    database.userQuestionAttempt.findMany({
+      where: { clerkUserId, question: { learningObjective: { examType } }, attemptedAt: { gte: priorStart } },
+      select: {
+        isCorrect: true,
+        isReview: true,
+        attemptedAt: true,
+        question: { select: { learningObjective: { select: { discipline: true, system: { select: { name: true } } } } } },
+      },
+    }),
+  ]);
+
+  const recent = attempts.filter((a) => a.attemptedAt >= windowStart);
+  const prior = attempts.filter((a) => a.attemptedAt < windowStart);
+  const recentAcc = accuracyOf(recent);
+  const priorAcc = accuracyOf(prior);
+
+  const bySystem = new Map<string, { correct: number; total: number }>();
+  for (const a of recent) {
+    const name = describeSource(a.question.learningObjective).displayName;
+    const entry = bySystem.get(name) ?? { correct: 0, total: 0 };
+    entry.total += 1;
+    if (a.isCorrect) entry.correct += 1;
+    bySystem.set(name, entry);
+  }
+  const weakestSystems = [...bySystem.entries()]
+    .filter(([, v]) => v.total >= MIN_SYSTEM_ATTEMPTS_FOR_SIGNAL)
+    .map(([name, v]) => ({ name, attempts: v.total, accuracyPct: Math.round((v.correct / v.total) * 100) }))
+    .sort((x, y) => x.accuracyPct - y.accuracyPct)
+    .slice(0, WEAK_SYSTEMS_SHOWN);
+
+  const reviewAttempts = recent.filter((a) => a.isReview);
+  const reviewAcc = accuracyOf(reviewAttempts);
+
+  return {
+    windowDays: SIGNAL_WINDOW_DAYS,
+    questionsAnswered,
+    recent: recentAcc,
+    changeVsPriorPct: priorAcc.total >= MIN_PRIOR_ATTEMPTS_FOR_TREND && recentAcc.total > 0 ? recentAcc.pct - priorAcc.pct : null,
+    review: { ...reviewAcc, hasData: reviewAcc.total > 0 },
+    weakestSystems,
+  };
+}
+
+export async function listPracticeAssessments(clerkUserId: string, examType: ExamType) {
+  return database.practiceAssessment.findMany({
+    where: { clerkUserId, examType },
+    orderBy: { takenAt: 'desc' },
+    select: { id: true, source: true, label: true, score: true, takenAt: true },
+  });
+}
+
+export async function addPracticeAssessment(params: {
+  clerkUserId: string;
+  examType: ExamType;
+  source: AssessmentSource;
+  label: string;
+  score: number;
+  takenAt: Date;
+}): Promise<{ ok: true; id: string } | { ok: false; reason: 'limit' }> {
+  const existing = await database.practiceAssessment.count({
+    where: { clerkUserId: params.clerkUserId, examType: params.examType },
+  });
+  if (existing >= MAX_ASSESSMENTS_PER_EXAM) return { ok: false, reason: 'limit' };
+  const row = await database.practiceAssessment.create({ data: params, select: { id: true } });
+  return { ok: true, id: row.id };
+}
+
+/** Scoped by clerkUserId so one user can never delete another's entry by guessing an id. */
+export async function deletePracticeAssessment(clerkUserId: string, id: string) {
+  const result = await database.practiceAssessment.deleteMany({ where: { id, clerkUserId } });
+  return result.count > 0;
+}
+
+export async function recordExamOutcome(params: {
+  clerkUserId: string;
+  examType: ExamType;
+  score: number | null;
+  passed: boolean;
+  takenAt: Date;
+}) {
+  return database.examOutcome.create({ data: params, select: { id: true } });
+}
+
+export async function getLatestExamOutcome(clerkUserId: string, examType: ExamType) {
+  return database.examOutcome.findFirst({
+    where: { clerkUserId, examType },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, score: true, passed: true, takenAt: true },
   });
 }

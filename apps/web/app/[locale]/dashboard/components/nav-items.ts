@@ -5,6 +5,7 @@ import {
   Home,
   RotateCcw,
   Target,
+  TrendingUp,
   UserRound,
 } from 'lucide-react';
 
@@ -15,6 +16,7 @@ export const NAV_ITEMS = [
   { label: 'Review', href: '/dashboard/review', icon: RotateCcw },
   { label: 'Topics', href: '/dashboard/topics', icon: BookOpen },
   { label: 'Study Guide', href: '/dashboard/study-guide', icon: BookMarked },
+  { label: 'Score Predictor', href: '/dashboard/predictor', icon: TrendingUp },
   { label: 'History', href: '/dashboard/history', icon: History },
   { label: 'Account', href: '/dashboard/account', icon: UserRound },
 ];
