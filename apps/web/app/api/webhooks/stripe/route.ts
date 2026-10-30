@@ -1,10 +1,10 @@
-import { database } from '@repo/database';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { sendGA4Purchase } from '../../../../lib/ga4-measurement-protocol';
 import { sendMetaPurchase } from '../../../../lib/meta-capi';
 import { sendPaymentFailedEmail } from '../../../../lib/payment-failed-email';
 import { buildPaymentIssue } from '../../../../lib/subscription';
+import { syncSubscription } from '../../../../lib/subscription-sync';
 
 // Stripe is the system of record for billing state — this handler is the
 // ONLY place that ever writes to the Subscription table. Never write to it
@@ -14,41 +14,6 @@ const RELEVANT_EVENTS = new Set([
   'customer.subscription.updated',
   'customer.subscription.deleted',
 ]);
-
-async function upsertFromSubscription(subscription: Stripe.Subscription) {
-  const clerkUserId = subscription.metadata?.clerkUserId;
-  if (!clerkUserId) {
-    // Shouldn't happen — /api/checkout always sets this — but a subscription
-    // we can't attribute to a user is useless to store.
-    console.error('Stripe subscription missing clerkUserId metadata:', subscription.id);
-    return;
-  }
-
-  const customerId =
-    typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id;
-  const priceId = subscription.items.data[0]?.price.id ?? '';
-
-  await database.subscription.upsert({
-    where: { stripeSubscriptionId: subscription.id },
-    create: {
-      clerkUserId,
-      stripeCustomerId: customerId,
-      stripeSubscriptionId: subscription.id,
-      status: subscription.status,
-      priceId,
-      currentPeriodEnd: new Date(subscription.items.data[0]!.current_period_end * 1000),
-      trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
-    },
-    update: {
-      status: subscription.status,
-      priceId,
-      currentPeriodEnd: new Date(subscription.items.data[0]!.current_period_end * 1000),
-      trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
-    },
-  });
-}
 
 export async function POST(request: Request) {
   if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
@@ -74,7 +39,7 @@ export async function POST(request: Request) {
   }
 
   if (RELEVANT_EVENTS.has(event.type)) {
-    await upsertFromSubscription(event.data.object as Stripe.Subscription);
+    await syncSubscription(event.data.object as Stripe.Subscription);
   }
 
   // Report real payments to Meta Ads and Google Ads (via GA4). Trial invoices
