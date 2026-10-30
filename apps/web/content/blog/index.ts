@@ -27,6 +27,14 @@ import { post as uworldEnough } from './is-uworld-enough-step-2-ck';
 import { post as goodUworldPct } from './what-is-a-good-uworld-percentage';
 import { post as imgScores } from './img-step-2-ck-score-internal-medicine-family-medicine';
 import { post as aiTutor } from './ai-tutor-for-usmle';
+import { post as doVsUsmle } from './do-students-usmle-or-comlex';
+import { post as abimPassRate } from './abim-internal-medicine-pass-rate';
+import { post as imIte } from './im-in-training-exam-predicts-abim';
+import { post as ckPlateau } from './step-2-ck-score-plateau';
+import { post as step3PassRate } from './usmle-step-3-pass-rate';
+import { post as truelearnVsUworld } from './truelearn-vs-uworld-step-2-ck';
+import { post as ambossReview } from './amboss-review-usmle';
+import { post as uworldPlans } from './uworld-plans-and-prices';
 import { post as step1ExamDates2026 } from './usmle-step-1-exam-dates-2026';
 import { post as step1StudyGuide } from './usmle-step-1-study-guide';
 import { post as step2CkExamDates2026 } from './usmle-step-2-ck-exam-dates-2026';
@@ -44,6 +52,14 @@ import { post as usmleStep3Syllabus } from './usmle-step-3-syllabus';
 import type { BlogPost } from './types';
 
 export const posts: BlogPost[] = [
+  doVsUsmle,
+  abimPassRate,
+  imIte,
+  ckPlateau,
+  step3PassRate,
+  truelearnVsUworld,
+  ambossReview,
+  uworldPlans,
   nbmeCount,
   free120,
   passingScores,
