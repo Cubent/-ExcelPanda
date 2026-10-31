@@ -1,6 +1,6 @@
 {
-  "name": "MedPrep Institute – All-in-One USMLE Prep Platform",
-  "short_name": "MedPrep Institute",
+  "name": "ExcelPanda – Master Excel, Hands On",
+  "short_name": "ExcelPanda",
   "description": "The all-in-one USMLE prep platform behind a 95% pass rate, with an adaptive Qbank, AI-powered practice, and personalized study guides for Step 1, Step 2 CK, Step 3, and the ABIM Exam.",
   "start_url": "/",
   "display": "standalone",
@@ -12,25 +12,25 @@
   "categories": ["education", "medical"],
   "icons": [
     {
-      "src": "/favicon.png?v=2",
+      "src": "/favicon.png?v=3",
       "sizes": "500x500",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/favicon-192x192.png?v=2",
+      "src": "/favicon-192x192.png?v=3",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/favicon-512x512.png?v=2",
+      "src": "/favicon-512x512.png?v=3",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/apple-touch-icon.png?v=2",
+      "src": "/apple-touch-icon.png?v=3",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"

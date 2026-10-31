@@ -1,4 +1,4 @@
-// Main layout component for the MedPrep Institute website
+// Main layout component for the ExcelPanda website
 import './styles.css';
 import { AnalyticsProvider } from '@repo/analytics';
 
@@ -15,22 +15,10 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.medprepinstitute.org'),
-  title: 'MedPrep Institute – All-in-One USMLE Prep Platform',
-  description: 'MedPrep Institute is the all-in-one USMLE prep platform behind a 95% pass rate, with an adaptive Qbank, AI-powered practice, and personalized study guides for Step 1, Step 2 CK, Step 3, and the ABIM Exam.',
-  keywords: [
-    'MedPrep Institute',
-    'USMLE prep platform',
-    'USMLE question bank',
-    'USMLE Step 1',
-    'USMLE Step 2 CK',
-    'USMLE Step 3',
-    'ABIM exam prep',
-    'adaptive question bank',
-    'spaced repetition medical',
-    'med school qbank',
-    'residency prep',
-  ],
+  metadataBase: new URL('https://www.excelpanda.com'),
+  title: 'ExcelPanda – Master Excel, Hands On',
+  description: 'ExcelPanda helps you master Excel hands on, with practical tutorials, real-world exercises and step-by-step guides.',
+  keywords: ['ExcelPanda', 'Excel tutorials', 'learn Excel', 'Excel formulas', 'Excel hands on'],
   alternates: {
     canonical: '/',
   },
@@ -46,16 +34,16 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: 'MedPrep Institute – All-in-One USMLE Prep Platform',
-    description: 'The USMLE prep platform behind a 95% pass rate: an adaptive Qbank, AI-powered practice, and personalized study guides for Step 1, Step 2 CK, Step 3, and the ABIM Exam.',
-    url: 'https://www.medprepinstitute.org',
-    siteName: 'MedPrep Institute',
+    title: 'ExcelPanda – Master Excel, Hands On',
+    description: 'ExcelPanda helps you master Excel hands on, with practical tutorials, real-world exercises and step-by-step guides.',
+    url: 'https://www.excelpanda.com',
+    siteName: 'ExcelPanda',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'MedPrep Institute – All-in-One USMLE Prep Platform',
+        alt: 'ExcelPanda – Master Excel, Hands On',
       },
     ],
     locale: 'en_US',
@@ -63,26 +51,26 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'MedPrep Institute – All-in-One USMLE Prep Platform',
-    description: 'The USMLE prep platform behind a 95% pass rate: an adaptive Qbank, AI-powered practice, and personalized study guides for Step 1, Step 2 CK, Step 3, and the ABIM Exam.',
+    title: 'ExcelPanda – Master Excel, Hands On',
+    description: 'ExcelPanda helps you master Excel hands on, with practical tutorials, real-world exercises and step-by-step guides.',
     images: ['/og-image.png'],
   },
   manifest: '/manifest.json',
   appleWebApp: {
-    title: 'MedPrep Institute',
+    title: 'ExcelPanda',
     statusBarStyle: 'default',
   },
   icons: {
     icon: [
-      { url: '/favicon.ico?v=2', sizes: 'any' },
-      { url: '/favicon.png?v=2', type: 'image/png' },
-      { url: '/favicon-16x16.png?v=2', sizes: '16x16', type: 'image/png' },
-      { url: '/favicon-32x32.png?v=2', sizes: '32x32', type: 'image/png' },
-      { url: '/favicon-192x192.png?v=2', sizes: '192x192', type: 'image/png' },
-      { url: '/favicon-512x512.png?v=2', sizes: '512x512', type: 'image/png' },
+      { url: '/favicon.ico?v=3', sizes: 'any' },
+      { url: '/favicon.png?v=3', type: 'image/png' },
+      { url: '/favicon-16x16.png?v=3', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png?v=3', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-192x192.png?v=3', sizes: '192x192', type: 'image/png' },
+      { url: '/favicon-512x512.png?v=3', sizes: '512x512', type: 'image/png' },
     ],
-    shortcut: '/favicon.ico?v=2',
-    apple: '/apple-touch-icon.png?v=2',
+    shortcut: '/favicon.ico?v=3',
+    apple: '/apple-touch-icon.png?v=3',
   },
 };
 
@@ -108,11 +96,11 @@ const RootLayout = async ({ children, params }: RootLayoutProperties) => {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "EducationalOrganization",
-            "name": "MedPrep Institute",
-            "alternateName": "MedPrep Institute – All-in-One USMLE Prep Platform",
-            "description": "MedPrep Institute is the all-in-one USMLE prep platform behind a 95% pass rate, with an adaptive Qbank, AI-powered practice, and personalized study guides for Step 1, Step 2 CK, Step 3, and the ABIM Exam.",
-            "url": "https://www.medprepinstitute.org",
-            "logo": "https://www.medprepinstitute.org/favicon.png",
+            "name": "ExcelPanda",
+            "alternateName": "ExcelPanda – Master Excel, Hands On",
+            "description": "ExcelPanda helps you master Excel hands on, with practical tutorials, real-world exercises and step-by-step guides.",
+            "url": "https://www.excelpanda.com",
+            "logo": "https://www.excelpanda.com/favicon.png",
           })
         }}
       />

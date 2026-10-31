@@ -32,7 +32,7 @@ export const ComparisonTable = ({ caption, columns, rows, footnote }: Comparison
               columns — only the data underneath it scrolls. */}
           <p
             id={captionId}
-            className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-sm font-semibold text-[#06005A]"
+            className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-sm font-semibold text-[#1F4D3A]"
           >
             {caption}
           </p>
@@ -47,7 +47,7 @@ export const ComparisonTable = ({ caption, columns, rows, footnote }: Comparison
               aria-labelledby={captionId}
               className="w-full min-w-[44rem] border-separate border-spacing-0 text-left text-sm leading-relaxed"
             >
-              <thead className="bg-[#06005A] text-white">
+              <thead className="bg-[#1F4D3A] text-white">
                 <tr>
                   {columns.map((column) => (
                     <th
@@ -77,7 +77,7 @@ export const ComparisonTable = ({ caption, columns, rows, footnote }: Comparison
                             // with border-collapse either).
                             row.featured ? '' : 'border-t border-gray-200'
                           } ${isFirst ? 'font-semibold text-[#000C3F]' : 'font-normal'} ${
-                            row.featured && isFirst ? 'border-l-4 border-[#C46B10]' : ''
+                            row.featured && isFirst ? 'border-l-4 border-[#FF8A5B]' : ''
                           }`}
                         >
                           {row.cells[column.key]}

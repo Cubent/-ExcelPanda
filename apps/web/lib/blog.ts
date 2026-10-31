@@ -1,7 +1,7 @@
 import { posts } from '@/content/blog';
 import type { BlogPost } from '@/content/blog/types';
 
-export const SITE_URL = 'https://www.medprepinstitute.org';
+export const SITE_URL = 'https://www.excelpanda.com';
 
 export const getAllPosts = (): BlogPost[] =>
   [...posts].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));

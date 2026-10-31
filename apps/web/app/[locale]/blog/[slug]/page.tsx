@@ -75,7 +75,7 @@ const BlogPostPage = async ({ params }: BlogPostPageProperties) => {
     },
     publisher: {
       '@type': 'Organization',
-      name: 'MedPrep Institute',
+      name: 'ExcelPanda',
       url: SITE_URL,
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
@@ -150,7 +150,7 @@ const BlogPostPage = async ({ params }: BlogPostPageProperties) => {
                   </li>
                 </ol>
               </nav>
-              <p className="mt-6 text-xs font-semibold uppercase tracking-[0.22em] text-[#C46B10]">
+              <p className="mt-6 text-xs font-semibold uppercase tracking-[0.22em] text-[#FF8A5B]">
                 {post.category}
               </p>
               <h1 className="font-[family-name:var(--font-display)] mt-3 text-3xl font-bold leading-tight tracking-tight text-white sm:text-5xl">
@@ -199,7 +199,7 @@ const BlogPostPage = async ({ params }: BlogPostPageProperties) => {
           <div className="mx-auto max-w-3xl px-6 py-10 sm:py-14">
             <TableOfContents sections={post.sections} />
 
-            <div className="prose prose-lg max-w-none prose-headings:font-[family-name:var(--font-display)] prose-headings:font-bold prose-headings:text-[#06005A] prose-h2:mt-14 prose-h2:scroll-mt-24 prose-h3:mt-8 prose-h3:scroll-mt-24 prose-a:font-medium prose-a:text-[#C46B10] prose-a:no-underline hover:prose-a:underline prose-strong:text-[#000C3F] prose-li:my-1.5">
+            <div className="prose prose-lg max-w-none prose-headings:font-[family-name:var(--font-display)] prose-headings:font-bold prose-headings:text-[#1F4D3A] prose-h2:mt-14 prose-h2:scroll-mt-24 prose-h3:mt-8 prose-h3:scroll-mt-24 prose-a:font-medium prose-a:text-[#FF8A5B] prose-a:no-underline hover:prose-a:underline prose-strong:text-[#000C3F] prose-li:my-1.5">
               <post.Body />
             </div>
 

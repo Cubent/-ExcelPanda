@@ -7,7 +7,7 @@ export const TableOfContents = ({ sections }: { sections: BlogSection[] }) => (
       {sections.map((section, index) => (
         <li key={section.id} className="flex gap-2">
           <span className="w-5 shrink-0 text-gray-400">{index + 1}.</span>
-          <a href={`#${section.id}`} className="text-[#06005A] hover:text-[#C46B10] hover:underline">
+          <a href={`#${section.id}`} className="text-[#1F4D3A] hover:text-[#FF8A5B] hover:underline">
             {section.title}
           </a>
         </li>

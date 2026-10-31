@@ -24,12 +24,12 @@ const BlogIndexPage = () => {
     <div className="min-h-screen bg-white">
       <SiteHeader />
       <main className="mx-auto max-w-3xl px-6 py-14 sm:py-20">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#C46B10]">Blog</p>
-        <h1 className="font-[family-name:var(--font-display)] mt-3 text-3xl font-bold tracking-tight text-[#06005A] sm:text-4xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#FF8A5B]">Blog</p>
+        <h1 className="font-[family-name:var(--font-display)] mt-3 text-3xl font-bold tracking-tight text-[#1F4D3A] sm:text-4xl">
           USMLE study guides and question bank reviews
         </h1>
         <p className="mt-4 text-lg leading-relaxed text-gray-600">
-          Practical guides for Step 1, Step 2 CK and Step 3, from the team behind MedPrep Institute.
+          Practical Excel guides from the team behind ExcelPanda.
         </p>
 
         <div className="mt-12 flex flex-col gap-6">
@@ -41,8 +41,8 @@ const BlogIndexPage = () => {
               <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                 {post.category}
               </p>
-              <h2 className="font-[family-name:var(--font-display)] mt-2 text-xl font-bold text-[#06005A]">
-                <Link href={`/blog/${post.slug}`} className="hover:text-[#C46B10]">
+              <h2 className="font-[family-name:var(--font-display)] mt-2 text-xl font-bold text-[#1F4D3A]">
+                <Link href={`/blog/${post.slug}`} className="hover:text-[#FF8A5B]">
                   {post.title}
                 </Link>
               </h2>

@@ -29,28 +29,10 @@ const securityHeaders = env.FLAGS_SECRET
   ? noseconeMiddleware(noseconeOptionsWithToolbar)
   : noseconeMiddleware(noseconeOptions);
 
-const isProtectedRoute = (pathname: string) =>
-  pathname.includes('/onboarding') ||
-  pathname.includes('/dashboard') ||
-  pathname.includes('/paywall') ||
-  pathname.includes('/checkout/success');
-
-export default clerkMiddleware(async (auth, request: NextRequest) => {
+export default clerkMiddleware(async (_auth, request: NextRequest) => {
   // Skip middleware for email API routes to prevent blocking external API calls
   if (request.nextUrl.pathname.includes('/api/models/application')) {
     return NextResponse.next();
-  }
-
-  // Gate onboarding and dashboard behind auth. This must run before the i18n
-  // middleware below, since i18n may return a rewrite response (not just a
-  // redirect) that would otherwise short-circuit this check entirely.
-  if (isProtectedRoute(request.nextUrl.pathname)) {
-    const { userId } = await auth();
-    if (!userId) {
-      const signInUrl = new URL('/sign-in', request.url);
-      signInUrl.searchParams.set('redirect_url', request.url);
-      return NextResponse.redirect(signInUrl);
-    }
   }
 
   // Skip i18n middleware for API routes

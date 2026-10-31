@@ -31,9 +31,9 @@ export const GET = () => {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>MedPrep Institute Blog</title>
+    <title>ExcelPanda Blog</title>
     <link>${SITE_URL}/blog</link>
-    <description>USMLE study guides, exam logistics and question bank reviews from MedPrep Institute.</description>
+    <description>Excel tutorials and guides from ExcelPanda.</description>
     <language>en-us</language>
     <lastBuildDate>${lastBuildDate}</lastBuildDate>
     <atom:link href="${SITE_URL}/blog/feed.xml" rel="self" type="application/rss+xml" />

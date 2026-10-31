@@ -22,9 +22,9 @@ export const NotFoundContent = () => (
 
       <p
         aria-hidden
-        className="font-[family-name:var(--font-display)] mt-4 text-8xl font-bold leading-none tracking-tight text-[#06005A] sm:text-9xl"
+        className="font-[family-name:var(--font-display)] mt-4 text-8xl font-bold leading-none tracking-tight text-[#1F4D3A] sm:text-9xl"
       >
-        4<span className="text-[#C46B10]">0</span>4
+        4<span className="text-[#FF8A5B]">0</span>4
       </p>
 
       <h1 className="font-[family-name:var(--font-display)] mt-8 text-3xl font-bold tracking-tight text-black sm:text-4xl">
@@ -38,13 +38,13 @@ export const NotFoundContent = () => (
       <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
         <Link
           href="/"
-          className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#C46B10] px-8 text-base font-semibold text-white transition-colors hover:bg-[#a95a0d] sm:w-auto"
+          className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#FF8A5B] px-8 text-base font-semibold text-white transition-colors hover:bg-[#a95a0d] sm:w-auto"
         >
           Back to home
         </Link>
         <Link
           href="/contact"
-          className="inline-flex h-12 w-full items-center justify-center rounded-full border border-[#06005A] px-8 text-base font-semibold text-[#06005A] transition-colors hover:bg-[#06005A] hover:text-white sm:w-auto"
+          className="inline-flex h-12 w-full items-center justify-center rounded-full border border-[#1F4D3A] px-8 text-base font-semibold text-[#1F4D3A] transition-colors hover:bg-[#1F4D3A] hover:text-white sm:w-auto"
         >
           Contact support
         </Link>
@@ -59,7 +59,7 @@ export const NotFoundContent = () => (
             <Link
               key={page.href}
               href={page.href}
-              className="inline-flex items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-[#06005A] hover:text-[#06005A]"
+              className="inline-flex items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-[#1F4D3A] hover:text-[#1F4D3A]"
             >
               {page.label}
             </Link>

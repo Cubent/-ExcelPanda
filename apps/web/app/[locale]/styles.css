@@ -290,3 +290,19 @@
   height: 150px !important;
 }
 
+
+@keyframes panda-float {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-14px) rotate(var(--r, 0deg)); }
+}
+.panda-float { animation: panda-float 6s ease-in-out infinite; }
+
+@keyframes panda-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.panda-marquee { animation: panda-marquee 30s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .panda-float, .panda-marquee { animation: none; }
+}

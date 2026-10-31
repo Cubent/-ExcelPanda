@@ -17,7 +17,7 @@ export const RelatedPosts = ({ slug, category }: { slug: string; category: strin
     <aside aria-labelledby="related-posts" className="mt-16 border-t border-gray-200 pt-10">
       <h2
         id="related-posts"
-        className="font-[family-name:var(--font-display)] text-2xl font-bold text-[#06005A]"
+        className="font-[family-name:var(--font-display)] text-2xl font-bold text-[#1F4D3A]"
       >
         Keep reading
       </h2>
@@ -29,7 +29,7 @@ export const RelatedPosts = ({ slug, category }: { slug: string; category: strin
             </p>
             <Link
               href={`/blog/${post.slug}`}
-              className="mt-2 block text-sm font-bold leading-snug text-[#06005A] hover:text-[#C46B10]"
+              className="mt-2 block text-sm font-bold leading-snug text-[#1F4D3A] hover:text-[#FF8A5B]"
             >
               {post.title}
             </Link>
