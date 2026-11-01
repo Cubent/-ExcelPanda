@@ -22,6 +22,7 @@ export const getProfile = cache(async () => {
   const str = (k: string) => (typeof answers[k] === 'string' ? (answers[k] as string) : undefined);
 
   return {
+    userId,
     name: str('name'),
     level: str('level'),
     goal: str('goal'),

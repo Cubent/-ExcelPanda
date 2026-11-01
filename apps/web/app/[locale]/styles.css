@@ -340,3 +340,11 @@
     scrollbar-color: #1f4d3a #f1f3ea;
   }
 }
+
+/* Sheet scrollbars: white, not green */
+.sheet-scroll { scrollbar-width: thin !important; scrollbar-color: #E4E7E2 #ffffff !important; }
+.sheet-scroll::-webkit-scrollbar { width: 10px; height: 10px; background: #ffffff; }
+.sheet-scroll::-webkit-scrollbar-track { background: #ffffff; }
+.sheet-scroll::-webkit-scrollbar-thumb { background: #E4E7E2; border-radius: 999px; border: 2px solid #ffffff; }
+.sheet-scroll::-webkit-scrollbar-thumb:hover { background: #D3D8D1; }
+.sheet-scroll::-webkit-scrollbar-corner { background: #ffffff; }

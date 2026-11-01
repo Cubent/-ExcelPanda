@@ -1,5 +1,6 @@
 import { UserProfile } from '@clerk/nextjs';
-import { BookOpen, Calendar, Flame, Target, Zap } from 'lucide-react';
+import { BookOpen, Calendar, Flame, Gem, Zap } from 'lucide-react';
+import { getStats } from '../data';
 import { getProfile } from '../get-profile';
 import { Card, IconBox, Page, PageHeader, Pill, SectionTitle } from '../ui';
 
@@ -15,6 +16,7 @@ const GOAL: Record<string, string> = {
 
 export default async function ProfilePage() {
   const p = await getProfile();
+  const stat = await getStats(p.userId);
   const joined = p.joinedAt.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   const minutes = Number(p.minutes);
 
@@ -25,10 +27,10 @@ export default async function ProfilePage() {
   ];
 
   const stats = [
-    { icon: Flame, tone: 'coral' as const, value: '4', label: 'Day streak' },
-    { icon: Zap, tone: 'amber' as const, value: '230', label: 'Total XP' },
-    { icon: BookOpen, tone: 'green' as const, value: '12', label: 'Lessons done' },
-    { icon: Target, tone: 'teal' as const, value: '86%', label: 'Accuracy' },
+    { icon: Flame, tone: 'coral' as const, value: String(stat.streak), label: 'Day streak' },
+    { icon: Zap, tone: 'amber' as const, value: String(stat.xp), label: 'Total XP' },
+    { icon: BookOpen, tone: 'green' as const, value: String(stat.lessonsDone), label: 'Lessons done' },
+    { icon: Gem, tone: 'teal' as const, value: String(stat.gems), label: 'Gems' },
   ];
 
   return (
@@ -42,7 +44,7 @@ export default async function ProfilePage() {
             <span className="flex size-20 items-center justify-center rounded-2xl border-4 border-white bg-[#C7F000] text-3xl font-semibold text-[#1F4D3A]">
               {(p.name ?? 'E')[0]}
             </span>
-            <Pill tone="amber">Bronze League</Pill>
+            <Pill tone="green">Free plan</Pill>
           </div>
           <h2 className="mt-4 text-2xl font-semibold tracking-tight">{p.name ?? 'Excel learner'}</h2>
           <p className="mt-1 flex items-center gap-1.5 text-sm text-[#1F4D3A]/55">

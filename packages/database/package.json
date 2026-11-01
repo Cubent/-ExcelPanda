@@ -11,6 +11,7 @@
     "deploy": "prisma migrate deploy",
     "studio": "prisma studio",
     "seed": "tsx prisma/seed.ts",
+    "seed:courses": "tsx prisma/seed-courses.ts",
     "clean": "git clean -xdf .cache .turbo dist node_modules generated"
   },
   "prisma": {

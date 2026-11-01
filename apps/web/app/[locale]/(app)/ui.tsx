@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 // Shared building blocks for the signed-in pages (design-only for now).
@@ -131,11 +132,17 @@ export function Btn({
   variant = 'primary',
   size = 'md',
   className = '',
+  href,
+  submit,
+  disabled,
 }: {
   children: ReactNode;
   variant?: 'primary' | 'secondary' | 'lime' | 'ghost';
   size?: 'sm' | 'md';
   className?: string;
+  href?: string;
+  submit?: boolean;
+  disabled?: boolean;
 }) {
   const variants = {
     primary: 'bg-[#1F4D3A] text-white shadow-sm hover:bg-[#173d2e]',
@@ -144,11 +151,18 @@ export function Btn({
     ghost: 'text-[#1F4D3A] hover:bg-[#1F4D3A]/5',
   };
   const sizes = { sm: 'px-3.5 py-2 text-[13px]', md: 'px-5 py-2.5 text-sm' };
+  const cls = `inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-colors ${
+    disabled ? 'cursor-not-allowed opacity-50' : ''
+  } ${variants[variant]} ${sizes[size]} ${className}`;
+  if (href && !disabled) {
+    return (
+      <Link href={href} className={cls}>
+        {children}
+      </Link>
+    );
+  }
   return (
-    <button
-      type="button"
-      className={`inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-colors ${variants[variant]} ${sizes[size]} ${className}`}
-    >
+    <button type={submit ? 'submit' : 'button'} disabled={disabled} className={cls}>
       {children}
     </button>
   );

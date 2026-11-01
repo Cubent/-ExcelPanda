@@ -7,7 +7,15 @@ import { Stat } from './ui';
 
 // Shell shared by every signed-in page: sidebar on desktop, top bar and
 // bottom nav on mobile.
-export function AppShell({ name, children }: { name?: string; children: ReactNode }) {
+export function AppShell({
+  name,
+  stats,
+  children,
+}: {
+  name?: string;
+  stats: { streak: number; xp: number; gems: number };
+  children: ReactNode;
+}) {
   return (
     <div className="min-h-screen bg-[#F7F8F4] text-[#1F4D3A]">
       <style>{`
@@ -18,9 +26,9 @@ export function AppShell({ name, children }: { name?: string; children: ReactNod
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#1F4D3A]/10 bg-[#F7F8F4]/90 px-4 py-3 backdrop-blur lg:hidden">
         <SiteLogo />
         <div className="flex items-center gap-4">
-          <Stat icon={Flame} value="4" tint="#C4562F" />
-          <Stat icon={Zap} value="230" tint="#9A6B00" />
-          <Stat icon={Gem} value="120" tint="#1D766B" />
+          <Stat icon={Flame} value={String(stats.streak)} tint="#C4562F" />
+          <Stat icon={Zap} value={String(stats.xp)} tint="#9A6B00" />
+          <Stat icon={Gem} value={String(stats.gems)} tint="#1D766B" />
         </div>
       </header>
 

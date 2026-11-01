@@ -365,9 +365,94 @@ model UserProfile {
   excelLevel            String?
   goal                  String?
   answers               Json?
+  xp                    Int       @default(0)
+  gems                  Int       @default(0)
   onboardingCompletedAt DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
   @@map("user_profiles")
+}
+
+// ---------------------------------------------------------------------------
+// ExcelPanda courses
+// ---------------------------------------------------------------------------
+
+enum LessonKind {
+  LESSON
+  CHEST
+  TEST
+}
+
+// A course is a path made of units, each unit a row of lessons. Courses can
+// exist as empty shells (no units yet); only published ones reach learners.
+model Course {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String   @default("")
+  order       Int      @default(0)
+  published   Boolean  @default(false)
+  units       Unit[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("courses")
+}
+
+model Unit {
+  id       String   @id @default(cuid())
+  courseId String
+  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  order    Int
+  title    String
+  blurb    String   @default("")
+  lessons  Lesson[]
+
+  @@unique([courseId, order])
+  @@map("units")
+}
+
+model Lesson {
+  id       String               @id @default(cuid())
+  unitId   String
+  unit     Unit                 @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  order    Int
+  title    String
+  // Lucide icon key, resolved on the client (e.g. "sigma", "gift").
+  icon     String               @default("book")
+  kind     LessonKind           @default(LESSON)
+  xp       Int                  @default(10)
+  // Key into the web app's lesson content registry. Null = no content yet.
+  contentKey String?
+  progress UserLessonProgress[]
+
+  @@unique([unitId, order])
+  @@map("lessons")
+}
+
+model UserLessonProgress {
+  id          String   @id @default(cuid())
+  clerkUserId String
+  lessonId    String
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completedAt DateTime @default(now())
+
+  @@unique([clerkUserId, lessonId])
+  @@index([clerkUserId])
+  @@map("user_lesson_progress")
+}
+
+// One row per user per UTC day they earned anything. Drives streaks, daily
+// quests, the weekly challenge and the weekly leaderboard.
+model UserActivityDay {
+  id          String   @id @default(cuid())
+  clerkUserId String
+  date        DateTime @db.Date
+  xp          Int      @default(0)
+  lessons     Int      @default(0)
+
+  @@unique([clerkUserId, date])
+  @@index([date])
+  @@map("user_activity_days")
 }
