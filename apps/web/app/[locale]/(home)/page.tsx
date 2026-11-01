@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { StartFreeButton } from '../components/start-free-button';
 import { SiteFooter } from '../components/site-footer';
 import { SiteHeader } from '../components/site-header';
 
@@ -7,6 +8,10 @@ const LIME = '#C7F000';
 const PEACH = '#FF8A5B';
 
 const FUNCTIONS = ['SUM', 'VLOOKUP', 'XLOOKUP', 'IF', 'INDEX', 'MATCH', 'COUNTIFS', 'SUMIFS', 'TEXTJOIN', 'FILTER', 'LET', 'PIVOT'];
+
+const FAQS: { q: string; a: string }[] = [{"q": "How do I learn Excel from scratch?", "a": "Start with cells, ranges and basic formulas such as SUM and AVERAGE, then move to lookups, pivot tables and charts. ExcelPanda breaks each of these into short, hands-on lessons so you practice every skill in a real spreadsheet instead of only reading about it."}, {"q": "How long does it take to learn Excel?", "a": "Most people can handle everyday tasks like formulas, formatting and simple charts within a few weeks of short daily practice. Lookups, pivot tables and data cleaning usually take a little longer, which is why lessons are kept to a few minutes each."}, {"q": "Do I need Excel installed to use ExcelPanda?", "a": "No. Lessons run in the browser, so there is nothing to install or set up before you start."}, {"q": "Which Excel functions should I learn first?", "a": "SUM, IF, COUNTIF, XLOOKUP and INDEX/MATCH cover a large share of real-world work. After those, learn SUMIFS, TEXTJOIN, FILTER and pivot tables."}, {"q": "Is learning by doing better than watching videos?", "a": "Videos are easy to follow but easy to forget. Typing the formula yourself, seeing the result and fixing mistakes builds the muscle memory that makes skills stick."}, {"q": "Is ExcelPanda free?", "a": "You can start with free lessons today. Paid plans for the full library may be added later, and the free lessons will remain free."}];
+
+const TOPICS: { t: string; d: string }[] = [{"t": "Excel formulas", "d": "Write SUM, IF, COUNTIF and nested formulas that work the first time, and learn to read error messages."}, {"t": "Lookups and references", "d": "Pull data across sheets with XLOOKUP, VLOOKUP and INDEX/MATCH, and understand absolute versus relative references."}, {"t": "Pivot tables", "d": "Summarize thousands of rows in a few clicks, group dates, and build reports that update on refresh."}, {"t": "Charts and visuals", "d": "Pick the right chart, format it cleanly and make the key point obvious at a glance."}, {"t": "Data cleaning", "d": "Fix messy exports with TRIM, TEXTSPLIT, Flash Fill and Power Query basics."}, {"t": "Keyboard shortcuts", "d": "Navigate, select and format without the mouse and finish routine work in a fraction of the time."}];
 
 const lessons = [
   { title: 'Formulas', sub: 'SUM, IF, AVERAGE', cells: ['12', '30', '=SUM(A1:B1)', '42'] },
@@ -50,7 +55,7 @@ const Grid = ({ cells, accent = false }: { cells: string[]; accent?: boolean }) 
 );
 
 const ExcelMock = () => (
-  <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-[#1F4D3A]/10 bg-white shadow-[0_30px_80px_rgba(31,77,58,0.15)]">
+  <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-[#1F4D3A]/10 bg-white">
     <div className="flex items-center gap-2 border-b border-[#1F4D3A]/10 bg-[#F3F6EC] px-4 py-3">
       <span className="size-2.5 rounded-full bg-[#FF8A5B]" />
       <span className="size-2.5 rounded-full bg-[#C7F000]" />
@@ -136,8 +141,8 @@ const Home = () => (
 
     {/* Hero */}
     <section className="mx-auto max-w-4xl px-6 pb-20 pt-20 text-center sm:pt-28">
-      <img src="/animateos-logo (4).png" alt="ExcelPanda logo" className="mx-auto mb-6 size-16 rounded-2xl shadow-md" />
-      <h1 className="text-5xl font-semibold leading-[1.05] tracking-tight sm:text-7xl">
+      <img src="/animateos-logo (4).png" alt="ExcelPanda logo" className="mx-auto mb-6 size-16 rounded-2xl" />
+      <h1 className="text-6xl font-semibold leading-[1.05] tracking-tight sm:text-8xl">
         Master Excel,
         <br />
         <span className="relative inline-block">
@@ -149,21 +154,12 @@ const Home = () => (
         Our bite-sized, interactive lessons make Excel skills easy to learn and remember. You learn by doing, not by watching.
       </p>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <Link
-          href="#start"
-          className="rounded-full bg-[#1F4D3A] px-6 py-3 text-sm font-semibold text-[#C7F000] transition-transform hover:-translate-y-0.5"
-        >
+        <StartFreeButton className="rounded-full bg-[#1F4D3A] px-9 py-4 text-lg font-semibold text-[#C7F000] transition-transform hover:opacity-90">
           Start learning free
-        </Link>
-        <Link href="#paths" className="rounded-full px-5 py-3 text-sm font-semibold text-[#1F4D3A] hover:bg-[#1F4D3A]/5">
+        </StartFreeButton>
+        <Link href="#paths" className="rounded-full px-7 py-4 text-lg font-semibold text-[#1F4D3A] hover:bg-[#1F4D3A]/5">
           See the lessons <span className="text-[#FF8A5B]">→</span>
         </Link>
-      </div>
-      <p className="mt-12 text-xs uppercase tracking-[0.2em] text-[#1F4D3A]/40">Built for</p>
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-lg font-semibold text-[#1F4D3A]/35">
-        {['Analysts', 'Students', 'Finance teams', 'Founders', 'Operations'].map((w) => (
-          <span key={w}>{w}</span>
-        ))}
       </div>
     </section>
 
@@ -180,7 +176,7 @@ const Home = () => (
         <span
           key={f.t}
           style={{ ['--r' as string]: f.r, background: f.f, color: f.c }}
-          className={`panda-float absolute hidden rounded-2xl px-4 py-3 font-mono text-sm font-bold shadow-lg sm:block ${f.x}`}
+          className={`panda-float absolute hidden rounded-2xl px-4 py-3 font-mono text-sm font-bold sm:block ${f.x}`}
         >
           {f.t}
         </span>
@@ -211,7 +207,7 @@ const Home = () => (
         {lessons.map((l, i) => (
           <article
             key={l.title}
-            className="w-60 shrink-0 rounded-3xl border border-[#1F4D3A]/10 bg-white p-4 shadow-sm"
+            className="w-60 shrink-0 rounded-3xl border border-[#1F4D3A]/10 bg-white p-4"
           >
             <Grid cells={l.cells} accent={i % 2 === 0} />
             <h3 className="mt-4 font-semibold">{l.title}</h3>
@@ -270,13 +266,113 @@ const Home = () => (
       <h2 className="text-center text-4xl font-semibold tracking-tight sm:text-5xl">What you’ll be able to do.</h2>
       <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {skills.map((s, i) => (
-          <div key={s} className="rounded-2xl bg-white p-5 text-sm font-medium shadow-sm ring-1 ring-[#1F4D3A]/10">
+          <div key={s} className="rounded-2xl bg-white p-5 text-sm font-medium ring-1 ring-[#1F4D3A]/10">
             <span
               className="mb-3 block size-2.5 rounded-full"
               style={{ background: [LIME, PEACH, GREEN][i % 3] }}
             />
             {s}
           </div>
+        ))}
+      </div>
+    </section>
+
+    {/* SEO: what & why */}
+    <section className="mx-auto max-w-6xl px-6 py-24">
+      <div className="grid gap-12 md:grid-cols-[1fr_1.4fr] md:gap-20">
+        <div>
+          <p className="text-sm font-medium text-[#1F4D3A]/60">Learn Excel online</p>
+          <h2 className="mt-3 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
+            The fastest way to learn Excel is to use it.
+          </h2>
+        </div>
+        <div className="space-y-5 text-lg leading-relaxed text-[#1F4D3A]/75">
+          <p>
+            ExcelPanda is an interactive Excel course built around short, practical exercises. Each lesson gives you a small
+            goal, a real spreadsheet and instant feedback, so you learn formulas, functions and data skills by doing them.
+          </p>
+          <p>
+            Whether you are starting from zero or tightening up your skills for work, you will build the habits that matter:
+            clean data, readable formulas and reports you can trust.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    {/* SEO: topics */}
+    <section className="border-y border-[#1F4D3A]/10 bg-white">
+      <div className="mx-auto max-w-6xl px-6 py-24">
+        <h2 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">Excel topics you can learn here</h2>
+        <div className="mt-14 grid gap-px overflow-hidden rounded-3xl border border-[#1F4D3A]/10 bg-[#1F4D3A]/10 sm:grid-cols-2 lg:grid-cols-3">
+          {TOPICS.map((t, i) => (
+            <article key={t.t} className="bg-white p-8">
+              <span className="font-mono text-sm" style={{ color: i % 2 ? PEACH : '#7C9A00' }}>
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <h3 className="mt-4 text-xl font-semibold">{t.t}</h3>
+              <p className="mt-2 leading-relaxed text-[#1F4D3A]/65">{t.d}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* SEO: comparison */}
+    <section className="mx-auto max-w-4xl px-6 py-24">
+      <h2 className="text-center text-4xl font-semibold tracking-tight sm:text-5xl">Learning by doing vs. watching videos</h2>
+      <div className="mt-12 overflow-hidden rounded-3xl border border-[#1F4D3A]/10 bg-white">
+        <table className="w-full text-left text-sm sm:text-base">
+          <thead>
+            <tr className="border-b border-[#1F4D3A]/10 bg-[#EEF3E2]">
+              <th className="px-5 py-4 font-medium text-[#1F4D3A]/60"><span className="sr-only">Feature</span></th>
+              <th className="px-5 py-4 font-medium text-[#1F4D3A]/60">Video courses</th>
+              <th className="px-5 py-4 font-semibold">ExcelPanda</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              ['You practice', 'After the video, if at all', 'In every lesson'],
+              ['Feedback', 'None, you check yourself', 'Instant, on your formula'],
+              ['Lesson length', '10 to 40 minutes', 'About 3 minutes'],
+              ['Remembering it', 'Rewatch to refresh', 'Short repeats of what you missed'],
+            ].map((r) => (
+              <tr key={r[0]} className="border-b border-[#1F4D3A]/10 last:border-0">
+                <th scope="row" className="px-5 py-4 font-medium">{r[0]}</th>
+                <td className="px-5 py-4 text-[#1F4D3A]/60">{r[1]}</td>
+                <td className="px-5 py-4 font-medium">{r[2]}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    {/* SEO: FAQ */}
+    <section id="faq" className="mx-auto max-w-3xl px-6 py-24">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: FAQS.map((f) => ({
+              '@type': 'Question',
+              name: f.q,
+              acceptedAnswer: { '@type': 'Answer', text: f.a },
+            })),
+          }),
+        }}
+      />
+      <h2 className="text-center text-4xl font-semibold tracking-tight sm:text-5xl">Excel learning questions, answered</h2>
+      <div className="mt-12 divide-y divide-[#1F4D3A]/10 border-y border-[#1F4D3A]/10">
+        {FAQS.map((f) => (
+          <details key={f.q} className="group py-5">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-medium">
+              {f.q}
+              <span className="text-2xl font-light text-[#FF8A5B] transition-transform group-open:rotate-45">+</span>
+            </summary>
+            <p className="mt-3 leading-relaxed text-[#1F4D3A]/70">{f.a}</p>
+          </details>
         ))}
       </div>
     </section>
