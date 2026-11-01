@@ -98,7 +98,7 @@ function PathNode({ node, offset, mascot }: { node: MapNode; offset: number; mas
         </div>
       )}
 
-      {state === 'locked' ? (
+      {state === 'locked' && !node.open ? (
         <span aria-label={`${node.title} (locked)`} className={`${cls} cursor-not-allowed`} style={style}>
           {icon}
         </span>

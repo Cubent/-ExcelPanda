@@ -18,7 +18,8 @@ export async function completeLesson(lessonId: string): Promise<CompleteResult> 
   const node = map?.units.flatMap((u) => u.nodes).find((n) => n.id === lessonId);
   if (!node) return { ok: false, xp: 0, gems: 0 };
   // Already completed (or not unlocked yet): nothing to award.
-  if (node.state !== 'current') return { ok: node.state === 'done', xp: 0, gems: 0 };
+  if (node.state === 'done') return { ok: true, xp: 0, gems: 0 };
+  if (!node.open) return { ok: false, xp: 0, gems: 0 };
 
   const date = todayUtc();
   try {

@@ -20,7 +20,7 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonI
   const unit = map?.units.find((u) => u.nodes.some((n) => n.slug === slug || n.id === slug));
   const node = unit?.nodes.find((n) => n.slug === slug || n.id === slug);
   if (!unit || !node) notFound();
-  if (node.state === 'locked') redirect('/dashboard');
+  if (!node.open) redirect('/dashboard');
 
   const row = await database.lesson.findUnique({ where: { id: node.id }, select: { contentKey: true } });
   const content = getLessonContent(row?.contentKey);
@@ -67,7 +67,7 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonI
             </p>
           </div>
         </div>
-        {node.state === 'current' && (
+        {node.state !== 'done' && (
           <form
             action={async () => {
               'use server';

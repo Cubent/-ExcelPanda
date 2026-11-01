@@ -590,6 +590,17 @@ export function buildEvaluator(data: SheetData): Evaluator {
       }
     }
 
+    if (name === 'ISERROR') {
+      if (argNodes.length !== 1) throw new XlError('#VALUE!');
+      try {
+        const v = evalNode(argNodes[0]);
+        return !isRange(v) && v instanceof XlError;
+      } catch (e) {
+        if (e instanceof XlError) return true;
+        throw e;
+      }
+    }
+
     const args = argNodes.map(evalNode);
     const need = (min: number, max = min) => {
       if (args.length < min || args.length > max) throw new XlError('#VALUE!');
@@ -735,6 +746,77 @@ export function buildEvaluator(data: SheetData): Evaluator {
           if (m(v) && typeof sv === 'number') s += sv;
         });
         return s;
+      }
+      case 'XLOOKUP': {
+        need(3, 4);
+        const [look, from, ret] = args;
+        if (!isRange(from) || !isRange(ret) || from.vals.length !== ret.vals.length) throw new XlError('#VALUE!');
+        const i = from.vals.findIndex((v) => v !== null && !(v instanceof XlError) && compare(v, look as Scalar) === 0);
+        if (i >= 0) return ret.vals[i];
+        if (args[3] !== undefined) return args[3] as Scalar;
+        throw new XlError('#N/A');
+      }
+      case 'MATCH': {
+        need(2, 3);
+        const rg = args[1];
+        if (!isRange(rg)) throw new XlError('#VALUE!');
+        const i = rg.vals.findIndex((v) => v !== null && !(v instanceof XlError) && compare(v, args[0] as Scalar) === 0);
+        if (i < 0) throw new XlError('#N/A');
+        return i + 1;
+      }
+      case 'INDEX': {
+        need(2, 3);
+        const rg = args[0];
+        if (!isRange(rg)) throw new XlError('#VALUE!');
+        const r = Math.trunc(toNum(args[1]));
+        const c = args[2] === undefined ? (rg.cols === 1 ? 1 : 0) : Math.trunc(toNum(args[2]));
+        if (rg.cols === 1 || rg.rows === 1) {
+          const idx = (rg.cols === 1 ? r : rg.rows === 1 && args[2] === undefined ? r : c) - 1;
+          if (idx < 0 || idx >= rg.vals.length) throw new XlError('#REF!');
+          return rg.vals[idx];
+        }
+        if (r < 1 || r > rg.rows || c < 1 || c > rg.cols) throw new XlError('#REF!');
+        return rg.vals[(r - 1) * rg.cols + (c - 1)];
+      }
+      case 'VLOOKUP': {
+        need(3, 4);
+        const tbl = args[1];
+        if (!isRange(tbl)) throw new XlError('#VALUE!');
+        const col = Math.trunc(toNum(args[2]));
+        if (col < 1 || col > tbl.cols) throw new XlError('#REF!');
+        for (let r = 0; r < tbl.rows; r++) {
+          const v = tbl.vals[r * tbl.cols];
+          if (v !== null && !(v instanceof XlError) && compare(v, args[0] as Scalar) === 0) return tbl.vals[r * tbl.cols + col - 1];
+        }
+        throw new XlError('#N/A');
+      }
+      case 'SUBSTITUTE': {
+        need(3);
+        const from = toStr(args[1]);
+        return from === '' ? toStr(args[0]) : toStr(args[0]).split(from).join(toStr(args[2]));
+      }
+      case 'VALUE': {
+        need(1);
+        const v = literal(toStr(args[0]).trim());
+        if (typeof v !== 'number') throw new XlError('#VALUE!');
+        return v;
+      }
+      case 'ISNUMBER':
+        need(1);
+        return typeof args[0] === 'number';
+      case 'ISTEXT':
+        need(1);
+        return typeof args[0] === 'string';
+      case 'ISBLANK':
+        need(1);
+        return args[0] === null;
+      case 'ISERROR':
+        need(1);
+        return args[0] instanceof XlError;
+      case 'COUNTBLANK': {
+        need(1);
+        const rg = args[0];
+        return isRange(rg) ? rg.vals.filter((v) => v === null || v === '').length : 0;
       }
       default:
         throw new XlError('#NAME?');

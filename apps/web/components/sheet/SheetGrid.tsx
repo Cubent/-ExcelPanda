@@ -421,7 +421,7 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
   const caretRef = useRef(0);
   const pendingCaret = useRef<number | null>(null);
   const pointRef = useRef<{ start: number; end: number } | null>(null);
-  const pointNav = useRef<{ anchor: Pos; focus: Pos }>({ anchor: ZERO, focus: ZERO });
+  const pointNav = useRef<{ anchor: Pos; focus: Pos; ext?: boolean }>({ anchor: ZERO, focus: ZERO });
   const prevEditing = useRef(false);
   const dragRef = useRef<
     | null
@@ -792,17 +792,30 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
     if (!s.edit || e.ctrlKey || e.metaKey || e.altKey) return false;
     const caret = e.currentTarget.selectionStart ?? caretRef.current;
     caretRef.current = caret;
-    const pointing = !!pointRef.current && caret === pointRef.current.end;
-    if (!pointing && !canPoint(s.edit.text, caret)) return false;
+    let pointing = !!pointRef.current && caret === pointRef.current.end;
+    if (!pointing && !canPoint(s.edit.text, caret)) {
+      // Caret sits right after a typed reference ("=SUM(B2" or "=SUM(B2:"): arrows adjust that reference.
+      if (!s.edit.text.startsWith('=')) return false;
+      const before = s.edit.text.slice(0, caret);
+      const m = /(\$?[A-Za-z]{1,2}\$?\d+)(:(\$?[A-Za-z]{1,2}\$?\d+)?)?$/.exec(before);
+      if (!m || (m.index > 0 && /[A-Za-z0-9_.]/.test(before[m.index - 1]))) return false;
+      const a1 = E.parseKey(m[1]);
+      if (!a1) return false;
+      const b1 = m[3] ? E.parseKey(m[3]) : null;
+      const colonOnly = !!m[2] && !m[3];
+      pointRef.current = { start: m.index, end: caret };
+      pointNav.current = { anchor: a1, focus: b1 ?? a1, ext: colonOnly };
+      pointing = true;
+    }
     e.preventDefault();
     const d = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[e.key] as [number, number];
-    const nav = pointing ? pointNav.current : { anchor: s.active, focus: s.active };
+    const nav = pointing ? pointNav.current : { anchor: s.active, focus: s.active, ext: false };
     const focus = clamp({ c: nav.focus.c + d[0], r: nav.focus.r + d[1] });
-    const anchor = e.shiftKey ? nav.anchor : focus;
-    pointNav.current = { anchor, focus };
+    const anchor = e.shiftKey || nav.ext ? nav.anchor : focus;
+    pointNav.current = { anchor, focus, ext: nav.ext };
     emit('point-arrow');
     const next = insertPoint(s, E.rectOf(anchor, focus));
-    pointNav.current = { anchor, focus }; // insertPoint normalises; keep the real direction
+    pointNav.current = { anchor, focus, ext: nav.ext }; // insertPoint normalises; keep the real direction
     if (next) commit(next);
     return true;
   };

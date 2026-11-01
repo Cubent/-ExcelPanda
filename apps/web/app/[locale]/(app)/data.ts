@@ -6,6 +6,9 @@ import { cache } from 'react';
 // Course map
 // ---------------------------------------------------------------------------
 
+// TEMPORARY: lets you open any lesson, not just the next one. Set to false to restore the locked path.
+export const UNLOCK_ALL = true;
+
 export type NodeState = 'done' | 'current' | 'locked';
 export type MapNode = {
   id: string;
@@ -16,6 +19,8 @@ export type MapNode = {
   kind: 'LESSON' | 'CHEST' | 'TEST';
   xp: number;
   state: NodeState;
+  /** Locked lessons are still openable when UNLOCK_ALL is on. */
+  open: boolean;
 };
 export type MapUnit = {
   id: string;
@@ -77,7 +82,7 @@ export const getCourseMap = cache(async (userId: string): Promise<CourseMap | nu
       let slug = l.title.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'lesson';
       if (usedSlugs.has(slug)) slug = `${slug}-${u.order}-${l.order}`;
       usedSlugs.add(slug);
-      const node: MapNode = { id: l.id, slug, title: l.title, icon: l.icon, kind: l.kind, xp: l.xp, state };
+      const node: MapNode = { id: l.id, slug, title: l.title, icon: l.icon, kind: l.kind, xp: l.xp, state, open: UNLOCK_ALL || state !== 'locked' };
       if (state === 'current') current = node;
       total += 1;
       if (state === 'done') completed += 1;

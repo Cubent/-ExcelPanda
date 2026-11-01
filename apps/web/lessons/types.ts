@@ -36,6 +36,8 @@ export type LessonStep = {
 };
 
 export type LessonContent = {
+  /** Show the formatting toolbar for this lesson (needed for fill colour, alignment). */
+  toolbar?: boolean;
   key: string;
   title: string;
   steps: LessonStep[];

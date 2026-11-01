@@ -288,12 +288,11 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, onComplet
   return (
     <div
       className="relative flex h-dvh flex-col overflow-hidden bg-[#F7F8F4] text-[#1F4D3A]"
-      onMouseDown={(e) => {
-        // Clicking instructions or empty space must not steal keyboard focus from the sheet.
-        if (!(e.target as HTMLElement).closest('button, a, input, textarea, [role=grid]')) {
-          e.preventDefault();
-          gridRef.current?.focus();
-        }
+      onMouseUp={(e) => {
+        // Clicking empty space gives the keyboard back to the sheet, unless you just selected text to copy it.
+        if ((e.target as HTMLElement).closest('button, a, input, textarea, [role=grid]')) return;
+        const sel = window.getSelection();
+        if (!sel || sel.isCollapsed) gridRef.current?.focus();
       }}
       onClick={(e) => {
         // After using a button (menu toggles, hint), hand the keyboard back to the sheet.
@@ -509,7 +508,7 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, onComplet
           )}
 
           <div className={opts.layout === 'side' ? 'min-h-0 min-w-0 flex-1 self-start' : 'mt-4 min-h-0'}>
-            <SheetGrid key={opts.full ? 'full' : 'compact'} ref={gridRef} autoFocus toolbar={opts.toolbar} statusBar={opts.status} noScroll={!opts.full} fit={!opts.full} onState={setSnap} onEvent={onEvent} />
+            <SheetGrid key={opts.full ? 'full' : 'compact'} ref={gridRef} autoFocus toolbar={opts.toolbar || !!lesson.toolbar} statusBar={opts.status} noScroll={!opts.full} fit={!opts.full} onState={setSnap} onEvent={onEvent} />
           </div>
 
           {opts.layout === 'center' && (
