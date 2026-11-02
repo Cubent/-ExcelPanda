@@ -27,6 +27,38 @@ import {
   vlookupHlookup,
   xlookupDeep,
 } from './ff3';
+import {
+  blanksErrors,
+  filterData,
+  findReplaceLesson,
+  flashFillLesson,
+  formatTable,
+  removeDuplicatesLesson,
+  sortData,
+  structuredRefs,
+  textNumbers,
+  textToColumnsLesson,
+  totalsSlicers,
+  unit1Test as daUnit1Test,
+  unit2Test as daUnit2Test,
+} from './da1';
+import {
+  buildChart,
+  calculatedFields,
+  chartDesign,
+  comboChart,
+  firstPivot as daFirstPivot,
+  grouping,
+  miniCharts,
+  pickRightChart,
+  pivotCharts,
+  pivotSlicers,
+  refreshPivot,
+  summarizeBy,
+  unit3Test as daUnit3Test,
+  unit4Test as daUnit4Test,
+} from './da2';
+import { correlation, dataTables, finalTest as daFinalTest, forecasting, goalSeekLesson, scenarios } from './da3';
 import { meetTheGrid } from './meet-the-grid';
 import type { LessonContent } from './types';
 import { basicMath, cellsRanges, formatting, sumAverage, unit1Test } from './unit1';
@@ -57,6 +89,12 @@ const ALL: LessonContent[] = [
   textSlice, findSubstitute, textJoin, cleanText, datesAreNumbers, dateMath, ffUnit3Test,
   xlookupDeep, vlookupHlookup, indexMatch, approxMatch, multiLookup, ffUnit4Test,
   descriptiveStats, topN, rounding, validationLesson, conditionalFormatting, ffFinalTest,
+  // Data Analysis & Pivots
+  formatTable, sortData, filterData, structuredRefs, totalsSlicers, daUnit1Test,
+  removeDuplicatesLesson, textToColumnsLesson, flashFillLesson, findReplaceLesson, textNumbers, blanksErrors, daUnit2Test,
+  daFirstPivot, summarizeBy, grouping, calculatedFields, pivotSlicers, refreshPivot, daUnit3Test,
+  pickRightChart, buildChart, comboChart, miniCharts, chartDesign, pivotCharts, daUnit4Test,
+  goalSeekLesson, scenarios, dataTables, forecasting, correlation, daFinalTest,
 ];
 
 const LESSONS: Record<string, LessonContent> = Object.fromEntries(ALL.map((l) => [l.key, l]));

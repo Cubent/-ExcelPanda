@@ -114,6 +114,72 @@ const FORMULAS_FUNCTIONS: U[] = [
   },
 ];
 
+const DATA_ANALYSIS: U[] = [
+  {
+    title: 'Tables, Sorting & Filtering',
+    blurb: 'Smart tables, sorting, filters, slicers and structured references',
+    lessons: [
+      T('Format as Table', 'grid', 'da-format-table'),
+      T('Sort', 'list', 'da-sort'),
+      T('Filter & search', 'search', 'da-filter'),
+      T('Structured references', 'sigma', 'da-structured-refs'),
+      T('Totals row & slicers', 'layout', 'da-totals-slicers'),
+      T('Unit 1 test', 'trophy', 'da-unit1-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'Cleaning Messy Data',
+    blurb: 'Duplicates, text to columns, Flash Fill, find and replace',
+    lessons: [
+      T('Remove duplicates', 'sparkles', 'da-remove-duplicates'),
+      T('Text to columns', 'sparkles', 'da-text-to-columns'),
+      T('Flash Fill', 'sparkles', 'da-flash-fill'),
+      T('Find & Replace', 'search', 'da-find-replace'),
+      T('Numbers & dates stored as text', 'wrench', 'da-text-numbers'),
+      T('Blanks & errors', 'wrench', 'da-blanks-errors'),
+      T('Unit 2 test', 'trophy', 'da-unit2-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'Pivot Tables',
+    blurb: 'Summarise thousands of rows with rows, columns and values',
+    lessons: [
+      T('Your first PivotTable', 'calculator', 'da-first-pivot'),
+      T('Summarize by', 'calculator', 'da-summarize-by'),
+      T('Grouping dates', 'calculator', 'da-grouping'),
+      T('Calculated fields', 'plus', 'da-calculated-fields'),
+      T('Filters & slicers', 'layout', 'da-pivot-slicers'),
+      T('Refresh & source data', 'wrench', 'da-refresh'),
+      T('Unit 3 test', 'trophy', 'da-unit3-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'Charts that Persuade',
+    blurb: 'Pick the right chart, design it clearly, chart a pivot',
+    lessons: [
+      T('Pick the right chart', 'chart', 'da-pick-chart'),
+      T('Build & edit a chart', 'chart', 'da-build-chart'),
+      T('Combo & secondary axis', 'chart', 'da-combo-chart'),
+      T('Mini charts in cells', 'chart', 'da-mini-charts'),
+      T('Design for clarity', 'palette', 'da-chart-design'),
+      T('Pivot charts', 'chart', 'da-pivot-charts'),
+      T('Unit 4 test', 'trophy', 'da-unit4-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'What-If & Analysis',
+    blurb: 'Goal Seek, scenarios, data tables, forecasts and correlation',
+    lessons: [
+      T('Goal Seek', 'branch', 'da-goal-seek'),
+      T('Scenarios', 'branch', 'da-scenarios'),
+      T('Data tables', 'grid', 'da-data-tables'),
+      T('Trends & forecasting', 'chart', 'da-forecast'),
+      T('Correlation', 'chart', 'da-correlation'),
+      T('Final test', 'trophy', 'da-final-test', 'TEST'),
+    ],
+  },
+];
+
 const XP: Record<string, number> = { LESSON: 10, CHEST: 0, TEST: 25 };
 
 async function seedUnits(courseId: string, units: U[]) {
@@ -174,10 +240,28 @@ async function main() {
   });
   await seedUnits(formulas.id, FORMULAS_FUNCTIONS);
 
+  const analysis = await database.course.upsert({
+    where: { slug: 'data-analysis-pivots' },
+    create: {
+      slug: 'data-analysis-pivots',
+      title: 'Data Analysis & Pivots',
+      description: 'Turn thousands of messy rows into one clear answer: tables, cleaning, PivotTables, charts and what-if.',
+      order: 3,
+      published: true,
+    },
+    update: {
+      title: 'Data Analysis & Pivots',
+      description: 'Turn thousands of messy rows into one clear answer: tables, cleaning, PivotTables, charts and what-if.',
+      order: 3,
+      published: true,
+    },
+  });
+  await seedUnits(analysis.id, DATA_ANALYSIS);
+
   // Empty shells: no units yet, not visible to learners.
   const shells = [
-    { slug: 'advanced-formulas', title: 'Advanced Formulas', order: 3, description: 'Dynamic arrays, LET, LAMBDA and beyond.' },
-    { slug: 'data-dashboards', title: 'Data & Dashboards', order: 4, description: 'Power Query, models and executive dashboards.' },
+    { slug: 'advanced-formulas', title: 'Advanced Formulas', order: 4, description: 'Dynamic arrays, LET, LAMBDA and beyond.' },
+    { slug: 'data-dashboards', title: 'Data & Dashboards', order: 5, description: 'Power Query, models and executive dashboards.' },
   ];
   for (const s of shells) {
     await database.course.upsert({

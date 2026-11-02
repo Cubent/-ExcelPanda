@@ -29,7 +29,22 @@ export type Style = {
 /** Conditional-format rule: `formula` is written for the top-left cell of `range`. */
 export type CfRule = { range: string; formula: string; style: Style };
 
+/** An Excel Table: a named block with a header row. `range` includes the header (and the totals row, if any). */
+export type TableDef = { name: string; range: string; totals?: boolean };
+/** One column's filter: pick values, or compare with an operator. */
+export type FilterSpec = { values?: string[]; op?: '>' | '<' | '=' | '>=' | '<=' | '<>' | 'contains'; val?: string };
+/** `range` includes the header row; `cols` is keyed by absolute column index. */
+export type FilterState = { range: string; cols: Record<number, FilterSpec> };
+
 export type SheetData = {
+  /** Tables in the sheet (banded, with structured references like Table1[Sales]). */
+  tables?: TableDef[];
+  /** Row indexes currently hidden by a filter. */
+  hidden?: number[];
+  /** The active filter, if any. */
+  filter?: FilterState;
+  /** Slicers: button panels that filter a column. */
+  slicers?: { col: number; name: string }[];
   cells: Record<string, string>;
   styles: Record<string, Style>;
   colW: Record<number, number>;
@@ -218,6 +233,7 @@ type Tok =
   | { t: 'num'; v: number }
   | { t: 'str'; v: string }
   | { t: 'ref'; v: string; sheet?: string }
+  | { t: 'struct'; table?: string; col: string; row: boolean }
   | { t: 'name'; v: string }
   | { t: 'fn'; v: string }
   | { t: 'op'; v: string }
@@ -257,6 +273,12 @@ function tokenize(src: string): Tok[] {
     let m = /^(\d+\.?\d*|\.\d+)(e[-+]?\d+)?/i.exec(rest);
     if (m) {
       out.push({ t: 'num', v: Number.parseFloat(m[0]) });
+      i += m[0].length;
+      continue;
+    }
+    m = /^([A-Za-z_][A-Za-z0-9_.]*)?\[(@)?\[?([^\]\[]+?)\]?\]/.exec(rest);
+    if (m) {
+      out.push({ t: 'struct', table: m[1], col: m[3].trim(), row: !!m[2] });
       i += m[0].length;
       continue;
     }
@@ -301,6 +323,7 @@ type Node =
   | { k: 'ref'; key: string; sheet?: string }
   | { k: 'range'; a: string; b: string; sheet?: string }
   | { k: 'name'; name: string }
+  | { k: 'struct'; table?: string; col: string; row: boolean }
   | { k: 'un'; op: string; e: Node }
   | { k: 'pct'; e: Node }
   | { k: 'bin'; op: string; l: Node; r: Node }
@@ -384,6 +407,7 @@ function parse(tokens: Tok[]): Node {
       }
       return { k: 'ref', key: t.v, sheet: t.sheet };
     }
+    if (t.t === 'struct') return { k: 'struct', table: t.table, col: t.col, row: t.row };
     if (t.t === 'name') {
       if (t.v === 'TRUE') return { k: 'bool', v: true };
       if (t.v === 'FALSE') return { k: 'bool', v: false };
@@ -603,6 +627,7 @@ export function buildEvaluator(data: SheetData): Evaluator {
   const stack = new Set<string>();
   const cache = new Map<string, Node | XlError>();
 
+  let curKey = '';
   function cellValue(key: string): Scalar {
     const cached = memo.get(key);
     if (cached !== undefined) return cached;
@@ -613,6 +638,8 @@ export function buildEvaluator(data: SheetData): Evaluator {
         out = new XlError('#REF!');
       } else {
         stack.add(key);
+        const prevKey = curKey;
+        curKey = key;
         try {
           let ast = cache.get(raw);
           if (!ast) {
@@ -631,6 +658,7 @@ export function buildEvaluator(data: SheetData): Evaluator {
         } catch (e) {
           out = e instanceof XlError ? e : new XlError('#VALUE!');
         }
+        curKey = prevKey;
         stack.delete(key);
       }
     } else {
@@ -658,6 +686,25 @@ export function buildEvaluator(data: SheetData): Evaluator {
     const vals: Scalar[] = [];
     for (let r = rc.r1; r <= rc.r2; r++) for (let c = rc.c1; c <= rc.c2; c++) vals.push(extValue(sheet, keyOf(c, r)));
     return { range: true, vals, rows: rc.r2 - rc.r1 + 1, cols: rc.c2 - rc.c1 + 1 };
+  }
+  // Structured references: Table1[Sales], Table1[@Sales], [@Sales].
+  function structInfo(n: { table?: string; col: string }) {
+    const here = parseKey(curKey);
+    const tbl = n.table
+      ? data.tables?.find((t) => t.name.toLowerCase() === n.table?.toLowerCase())
+      : data.tables?.find((t) => {
+          const rc = parseRectLabel(t.range);
+          return !!(rc && here && here.c >= rc.c1 && here.c <= rc.c2 && here.r >= rc.r1 && here.r <= rc.r2);
+        });
+    const rc = tbl ? parseRectLabel(tbl.range) : null;
+    if (!tbl || !rc) throw new XlError('#REF!');
+    let col = -1;
+    for (let c = rc.c1; c <= rc.c2; c++) {
+      const h = data.cells[keyOf(c, rc.r1)] ?? '';
+      if (h.toLowerCase().trim() === n.col.toLowerCase()) col = c;
+    }
+    if (col < 0) throw new XlError('#REF!');
+    return { col, r1: rc.r1 + 1, r2: tbl.totals ? rc.r2 - 1 : rc.r2 };
   }
   const resolveName = (name: string): Node => {
     const hit = Object.keys(data.names ?? {}).find((k) => k.toUpperCase() === name.toUpperCase());
@@ -708,6 +755,17 @@ export function buildEvaluator(data: SheetData): Evaluator {
         return n.sheet ? extRange(n.sheet, n.a, n.b) : rangeVal(n.a, n.b);
       case 'name':
         return evalNode(resolveName(n.name));
+      case 'struct': {
+        const { col, r1, r2 } = structInfo(n);
+        if (n.row) {
+          const here = parseKey(curKey);
+          if (!here || here.r < r1 || here.r > r2) throw new XlError('#VALUE!');
+          return cellValue(keyOf(col, here.r));
+        }
+        const vals: Scalar[] = [];
+        for (let r = r1; r <= r2; r++) vals.push(cellValue(keyOf(col, r)));
+        return { range: true, vals, rows: r2 - r1 + 1, cols: 1 };
+      }
       case 'un': {
         const v = toNum(evalNode(n.e));
         return n.op === '-' ? -v : v;
@@ -815,6 +873,59 @@ export function buildEvaluator(data: SheetData): Evaluator {
       const idx = Math.trunc(toNum(evalNode(argNodes[0])));
       if (idx < 1 || idx >= argNodes.length) throw new XlError('#VALUE!');
       return evalNode(argNodes[idx]);
+    }
+    if (name === 'SUBTOTAL') {
+      if (argNodes.length < 2) throw new XlError('#VALUE!');
+      const fn = Math.trunc(toNum(evalNode(argNodes[0]))) % 100;
+      const hidden = new Set(data.hidden ?? []);
+      const vals: Scalar[] = [];
+      for (const a of argNodes.slice(1)) {
+        if (a.k === 'range' && !a.sheet) {
+          const pa = parseKey(a.a);
+          const pb = parseKey(a.b);
+          if (!pa || !pb) throw new XlError('#REF!');
+          const rc = rectOf(pa, pb);
+          for (let r = rc.r1; r <= rc.r2; r++) if (!hidden.has(r)) for (let c = rc.c1; c <= rc.c2; c++) vals.push(cellValue(keyOf(c, r)));
+        } else if (a.k === 'struct' && !a.row) {
+          const { col, r1, r2 } = structInfo(a);
+          for (let r = r1; r <= r2; r++) if (!hidden.has(r)) vals.push(cellValue(keyOf(col, r)));
+        } else {
+          const v = evalNode(a);
+          if (isRange(v)) vals.push(...v.vals);
+          else vals.push(v);
+        }
+      }
+      const nums = vals.filter((v): v is number => typeof v === 'number');
+      for (const v of vals) if (v instanceof XlError) throw v;
+      const mean = nums.length ? nums.reduce((t, v) => t + v, 0) / nums.length : 0;
+      switch (fn) {
+        case 1:
+          if (!nums.length) throw new XlError('#DIV/0!');
+          return mean;
+        case 2:
+          return nums.length;
+        case 3:
+          return vals.filter((v) => v !== null).length;
+        case 4:
+          return nums.length ? Math.max(...nums) : 0;
+        case 5:
+          return nums.length ? Math.min(...nums) : 0;
+        case 6:
+          return nums.length ? nums.reduce((t, v) => t * v, 1) : 0;
+        case 7:
+        case 8:
+        case 10:
+        case 11: {
+          const pop = fn === 8 || fn === 11;
+          if (nums.length < (pop ? 1 : 2)) throw new XlError('#DIV/0!');
+          const variance = nums.reduce((t, v) => t + (v - mean) ** 2, 0) / (pop ? nums.length : nums.length - 1);
+          return fn <= 8 ? Math.sqrt(variance) : variance;
+        }
+        case 9:
+          return nums.reduce((t, v) => t + v, 0);
+        default:
+          throw new XlError('#VALUE!');
+      }
     }
     if (name === 'ISNA') {
       if (argNodes.length !== 1) throw new XlError('#VALUE!');
@@ -1339,6 +1450,24 @@ export function buildEvaluator(data: SheetData): Evaluator {
         for (let d = lo; d <= hi; d++) if (!isWeekend(d) && !hol.has(d)) n++;
         return startD <= endD ? n : -n;
       }
+      case 'SLOPE':
+      case 'INTERCEPT':
+      case 'CORREL':
+      case 'RSQ': {
+        need(2);
+        const [ys, xs] = pairs(args[0], args[1]);
+        const fit = linFit(xs, ys);
+        if (name === 'SLOPE') return fit.slope;
+        if (name === 'INTERCEPT') return fit.intercept;
+        return name === 'CORREL' ? fit.r : fit.r * fit.r;
+      }
+      case 'FORECAST':
+      case 'FORECAST.LINEAR': {
+        need(3);
+        const [ys, xs] = pairs(args[1], args[2]);
+        const fit = linFit(xs, ys);
+        return fit.intercept + fit.slope * toNum(args[0]);
+      }
       case 'NA':
         throw new XlError('#N/A');
       case 'ISNA':
@@ -1347,6 +1476,38 @@ export function buildEvaluator(data: SheetData): Evaluator {
       default:
         throw new XlError('#NAME?');
     }
+  }
+
+  // Pairs of numbers from two equal-length ranges, skipping rows where either is not a number.
+  function pairs(a: Val, b: Val): [number[], number[]] {
+    if (!isRange(a) || !isRange(b) || a.vals.length !== b.vals.length) throw new XlError('#N/A');
+    const x: number[] = [];
+    const y: number[] = [];
+    a.vals.forEach((v, i) => {
+      const w = b.vals[i];
+      if (typeof v === 'number' && typeof w === 'number') {
+        x.push(v);
+        y.push(w);
+      }
+    });
+    if (x.length < 2) throw new XlError('#DIV/0!');
+    return [x, y];
+  }
+  function linFit(x: number[], y: number[]) {
+    const n = x.length;
+    const mx = x.reduce((t, v) => t + v, 0) / n;
+    const my = y.reduce((t, v) => t + v, 0) / n;
+    let sxx = 0;
+    let syy = 0;
+    let sxy = 0;
+    for (let i = 0; i < n; i++) {
+      sxx += (x[i] - mx) ** 2;
+      syy += (y[i] - my) ** 2;
+      sxy += (x[i] - mx) * (y[i] - my);
+    }
+    if (sxx === 0 || syy === 0) throw new XlError('#DIV/0!');
+    const slope = sxy / sxx;
+    return { slope, intercept: my - slope * mx, r: sxy / Math.sqrt(sxx * syy) };
   }
 
   // Row-by-row AND of (range, criteria) pairs for the *IFS functions.
@@ -1448,7 +1609,7 @@ export function adjustFormula(raw: string, dc: number, dr: number): string {
     .split(/("(?:[^"]|"")*")/)
     .map((seg, idx) => {
       if (idx % 2 === 1) return seg;
-      return seg.replace(/(?<![A-Za-z0-9_.])(\$?)([A-Za-z]{1,3})(\$?)(\d+)(?![\w.(!])/g, (_m, ac, col, ar, row) => {
+      return seg.replace(/(?<![A-Za-z0-9_.\[@])(\$?)([A-Za-z]{1,3})(\$?)(\d+)(?![\w.(!\]])/g, (_m, ac, col, ar, row) => {
         const c = ac ? colIndex(col) : colIndex(col) + dc;
         const r = ar ? +row - 1 : +row - 1 + dr;
         if (!inBounds(c, r)) return '#REF!';

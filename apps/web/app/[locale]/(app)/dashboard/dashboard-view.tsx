@@ -397,13 +397,20 @@ export function DashboardView({
                 href={`/dashboard/${m.slug}`}
                 className="group flex flex-col overflow-hidden rounded-3xl border-2 border-b-4 border-[#1F4D3A]/20 bg-white transition-all hover:-translate-y-0.5 hover:border-[#1F4D3A]/40 active:translate-y-0.5 active:border-b-2"
               >
-                {mi % 2 === 0 ? (
+                {mi % 3 === 0 ? (
                   <div className="relative h-40 overflow-hidden bg-[#C7F000]/55">
                     <Dots className="absolute inset-0 h-full w-full" />
                     <SheetFigure size={104} className="absolute left-[14%] top-6 -rotate-6 transition-transform group-hover:-rotate-3" />
                     <ChartFigure size={84} className="absolute right-[10%] top-3 rotate-6" />
                     <FxFigure size={54} className="absolute bottom-3 right-[34%] -rotate-12" />
                     <StarFigure size={30} className="absolute bottom-4 right-4 rotate-12" />
+                  </div>
+                ) : mi % 3 === 2 ? (
+                  <div className="relative h-40 overflow-hidden bg-[#D4EDE6]">
+                    <Dots className="absolute inset-0 h-full w-full" />
+                    <ChartFigure size={112} className="absolute left-[10%] top-4 rotate-3 transition-transform group-hover:rotate-0" />
+                    <SheetFigure size={84} className="absolute right-[12%] top-6 -rotate-6" />
+                    <StarFigure size={32} className="absolute bottom-4 left-[44%] rotate-12" />
                   </div>
                 ) : (
                   <div className="relative h-40 overflow-hidden bg-[#FFE9A8]">

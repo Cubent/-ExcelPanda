@@ -28,6 +28,8 @@ import {
   type MouseEvent as RMouseEvent,
 } from 'react';
 import * as E from './engine';
+import { FilterMenu, SlicerBar, ToolDialog, type DialogKind } from './ToolDialogs';
+import * as T from './tools';
 import type { Pos, Rect, SheetData, Style } from './engine';
 
 // ---------------------------------------------------------------------------
@@ -52,13 +54,15 @@ export type SheetSnapshot = {
   editing: boolean;
 };
 
+export type ToolName = 'table' | 'totals' | 'sort' | 'filter' | 'dedupe' | 'text2col' | 'flash' | 'find' | 'slicer' | 'goalseek' | 'datatable';
+
 export type SheetHandle = {
   /** Merge cells in (only touching cells whose raw text differs). */
   apply(cells: Record<string, string>): void;
   /** Replace the whole sheet and clear undo history. */
   reset(data?: SheetData): void;
   /** Set named ranges (merged), extra read-only sheets, conditional formats and dropdown lists. */
-  setMeta(meta: Pick<SheetData, 'names' | 'ext' | 'cf' | 'lists'>): void;
+  setMeta(meta: Pick<SheetData, 'names' | 'ext' | 'cf' | 'lists' | 'tables' | 'filter' | 'hidden' | 'slicers'>): void;
   select(label: string): void;
   focus(): void;
 };
@@ -69,6 +73,8 @@ type Props = {
   statusBar?: boolean;
   /** Hide scrollbars and disable scrolling (sheet is sized to fit). */
   noScroll?: boolean;
+  /** Data tools to show in a second toolbar row (and enable their shortcuts). */
+  tools?: ToolName[];
   /** Card height hugs the grid instead of filling its parent. */
   fit?: boolean;
   autoFocus?: boolean;
@@ -215,7 +221,7 @@ function commitEdit(s: St, move: 'down' | 'up' | 'right' | 'left' | 'none'): St 
   const key = E.keyOf(s.active.c, s.active.r);
   const text = E.normalizeInput(s.edit.text);
   let next: St = { ...s, edit: null, point: null, clip: null };
-  next = pushData(next, setCells(next.data, { [key]: text }));
+  next = pushData(next, T.afterEdit(setCells(next.data, { [key]: text }), [key]));
   return move === 'none' ? next : afterEnter(next, move);
 }
 
@@ -389,7 +395,7 @@ const PALETTE_TEXT = ['', '#C0392B', '#1F7A4D', '#1F5FBF', '#8A5A00', '#6B7280']
 // Component
 // ---------------------------------------------------------------------------
 export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
-  { initial, toolbar = true, statusBar = true, noScroll = false, fit = false, autoFocus = false, onState, onEvent },
+  { initial, toolbar = true, statusBar = true, noScroll = false, tools, fit = false, autoFocus = false, onState, onEvent },
   handle,
 ) {
   const [st, setSt] = useState<St>(() => ({
@@ -438,6 +444,9 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
   const [nameDraft, setNameDraft] = useState<string | null>(null);
   const [menu, setMenu] = useState<null | 'fill' | 'color'>(null);
   const [listOpen, setListOpen] = useState(false);
+  const [dialog, setDialog] = useState<DialogKind | null>(null);
+  const [filterCol, setFilterCol] = useState<number | null>(null);
+  const [note, setNote] = useState<string | null>(null);
 
   // --- layout metrics ---------------------------------------------------------
   const widths = useMemo(
@@ -452,6 +461,15 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
   const totalW = lefts[E.COLS];
   const leftsRef = useRef(lefts);
   leftsRef.current = lefts;
+  // Row geometry: filtered-out rows collapse to zero height.
+  const hiddenSet = useMemo(() => new Set(st.data.hidden ?? []), [st.data.hidden]);
+  const tops = useMemo(() => {
+    const a = [0];
+    for (let r = 0; r < E.ROWS; r++) a.push(a[r] + (hiddenSet.has(r) ? 0 : ROW_H));
+    return a;
+  }, [hiddenSet]);
+  const topsRef = useRef(tops);
+  topsRef.current = tops;
 
   const rect = rectOfState(st);
   const ev = useMemo(() => E.buildEvaluator(st.data), [st.data]);
@@ -478,6 +496,11 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
             ext: meta.ext ?? s.data.ext,
             cf: meta.cf ?? s.data.cf,
             lists: meta.lists ?? s.data.lists,
+            // Tables and filters are replaced only when a step declares them.
+            tables: meta.tables ?? s.data.tables,
+            filter: 'filter' in meta ? meta.filter : s.data.filter,
+            hidden: 'hidden' in meta ? meta.hidden : s.data.hidden,
+            slicers: meta.slicers ?? s.data.slicers,
           },
         });
       },
@@ -537,13 +560,13 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
     const p = whole || (st.origin.c === st.focus.c && st.origin.r === st.focus.r) ? st.active : st.focus;
     const left = lefts[p.c];
     const right = lefts[p.c + 1];
-    const top = p.r * ROW_H;
-    const bottom = top + ROW_H;
+    const top = tops[p.r];
+    const bottom = tops[p.r + 1];
     if (left < el.scrollLeft) el.scrollLeft = left;
     else if (right > el.scrollLeft + el.clientWidth - ROW_HDR_W) el.scrollLeft = right - el.clientWidth + ROW_HDR_W + 2;
     if (top < el.scrollTop) el.scrollTop = top;
     else if (bottom > el.scrollTop + el.clientHeight - COL_H) el.scrollTop = bottom - el.clientHeight + COL_H + 2;
-  }, [st.active, st.focus, st.origin, lefts]);
+  }, [st.active, st.focus, st.origin, lefts, tops]);
 
   // --- actions shared by keyboard + toolbar ---------------------------------------
   const startEdit = useCallback((s: St, mode: 'enter' | 'edit', text: string, from: 'cell' | 'bar' = 'cell') => {
@@ -657,7 +680,9 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
         emit(`ctrl+${name}`);
         if (shift) emit(`ctrl+shift+${name}`);
       } else {
-        to = clamp({ c: base.c + dc, r: base.r + dr });
+        let t2 = clamp({ c: base.c + dc, r: base.r + dr });
+        while (dr !== 0 && hiddenSet.has(t2.r) && t2.r + dr >= 0 && t2.r + dr < E.ROWS) t2 = { c: t2.c, r: t2.r + dr };
+        to = hiddenSet.has(t2.r) ? base : t2;
         emit('arrow');
         if (shift) emit('shift+arrow');
       }
@@ -736,6 +761,26 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
         e.preventDefault();
         commit({ ...s, origin: { c: s.active.c, r: 0 }, focus: { c: s.active.c, r: E.ROWS - 1 } });
         emit('ctrl+space');
+        return;
+      }
+      if (lower === 't' && has('table')) {
+        e.preventDefault();
+        doTable();
+        return;
+      }
+      if (lower === 'l' && shift && has('filter')) {
+        e.preventDefault();
+        doFilter();
+        return;
+      }
+      if (lower === 'h' && has('find')) {
+        e.preventDefault();
+        setDialog('find');
+        return;
+      }
+      if (lower === 'e' && has('flash')) {
+        e.preventDefault();
+        doFlash();
         return;
       }
       if (lower === 'z' && !shift) {
@@ -904,7 +949,17 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
         }
       }
     }
-    const r = y < 0 ? -1 : Math.min(E.ROWS - 1, Math.floor(y / ROW_H));
+    let r = -1;
+    if (y >= 0) {
+      r = E.ROWS - 1;
+      const tp = topsRef.current;
+      for (let i = 0; i < E.ROWS; i++) {
+        if (y < tp[i + 1]) {
+          r = i;
+          break;
+        }
+      }
+    }
     return { c, r };
   };
 
@@ -1124,6 +1179,20 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
     const keys = new Set<string>(Object.keys(st.data.cells));
     for (const [k, v] of Object.entries(st.data.styles)) if (v.bg) keys.add(k);
     // Conditional-format rules: which cells currently match, and the style they get.
+    const tableStyle = new Map<string, Style>();
+    for (const t of st.data.tables ?? []) {
+      const rc = T.tableRect(t);
+      if (!rc) continue;
+      for (let r = rc.r1; r <= rc.r2; r++) {
+        for (let c = rc.c1; c <= rc.c2; c++) {
+          const key = E.keyOf(c, r);
+          keys.add(key);
+          if (r === rc.r1) tableStyle.set(key, { bg: '#1F4D3A', color: '#FFFFFF', b: true });
+          else if (t.totals && r === rc.r2) tableStyle.set(key, { bg: '#DDE8DF', b: true });
+          else if ((r - rc.r1) % 2 === 1) tableStyle.set(key, { bg: '#EAF1EC' });
+        }
+      }
+    }
     const cfStyle = new Map<string, Style>();
     for (const rule of st.data.cf ?? []) {
       const rc = E.parseRectLabel(rule.range);
@@ -1153,7 +1222,8 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
     for (const key of keys) {
       const p = E.parseKey(key);
       if (!p || !E.inBounds(p.c, p.r)) continue;
-      const style = cfStyle.has(key) ? { ...st.data.styles[key], ...cfStyle.get(key) } : (st.data.styles[key] ?? {});
+      if (hiddenSet.has(p.r)) continue;
+      const style: Style = { ...tableStyle.get(key), ...st.data.styles[key], ...cfStyle.get(key) };
       const val = ev.value(key);
       let text = ev.display(key);
       const isNum = typeof val === 'number';
@@ -1169,10 +1239,10 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
       if (isNum && text.length * CHAR_W * (style.b ? 1.08 : 1) + 8 > w) {
         text = '#'.repeat(Math.max(1, Math.floor((w - 8) / CHAR_W)));
       }
-      out.push({ key, left: lefts[p.c], top: p.r * ROW_H, w, spanW, text, align, style, isErr });
+      out.push({ key, left: lefts[p.c], top: tops[p.r], w, spanW, text, align, style, isErr });
     }
     return out;
-  }, [st.data, ev, widths, lefts]);
+  }, [st.data, ev, widths, lefts, tops, hiddenSet]);
 
   const stats = useMemo(() => {
     if (rect.c1 === rect.c2 && rect.r1 === rect.r2) return null;
@@ -1205,15 +1275,73 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
     setListOpen(false);
     scrollRef.current?.focus({ preventScroll: true });
   };
+  // --- data tools ----------------------------------------------------------------
+  const has = (name: ToolName) => !!tools?.includes(name);
+  const applyTool = (data: SheetData, message: string, event: string) => {
+    const s = ref.current;
+    commit(pushData(s, data));
+    emit(event);
+    setDialog(null);
+    setFilterCol(null);
+    setNote(message);
+    scrollRef.current?.focus({ preventScroll: true });
+  };
+  useEffect(() => {
+    if (!note) return;
+    const t = setTimeout(() => setNote(null), 3500);
+    return () => clearTimeout(t);
+  }, [note]);
+  const workRect = (): Rect | null => {
+    const s = ref.current;
+    const r = rectOfState(s);
+    if (r.c1 !== r.c2 || r.r1 !== r.r2) return r;
+    const t = T.tableAt(s.data, s.active);
+    return (t && T.tableRect(t)) || T.currentRegion(s.data, s.active);
+  };
+  const doTable = () => {
+    const s = ref.current;
+    if (T.tableAt(s.data, s.active)) return setNote('That range is already a table');
+    const rc = workRect();
+    if (!rc) return setNote('Click inside your data first');
+    applyTool(T.makeTable(s.data, rc), 'Table created', 'table');
+  };
+  const doTotals = () => {
+    const s = ref.current;
+    const t = T.tableAt(s.data, s.active);
+    if (!t) return setNote('Click inside a table first');
+    applyTool(T.setTotalsRow(s.data, t.name, !t.totals), t.totals ? 'Total row off' : 'Total row on', 'totals-row');
+  };
+  const doFilter = () => {
+    const s = ref.current;
+    if (s.data.filter) return applyTool(T.applyFilter(s.data, undefined), 'Filter removed', 'filter-off');
+    const rc = workRect();
+    if (!rc) return setNote('Click inside your data first');
+    applyTool({ ...s.data, filter: { range: E.rectLabel(rc), cols: {} } }, 'Filter on: use the arrows in the header', 'filter-on');
+  };
+  const doQuickSort = (asc: boolean) => {
+    const s = ref.current;
+    const rc = workRect();
+    if (!rc) return setNote('Click inside your data first');
+    const evl = E.buildEvaluator(s.data);
+    let header = true;
+    for (let c = rc.c1; c <= rc.c2; c++) if (typeof evl.value(E.keyOf(c, rc.r1)) === 'number') header = false;
+    applyTool(T.sortRows(s.data, rc, [{ col: Math.min(Math.max(s.active.c, rc.c1), rc.c2), asc }], header), asc ? 'Sorted A to Z' : 'Sorted Z to A', 'sort');
+  };
+  const doFlash = () => {
+    const s = ref.current;
+    const res = T.flashFill(s.data, s.active.c, s.active.r);
+    if (res.filled) applyTool(res.data, `Flash Fill filled ${res.filled} cells`, 'flash-fill');
+    else setNote('Flash Fill needs an example above, next to your data');
+  };
   const activeStyle = st.data.styles[activeKey] ?? {};
   const barText = st.edit ? st.edit.text : (st.data.cells[activeKey] ?? '');
 
   // selection geometry
   const px = (rc: Rect) => ({
     left: lefts[rc.c1],
-    top: rc.r1 * ROW_H,
+    top: tops[rc.r1],
     width: lefts[rc.c2 + 1] - lefts[rc.c1],
-    height: (rc.r2 - rc.r1 + 1) * ROW_H,
+    height: tops[rc.r2 + 1] - tops[rc.r1],
   });
   const multi = rect.c1 !== rect.c2 || rect.r1 !== rect.r2;
   const tint: Rect[] = [];
@@ -1239,7 +1367,7 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
 
   return (
     <div
-      className={`flex min-h-0 flex-col overflow-hidden rounded-xl border border-[#1F4D3A]/15 bg-white ${fit ? '' : 'h-full'}`}
+      className={`relative flex min-h-0 flex-col overflow-hidden rounded-xl border border-[#1F4D3A]/15 bg-white ${fit ? '' : 'h-full'}`}
       style={{ fontFamily: FONT }}
     >
       {toolbar && (
@@ -1337,6 +1465,42 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
         </div>
       )}
 
+      {tools && tools.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 border-b border-[#1F4D3A]/10 bg-[#F1F5EF] px-2 py-1.5" role="toolbar" aria-label="Data tools">
+          {(
+            [
+              has('table') && ['Table', 'Format as Table (Ctrl+T in Excel)', doTable],
+              has('totals') && ['Total row', 'Show or hide the table total row', doTotals],
+              has('sort') && ['Sort A→Z', 'Sort by the selected column', () => doQuickSort(true)],
+              has('sort') && ['Sort Z→A', 'Sort by the selected column, reversed', () => doQuickSort(false)],
+              has('sort') && ['Custom sort', 'Sort by several columns', () => setDialog('sort')],
+              has('filter') && ['Filter', 'Turn the filter arrows on or off (Ctrl+Shift+L)', doFilter],
+              has('slicer') && ['Slicer', 'Add a slicer', () => setDialog('slicer')],
+              has('dedupe') && ['Remove duplicates', 'Remove duplicate rows', () => setDialog('dedupe')],
+              has('text2col') && ['Text to columns', 'Split text into columns', () => setDialog('text2col')],
+              has('flash') && ['Flash fill', 'Fill by example (Ctrl+E)', doFlash],
+              has('find') && ['Find & replace', 'Find and replace (Ctrl+H)', () => setDialog('find')],
+              has('goalseek') && ['Goal seek', 'What-if: Goal Seek', () => setDialog('goalseek')],
+              has('datatable') && ['Data table', 'What-if: Data Table', () => setDialog('datatable')],
+            ] as (false | [string, string, () => void])[]
+          )
+            .filter((b): b is [string, string, () => void] => !!b)
+            .map(([label, title, fn]) => (
+              <button
+                key={label}
+                type="button"
+                title={title}
+                onMouseDown={keepFocus}
+                onClick={fn}
+                className="rounded-md border border-[#1F4D3A]/20 bg-white px-2.5 py-1 text-xs font-semibold text-[#1F4D3A] transition-colors hover:bg-[#C7F000]/40"
+              >
+                {label}
+              </button>
+            ))}
+        </div>
+      )}
+      <SlicerBar data={st.data} onApply={applyTool} />
+
       {/* Name box + formula bar */}
       <div className="flex items-center gap-2 border-b border-[#1F4D3A]/10 bg-white px-2 py-1.5">
         <input
@@ -1407,7 +1571,7 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
         onCut={onCut}
         onPaste={onPaste}
       >
-        <div style={{ position: 'relative', width: ROW_HDR_W + totalW, height: COL_H + E.ROWS * ROW_H }}>
+        <div style={{ position: 'relative', width: ROW_HDR_W + totalW, height: COL_H + tops[E.ROWS] }}>
           {/* column headers */}
           <div style={{ position: 'sticky', top: 0, height: COL_H, width: ROW_HDR_W + totalW, zIndex: 30 }}>
             <div
@@ -1456,17 +1620,18 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
             })}
           </div>
 
-          <div style={{ position: 'relative', width: ROW_HDR_W + totalW, height: E.ROWS * ROW_H }}>
+          <div style={{ position: 'relative', width: ROW_HDR_W + totalW, height: tops[E.ROWS] }}>
             {/* row headers */}
-            <div style={{ position: 'sticky', left: 0, width: ROW_HDR_W, height: E.ROWS * ROW_H, zIndex: 20 }}>
+            <div style={{ position: 'sticky', left: 0, width: ROW_HDR_W, height: tops[E.ROWS], zIndex: 20 }}>
               {Array.from({ length: E.ROWS }, (_, r) => {
+                if (hiddenSet.has(r)) return null;
                 const inSel = r >= rect.r1 && r <= rect.r2;
                 return (
                   <div
                     key={r}
                     style={{
                       position: 'absolute',
-                      top: r * ROW_H,
+                      top: tops[r],
                       left: 0,
                       width: ROW_HDR_W,
                       height: ROW_H,
@@ -1491,13 +1656,16 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
                 left: ROW_HDR_W,
                 top: 0,
                 width: totalW,
-                height: E.ROWS * ROW_H,
-                backgroundImage: `linear-gradient(to bottom, transparent ${ROW_H - 1}px, ${GRID_LINE} ${ROW_H - 1}px)`,
-                backgroundSize: `100% ${ROW_H}px`,
+                height: tops[E.ROWS],
                 zIndex: 1,
                 isolation: 'isolate',
               }}
             >
+              {Array.from({ length: E.ROWS }, (_, r) =>
+                hiddenSet.has(r) ? null : (
+                  <div key={`hl${r}`} style={{ position: 'absolute', left: 0, top: tops[r] + ROW_H - 1, width: '100%', height: 1, background: GRID_LINE }} />
+                ),
+              )}
               {lefts.slice(1).map((x, i) => (
                 <div key={i} style={{ position: 'absolute', left: x - 1, top: 0, width: 1, height: '100%', background: GRID_LINE }} />
               ))}
@@ -1584,9 +1752,40 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
                 </div>
               )}
 
+              {/* filter arrows */}
+              {st.data.filter &&
+                (() => {
+                  const fr = T.filterRect(st.data.filter);
+                  if (!fr) return null;
+                  return Array.from({ length: fr.c2 - fr.c1 + 1 }, (_, i) => {
+                    const c = fr.c1 + i;
+                    const on = !!st.data.filter?.cols[c];
+                    return (
+                      <button
+                        key={`fa${c}`}
+                        type="button"
+                        aria-label={`Filter ${E.colLabel(c)}`}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setFilterCol(filterCol === c ? null : c);
+                        }}
+                        style={{ position: 'absolute', left: lefts[c + 1] - 19, top: tops[fr.r1] + 3, width: 16, height: ROW_H - 6, zIndex: 9, background: on ? '#C7F000' : '#fff', border: '1px solid #9DB3A5', fontSize: 8, color: '#1F4D3A', cursor: 'pointer', padding: 0 }}
+                      >
+                        ▼
+                      </button>
+                    );
+                  });
+                })()}
+              {filterCol !== null && st.data.filter && T.filterRect(st.data.filter) && (
+                <div style={{ position: 'absolute', left: Math.max(0, Math.min(lefts[filterCol], totalW - 230)), top: tops[(T.filterRect(st.data.filter) as Rect).r1] + ROW_H, zIndex: 70 }}>
+                  <FilterMenu key={filterCol} data={st.data} col={filterCol} onApply={applyTool} onClose={() => setFilterCol(null)} />
+                </div>
+              )}
+
               {/* dropdown arrow + list for cells with a list */}
               {!st.edit && activeList && (
-                <div style={{ position: 'absolute', left: lefts[st.active.c], top: st.active.r * ROW_H, width: widths[st.active.c], height: ROW_H, zIndex: 8, pointerEvents: 'none' }}>
+                <div style={{ position: 'absolute', left: lefts[st.active.c], top: tops[st.active.r], width: widths[st.active.c], height: ROW_H, zIndex: 8, pointerEvents: 'none' }}>
                   <button
                     type="button"
                     aria-label="Open list"
@@ -1639,7 +1838,7 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
                   style={{
                     position: 'absolute',
                     left: lefts[st.active.c],
-                    top: st.active.r * ROW_H,
+                    top: tops[st.active.r],
                     width: editW,
                     height: ROW_H,
                     zIndex: 40,
@@ -1660,6 +1859,13 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
           </div>
         </div>
       </div>
+
+      {dialog && <ToolDialog kind={dialog} data={st.data} rect={rect} active={st.active} onApply={applyTool} onClose={() => setDialog(null)} />}
+      {note && (
+        <div role="status" className="pointer-events-none absolute bottom-10 left-3 z-[90] max-w-[80%] rounded-md bg-[#1F4D3A] px-3 py-1.5 text-xs font-semibold text-white shadow-lg">
+          {note}
+        </div>
+      )}
 
       {statusBar && (
         <div className="flex min-h-7 items-center justify-end border-t border-[#1F4D3A]/10 bg-[#F7F8F4] px-3 py-1 text-[12px] text-[#1F4D3A]/70">

@@ -1,12 +1,18 @@
 // Small builders that keep lesson definitions short and consistent.
 import type { ReactNode } from 'react';
 import * as E from '@/components/sheet/engine';
-import type { LessonStep, SheetMeta, StepCtx } from './types';
+import type { ChartPanelConfig, LessonStep, PivotPanelConfig, SheetMeta, SheetView, StepCtx, ToolName } from './types';
 
 export const isF = (raw: string) => raw.trim().startsWith('=');
 /** True when the formula calls every one of the named functions. */
 export const uses = (raw: string, ...fns: string[]) => fns.every((fn) => new RegExp(`\\b${fn.replace('.', '\\.')}\\s*\\(`, 'i').test(raw));
 export const squash = (v: unknown) => String(v).trim().replace(/\s+/g, ' ').toLowerCase();
+/** Turns rows of values into cell addresses, e.g. grid([['Name','Qty'],['Pen',2]]) -> {A1:'Name',B1:'Qty',A2:'Pen',B2:'2'}. */
+export const grid = (rows: (string | number)[][], c0 = 0, r0 = 0): Record<string, string> => {
+  const out: Record<string, string> = {};
+  rows.forEach((row, ri) => row.forEach((v, ci) => (out[E.keyOf(c0 + ci, r0 + ri)] = String(v))));
+  return out;
+};
 export const date = (y: number, m: number, d: number) => E.dateToSerial(y, m, d);
 export const near = (v: unknown, n: number, eps = 1e-6) => typeof v === 'number' && Math.abs(v - n) < eps;
 
@@ -28,6 +34,11 @@ type Base = {
   fresh?: boolean;
   select?: string;
   meta?: SheetMeta;
+  tools?: ToolName[];
+  view?: SheetView;
+  resetPanels?: boolean;
+  pivot?: PivotPanelConfig;
+  chart?: ChartPanelConfig;
 };
 
 /** An information-only step. */
@@ -66,6 +77,11 @@ export function task(
     fresh: o.fresh,
     select: o.select ?? Object.keys(o.cells)[0],
     meta: o.meta,
+    tools: o.tools,
+    view: o.view,
+    resetPanels: o.resetPanels,
+    pivot: o.pivot,
+    chart: o.chart,
     solution: { cells: o.sol, events: o.ev },
     check: (c) => {
       if (c.editing) return false;
@@ -98,6 +114,11 @@ export function custom(
     fresh: o.fresh,
     select: o.select,
     meta: o.meta,
+    tools: o.tools,
+    view: o.view,
+    resetPanels: o.resetPanels,
+    pivot: o.pivot,
+    chart: o.chart,
     check: o.check,
     solution: o.sol,
   };

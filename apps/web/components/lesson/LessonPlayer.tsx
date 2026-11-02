@@ -5,11 +5,13 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as E from '@/components/sheet/engine';
 import { SheetGrid, type SheetHandle, type SheetSnapshot } from '@/components/sheet/SheetGrid';
+import { ChartPanel, type ChartState } from './ChartPanel';
+import { PivotPanel, type PivotState } from './PivotPanel';
 import { macify, useIsMac } from '@/lessons/platform';
 import { getLessonContent } from '@/lessons/registry';
 import { setSheetSize } from '@/components/sheet/engine';
 import { playComplete, playNext, playSuccess } from './sounds';
-import type { StepCtx } from '@/lessons/types';
+import type { SheetView, StepCtx } from '@/lessons/types';
 
 const PRAISE = ['Well done!', 'Nice one!', 'Perfect!', 'You nailed it!', 'Spot on!', 'Great job!', 'Excellent!', 'Boom, correct!'];
 
@@ -70,6 +72,10 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
   const [finished, setFinished] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [snap, setSnap] = useState<SheetSnapshot | null>(null);
+  const [pivotState, setPivotState] = useState<PivotState | null>(null);
+  const [chartState, setChartState] = useState<ChartState | null>(null);
+  const [view, setView] = useState<SheetView>('sheet');
+  const [panelEpoch, setPanelEpoch] = useState(0);
   const [save, setSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [earned, setEarned] = useState({ xp: 0, gems: 0 });
   const [opts, setOpts] = useState<Opts>(DEFAULT_OPTS);
@@ -122,6 +128,8 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
     return Math.floor((xp * (k + 1)) / checkIdx.length) - Math.floor((xp * k) / checkIdx.length);
   };
   const step = steps[index];
+  const pivotCfg = step?.pivot ?? lesson?.pivot;
+  const chartCfg = step?.chart ?? lesson?.chart;
 
   // Start of each step: forget old events, set up the sheet, hand it focus.
   useEffect(() => {
@@ -133,6 +141,9 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
       ext: step.meta?.ext ?? lesson?.meta?.ext,
       cf: step.meta?.cf ?? lesson?.meta?.cf,
       lists: step.meta?.lists ?? lesson?.meta?.lists,
+      tables: step.meta?.tables ?? lesson?.meta?.tables,
+      slicers: step.meta?.slicers ?? lesson?.meta?.slicers,
+      ...('filter' in (step.meta ?? {}) ? { filter: step.meta?.filter, hidden: step.meta?.hidden } : {}),
     };
     if (step.fresh) gridRef.current?.reset({ ...E.emptyData(), cells: { ...step.seed }, ...meta });
     else {
@@ -140,6 +151,12 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
       gridRef.current?.setMeta(meta);
     }
     if (step.select) gridRef.current?.select(step.select);
+    setView(step.view ?? 'sheet');
+    if (step.resetPanels) {
+      setPanelEpoch((n) => n + 1);
+      setPivotState(null);
+      setChartState(null);
+    }
     gridRef.current?.focus();
     bump((n) => n + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -170,6 +187,9 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
       style: (k) => snap.data.styles[k] ?? {},
       selection: E.rectLabel(rect),
       activeKey: E.keyOf(snap.active.c, snap.active.r),
+      pivot: pivotState,
+      chart: chartState,
+      view,
     };
     try {
       return step.check(ctx);
@@ -178,7 +198,7 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
     }
     // eventsRef is mutated in place, so depend on the render tick via snap + index.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, snap, eventsRef.current.size]);
+  }, [step, snap, pivotState, chartState, view, eventsRef.current.size]);
 
   // Celebrate the moment a step becomes solved.
   useEffect(() => {
@@ -534,8 +554,55 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
             heading(true)
           )}
 
-          <div className={opts.layout === 'side' ? 'min-h-0 min-w-0 flex-1 self-start' : 'mt-4 min-h-0'}>
-            <SheetGrid key={opts.full ? 'full' : 'compact'} ref={gridRef} autoFocus toolbar={opts.toolbar || !!lesson.toolbar} statusBar={opts.status} noScroll={!opts.full} fit={!opts.full} onState={setSnap} onEvent={onEvent} />
+          <div className={`${opts.layout === 'side' ? `min-h-0 min-w-0 flex-1 ${opts.full ? '' : 'self-start'}` : 'mt-4 min-h-0'} ${opts.full ? 'flex flex-1 flex-col' : ''}`}>
+            {(pivotCfg || chartCfg) && (
+              <div className="mb-2 flex gap-1.5" role="tablist" aria-label="Workbook sheets">
+                {(
+                  [
+                    ['sheet', 'Data'],
+                    pivotCfg && ['pivot', 'PivotTable'],
+                    chartCfg && ['chart', 'Chart'],
+                  ] as (false | undefined | [SheetView, string])[]
+                )
+                  .filter((t): t is [SheetView, string] => !!t)
+                  .map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      role="tab"
+                      aria-selected={view === id}
+                      onClick={() => {
+                        setView(id);
+                        if (id === 'sheet') setTimeout(() => gridRef.current?.focus(), 0);
+                      }}
+                      className={`rounded-t-lg border border-b-0 px-4 py-1.5 text-xs font-bold ${view === id ? 'border-[#1F4D3A]/25 bg-white text-[#1F4D3A]' : 'border-transparent bg-[#1F4D3A]/8 text-[#1F4D3A]/60 hover:bg-[#1F4D3A]/12'}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+              </div>
+            )}
+            <div className={view === 'sheet' ? (opts.full ? 'min-h-0 flex-1' : '') : 'hidden'}>
+              <SheetGrid key={opts.full ? 'full' : 'compact'} ref={gridRef} autoFocus toolbar={opts.toolbar || !!lesson.toolbar} statusBar={opts.status} noScroll={!opts.full} fit={!opts.full} tools={step.tools ?? lesson.tools} onState={setSnap} onEvent={onEvent} />
+            </div>
+            {pivotCfg && (
+              <div className={view === 'pivot' ? 'h-[calc(100dvh-390px)] min-h-[300px] max-h-[460px] overflow-hidden rounded-xl border border-[#1F4D3A]/15 bg-white' : 'hidden'}>
+                <PivotPanel key={`p${panelEpoch}`} data={snap?.data ?? E.emptyData()} source={pivotCfg.source} initial={pivotCfg.initial} features={pivotCfg.features} onState={setPivotState} />
+              </div>
+            )}
+            {chartCfg && (
+              <div className={view === 'chart' ? 'h-[calc(100dvh-390px)] min-h-[300px] max-h-[460px] overflow-hidden rounded-xl border border-[#1F4D3A]/15 bg-white' : 'hidden'}>
+                <ChartPanel
+                  key={`c${panelEpoch}`}
+                  data={snap?.data ?? E.emptyData()}
+                  selection={snap ? E.rectLabel(snap.rect) : ''}
+                  pivot={pivotState?.result ?? null}
+                  allow={chartCfg.allow}
+                  initial={chartCfg.initial}
+                  onState={setChartState}
+                />
+              </div>
+            )}
           </div>
 
           {opts.layout === 'center' && (
