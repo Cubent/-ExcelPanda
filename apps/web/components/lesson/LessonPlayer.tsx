@@ -7,6 +7,9 @@ import * as E from '@/components/sheet/engine';
 import { SheetGrid, type SheetHandle, type SheetSnapshot } from '@/components/sheet/SheetGrid';
 import { ChartPanel, type ChartState } from './ChartPanel';
 import { PivotPanel, type PivotState } from './PivotPanel';
+import { QueryPanel, type QueryState } from './QueryPanel';
+import { ModelPanel, type ModelState } from './ModelPanel';
+import { tableToCells } from '@/components/sheet/pq';
 import { macify, useIsMac } from '@/lessons/platform';
 import { getLessonContent } from '@/lessons/registry';
 import { setSheetSize } from '@/components/sheet/engine';
@@ -74,6 +77,8 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
   const [snap, setSnap] = useState<SheetSnapshot | null>(null);
   const [pivotState, setPivotState] = useState<PivotState | null>(null);
   const [chartState, setChartState] = useState<ChartState | null>(null);
+  const [queryState, setQueryState] = useState<QueryState | null>(null);
+  const [modelState, setModelState] = useState<ModelState | null>(null);
   const [view, setView] = useState<SheetView>('sheet');
   const [panelEpoch, setPanelEpoch] = useState(0);
   const [save, setSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -95,7 +100,27 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
     } catch {}
   }, [opts]);
   // Must run before the grid renders so it sees the right dimensions.
+  // The larger sheet is used only for steps whose data does not fit the compact one (more than 14 rows or 10 columns),
+  // and it stays for the rest of that exercise so your work is not lost.
+  const largeSize = lesson?.sheet ?? { cols: 12, rows: 30 };
+  const needsLarge = useMemo(() => {
+    const out: boolean[] = [];
+    let cur = false;
+    (lesson?.steps ?? []).forEach((s, i) => {
+      if (s.fresh || i === 0) cur = false;
+      const keys = [...Object.keys(s.seed ?? {}), ...Object.keys(s.solution?.cells ?? {})];
+      if (keys.some((k) => {
+        const p = E.parseKey(k);
+        return !!p && (p.r >= 14 || p.c >= 10);
+      })) cur = true;
+      out.push(cur);
+    });
+    return out;
+  }, [lesson]);
+  const autoLarge = !!needsLarge[index];
+  const big = opts.full || autoLarge;
   if (opts.full) setSheetSize(26, 100);
+  else if (autoLarge) setSheetSize(largeSize.cols, largeSize.rows);
   else setSheetSize(10, 14);
   // Remember which step you are on, so a reload picks up where you left off.
   const stepKey = `xp-lesson-step:${contentKey}`;
@@ -130,6 +155,8 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
   const step = steps[index];
   const pivotCfg = step?.pivot ?? lesson?.pivot;
   const chartCfg = step?.chart ?? lesson?.chart;
+  const queryCfg = step?.query ?? lesson?.query;
+  const modelCfg = step?.model ?? lesson?.model;
 
   // Start of each step: forget old events, set up the sheet, hand it focus.
   useEffect(() => {
@@ -156,11 +183,13 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
       setPanelEpoch((n) => n + 1);
       setPivotState(null);
       setChartState(null);
+      setQueryState(null);
+      setModelState(null);
     }
     gridRef.current?.focus();
     bump((n) => n + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, step, opts.full]);
+  }, [index, step, big]);
 
   const onEvent = useCallback((name: string) => {
     if (!eventsRef.current.has(name)) {
@@ -189,6 +218,8 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
       activeKey: E.keyOf(snap.active.c, snap.active.r),
       pivot: pivotState,
       chart: chartState,
+      query: queryState,
+      model: modelState,
       view,
     };
     try {
@@ -198,7 +229,7 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
     }
     // eventsRef is mutated in place, so depend on the render tick via snap + index.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, snap, pivotState, chartState, view, eventsRef.current.size]);
+  }, [step, snap, pivotState, chartState, queryState, modelState, view, eventsRef.current.size]);
 
   // Celebrate the moment a step becomes solved.
   useEffect(() => {
@@ -541,7 +572,7 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
           className={
             opts.layout === 'side'
               ? 'flex min-h-0 flex-1 flex-col gap-4 px-4 pb-4 sm:px-6 lg:flex-row'
-              : 'mx-auto flex min-h-0 w-full max-w-[1010px] flex-1 flex-col px-4 pb-4 sm:px-6'
+              : `mx-auto flex min-h-0 w-full ${autoLarge && !opts.full ? 'max-w-[1240px]' : 'max-w-[1010px]'} flex-1 flex-col px-4 pb-4 sm:px-6`
           }
         >
           {opts.layout === 'side' ? (
@@ -554,14 +585,16 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
             heading(true)
           )}
 
-          <div className={`${opts.layout === 'side' ? `min-h-0 min-w-0 flex-1 ${opts.full ? '' : 'self-start'}` : 'mt-4 min-h-0'} ${opts.full ? 'flex flex-1 flex-col' : ''}`}>
-            {(pivotCfg || chartCfg) && (
+          <div className={`${opts.layout === 'side' ? `min-h-0 min-w-0 flex-1 ${big ? '' : 'self-start'}` : 'mt-4 min-h-0'} ${big ? 'flex flex-1 flex-col' : ''}`}>
+            {(pivotCfg || chartCfg || queryCfg || modelCfg) && (
               <div className="mb-2 flex gap-1.5" role="tablist" aria-label="Workbook sheets">
                 {(
                   [
                     ['sheet', 'Data'],
                     pivotCfg && ['pivot', 'PivotTable'],
                     chartCfg && ['chart', 'Chart'],
+                    queryCfg && ['query', 'Power Query'],
+                    modelCfg && ['model', 'Data Model'],
                   ] as (false | undefined | [SheetView, string])[]
                 )
                   .filter((t): t is [SheetView, string] => !!t)
@@ -582,8 +615,8 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
                   ))}
               </div>
             )}
-            <div className={view === 'sheet' ? (opts.full ? 'min-h-0 flex-1' : '') : 'hidden'}>
-              <SheetGrid key={opts.full ? 'full' : 'compact'} ref={gridRef} autoFocus toolbar={opts.toolbar || !!lesson.toolbar} statusBar={opts.status} noScroll={!opts.full} fit={!opts.full} tools={step.tools ?? lesson.tools} onState={setSnap} onEvent={onEvent} />
+            <div className={view === 'sheet' ? (big ? 'min-h-0 flex-1' : '') : 'hidden'}>
+              <SheetGrid key={big ? `full-${opts.full ? 'all' : largeSize.cols}` : 'compact'} ref={gridRef} autoFocus toolbar={opts.toolbar || !!lesson.toolbar} statusBar={opts.status} noScroll={!big} fit={!big} tools={step.tools ?? lesson.tools} onState={setSnap} onEvent={onEvent} />
             </div>
             {pivotCfg && (
               <div className={view === 'pivot' ? 'h-[calc(100dvh-390px)] min-h-[300px] max-h-[460px] overflow-hidden rounded-xl border border-[#1F4D3A]/15 bg-white' : 'hidden'}>
@@ -601,6 +634,25 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
                   initial={chartCfg.initial}
                   onState={setChartState}
                 />
+              </div>
+            )}
+            {queryCfg && (
+              <div className={view === 'query' ? 'h-[calc(100dvh-340px)] min-h-[360px] max-h-[640px] overflow-hidden rounded-xl border border-[#1F4D3A]/15 bg-white' : 'hidden'}>
+                <QueryPanel
+                  key={`q${panelEpoch}`}
+                  config={queryCfg}
+                  onState={setQueryState}
+                  onLoad={(_n, t, origin, prev) => {
+                    // A refresh replaces the old result: clear it first so shorter tables leave nothing behind.
+                    const clear = prev ? Object.fromEntries(Object.keys(tableToCells(prev, origin)).map((k) => [k, ''])) : {};
+                    gridRef.current?.apply({ ...clear, ...tableToCells(t, origin) });
+                  }}
+                />
+              </div>
+            )}
+            {modelCfg && (
+              <div className={view === 'model' ? 'h-[calc(100dvh-340px)] min-h-[360px] max-h-[700px] overflow-hidden rounded-xl border border-[#1F4D3A]/15 bg-white' : 'hidden'}>
+                <ModelPanel key={`m${panelEpoch}`} config={modelCfg} onState={setModelState} />
               </div>
             )}
           </div>

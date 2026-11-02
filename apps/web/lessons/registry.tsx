@@ -59,6 +59,14 @@ import {
   unit4Test as daUnit4Test,
 } from './da2';
 import { correlation, dataTables, finalTest as daFinalTest, forecasting, goalSeekLesson, scenarios } from './da3';
+import * as ADV1 from './adv1';
+import * as ADV2 from './adv2';
+import * as ADV3 from './adv3';
+import { DD1 } from './dd1';
+import { DD2 } from './dd2';
+import { DD3 } from './dd3';
+import { DD4 } from './dd4';
+import { DD5 } from './dd5';
 import { meetTheGrid } from './meet-the-grid';
 import type { LessonContent } from './types';
 import { basicMath, cellsRanges, formatting, sumAverage, unit1Test } from './unit1';
@@ -95,6 +103,13 @@ const ALL: LessonContent[] = [
   daFirstPivot, summarizeBy, grouping, calculatedFields, pivotSlicers, refreshPivot, daUnit3Test,
   pickRightChart, buildChart, comboChart, miniCharts, chartDesign, pivotCharts, daUnit4Test,
   goalSeekLesson, scenarios, dataTables, forecasting, correlation, daFinalTest,
+  // Advanced Formulas
+  ADV1.spillLesson, ADV1.sortFunctions, ADV1.filterFunction, ADV1.uniqueFunction, ADV1.sequenceFunction, ADV1.unit1Test,
+  ADV1.letFunction, ADV1.lambdaFunction, ADV1.mapReduceScan, ADV1.byRowByCol, ADV1.lambdaLibrary, ADV1.unit2Test,
+  ADV2.booleanArrays, ADV2.sumproductLesson, ADV2.arrayConstants, ADV2.reshapeFunctions, ADV2.tocolWrap, ADV2.unit3Test,
+  ADV2.xlookupArrays, ADV2.xmatchLesson, ADV2.nearestTwoWay, ADV2.indirectOffset, ADV2.manySheets, ADV2.unit4Test,
+  ADV3.textSplitLesson, ADV3.regexLesson, ADV3.debuggingLesson, ADV3.performanceLesson, ADV3.errorProofing, ADV3.finalTest,
+  ...DD1, ...DD2, ...DD3, ...DD4, ...DD5,
 ];
 
 const LESSONS: Record<string, LessonContent> = Object.fromEntries(ALL.map((l) => [l.key, l]));

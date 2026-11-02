@@ -180,6 +180,134 @@ const DATA_ANALYSIS: U[] = [
   },
 ];
 
+const ADVANCED: U[] = [
+  {
+    title: 'Dynamic Arrays',
+    blurb: 'Spill ranges, SORT, FILTER, UNIQUE and SEQUENCE',
+    lessons: [
+      T('Spill ranges', 'sparkles', 'adv-spill'),
+      T('SORT & SORTBY', 'list', 'adv-sort'),
+      T('FILTER', 'search', 'adv-filter'),
+      T('UNIQUE', 'sparkles', 'adv-unique'),
+      T('SEQUENCE & RANDARRAY', 'plus', 'adv-sequence'),
+      T('Unit 1 test', 'trophy', 'adv-unit1-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'LET & LAMBDA',
+    blurb: 'Name your steps, then write your own functions',
+    lessons: [
+      T('LET', 'branch', 'adv-let'),
+      T('LAMBDA', 'branch', 'adv-lambda'),
+      T('MAP, REDUCE & SCAN', 'sigma', 'adv-map-reduce'),
+      T('BYROW, BYCOL & MAKEARRAY', 'grid', 'adv-byrow'),
+      T('Reusable function libraries', 'layout', 'adv-lambda-library'),
+      T('Unit 2 test', 'trophy', 'adv-unit2-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'Array Thinking',
+    blurb: 'Boolean arithmetic, SUMPRODUCT, constants and reshaping',
+    lessons: [
+      T('Boolean arithmetic', 'calculator', 'adv-boolean-arrays'),
+      T('SUMPRODUCT', 'calculator', 'adv-sumproduct'),
+      T('Array constants', 'list', 'adv-array-constants'),
+      T('TAKE, DROP, CHOOSECOLS & stacking', 'grid', 'adv-reshape'),
+      T('TOCOL, TOROW & WRAPROWS', 'grid', 'adv-tocol'),
+      T('Unit 3 test', 'trophy', 'adv-unit3-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'Advanced Lookups',
+    blurb: 'XLOOKUP tricks, XMATCH, nearest match and many sheets',
+    lessons: [
+      T('XLOOKUP: rows, lists and wildcards', 'search', 'adv-xlookup-arrays'),
+      T('XMATCH', 'search', 'adv-xmatch'),
+      T('Nearest match & two-way lookups', 'search', 'adv-nearest'),
+      T('INDIRECT & OFFSET (and why to avoid them)', 'wrench', 'adv-indirect-offset'),
+      T('Consolidate many sheets', 'layout', 'adv-many-sheets'),
+      T('Unit 4 test', 'trophy', 'adv-unit4-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'Text, Regex & Errors',
+    blurb: 'TEXTSPLIT, regular expressions, debugging and speed',
+    lessons: [
+      T('TEXTSPLIT, TEXTBEFORE & TEXTAFTER', 'sparkles', 'adv-textsplit'),
+      T('Regular expressions', 'sparkles', 'adv-regex'),
+      T('Debugging long formulas', 'wrench', 'adv-debug'),
+      T('Faster workbooks', 'wrench', 'adv-performance'),
+      T('Error-proofing', 'wrench', 'adv-error-proofing'),
+      T('Final test', 'trophy', 'adv-final-test', 'TEST'),
+    ],
+  },
+];
+
+const DATA_DASHBOARDS: U[] = [
+  {
+    title: 'Power Query Basics',
+    blurb: 'Get data, set types, clean text and shape rows',
+    lessons: [
+      T('Meet Power Query', 'sparkles', 'dd-pq-intro'),
+      T('Data types & errors', 'wrench', 'dd-pq-types'),
+      T('Cleaning text & values', 'wrench', 'dd-pq-clean'),
+      T('Filtering, sorting & columns', 'list', 'dd-pq-rows'),
+      T('Adding columns', 'plus', 'dd-pq-add'),
+      T('Steps, parameters & refresh', 'branch', 'dd-pq-refresh'),
+    ],
+  },
+  {
+    title: 'Advanced Power Query',
+    blurb: 'Merge, append, combine folders, unpivot and group',
+    lessons: [
+      T('Merge queries (lookups)', 'search', 'dd-pq-merge'),
+      T('Join kinds', 'search', 'dd-pq-joins'),
+      T('Append queries', 'layout', 'dd-pq-append'),
+      T('Combine files from a folder', 'layout', 'dd-pq-folder'),
+      T('Unpivot & pivot', 'grid', 'dd-pq-unpivot'),
+      T('Group by & summarise', 'sigma', 'dd-pq-group'),
+      T('Unit 2 test', 'trophy', 'dd-pq-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'Data Model & DAX',
+    blurb: 'Relationships, measures, CALCULATE and time intelligence',
+    lessons: [
+      T('Tables & relationships', 'grid', 'dd-model-rel'),
+      T('Your first measures', 'calculator', 'dd-model-measures'),
+      T('CALCULATE', 'sigma', 'dd-model-calculate'),
+      T('Filter context', 'branch', 'dd-model-context'),
+      T('Time intelligence', 'calculator', 'dd-model-time'),
+      T('Row context, RELATED & VAR', 'branch', 'dd-model-iterators'),
+      T('Unit 3 test', 'trophy', 'dd-model-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'Dashboard Design',
+    blurb: 'KPIs, layout, status, in-cell bars and the right chart',
+    lessons: [
+      T('KPI cards', 'sparkles', 'dd-dash-kpi'),
+      T('Layout & formatting', 'layout', 'dd-dash-layout'),
+      T('Status that survives colour-blindness', 'list', 'dd-dash-status'),
+      T('In-cell bars', 'grid', 'dd-dash-bars'),
+      T('Choosing the right chart', 'sigma', 'dd-dash-chart'),
+      T('Unit 4 test', 'trophy', 'dd-dash-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'Interactive Reporting',
+    blurb: 'Dropdowns, dynamic titles, slicers and one-click refresh',
+    lessons: [
+      T('A dropdown that drives the page', 'search', 'dd-int-dropdown'),
+      T('Dynamic titles & rankings', 'sparkles', 'dd-int-dynamic'),
+      T('Slicers & visible-only totals', 'list', 'dd-int-slicer'),
+      T('Switch what the dashboard shows', 'branch', 'dd-int-toggle'),
+      T('Refresh the whole report', 'wrench', 'dd-int-refresh'),
+      T('Course final', 'trophy', 'dd-final', 'TEST'),
+    ],
+  },
+];
+
 const XP: Record<string, number> = { LESSON: 10, CHEST: 0, TEST: 25 };
 
 async function seedUnits(courseId: string, units: U[]) {
@@ -258,18 +386,41 @@ async function main() {
   });
   await seedUnits(analysis.id, DATA_ANALYSIS);
 
-  // Empty shells: no units yet, not visible to learners.
-  const shells = [
-    { slug: 'advanced-formulas', title: 'Advanced Formulas', order: 4, description: 'Dynamic arrays, LET, LAMBDA and beyond.' },
-    { slug: 'data-dashboards', title: 'Data & Dashboards', order: 5, description: 'Power Query, models and executive dashboards.' },
-  ];
-  for (const s of shells) {
-    await database.course.upsert({
-      where: { slug: s.slug },
-      create: { ...s, published: false },
-      update: { title: s.title, order: s.order, description: s.description },
-    });
-  }
+  const advanced = await database.course.upsert({
+    where: { slug: 'advanced-formulas' },
+    create: {
+      slug: 'advanced-formulas',
+      title: 'Advanced Formulas',
+      description: 'Dynamic arrays, LET, LAMBDA, regex and the modern way to write formulas.',
+      order: 4,
+      published: true,
+    },
+    update: {
+      title: 'Advanced Formulas',
+      description: 'Dynamic arrays, LET, LAMBDA, regex and the modern way to write formulas.',
+      order: 4,
+      published: true,
+    },
+  });
+  await seedUnits(advanced.id, ADVANCED);
+
+  const dashboards = await database.course.upsert({
+    where: { slug: 'data-dashboards' },
+    create: {
+      slug: 'data-dashboards',
+      title: 'Data & Dashboards',
+      description: 'Power Query, data models with DAX, and dashboards that update with one click.',
+      order: 5,
+      published: true,
+    },
+    update: {
+      title: 'Data & Dashboards',
+      description: 'Power Query, data models with DAX, and dashboards that update with one click.',
+      order: 5,
+      published: true,
+    },
+  });
+  await seedUnits(dashboards.id, DATA_DASHBOARDS);
 
   const [courses, units, lessons] = await Promise.all([
     database.course.count(),

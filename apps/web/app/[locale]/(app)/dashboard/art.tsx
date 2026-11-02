@@ -65,6 +65,20 @@ export function SigmaFigure({ size = 72, className, style }: P) {
   );
 }
 
+/** A dashboard: KPI tiles over a small line chart. */
+export function DashFigure({ size = 96, className, style }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 96 96" fill="none" className={className} style={style} aria-hidden>
+      <rect x="6" y="10" width="84" height="76" rx="12" fill="#fff" stroke={G} strokeWidth="3" />
+      <rect x="14" y="18" width="23" height="16" rx="4" fill={G} />
+      <rect x="41" y="18" width="23" height="16" rx="4" fill={L} stroke={G} strokeWidth="2" />
+      <rect x="68" y="18" width="14" height="16" rx="4" fill={A} />
+      <path d="M14 70 30 58l14 6 16-16 22-12" stroke={T} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="82" cy="36" r="4" fill={C} />
+    </svg>
+  );
+}
+
 export function StarFigure({ size = 40, className, style }: P) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none" className={className} style={style} aria-hidden>

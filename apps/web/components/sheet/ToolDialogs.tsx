@@ -4,7 +4,7 @@ import { type ReactNode, useMemo, useState } from 'react';
 import * as E from './engine';
 import * as T from './tools';
 
-export type DialogKind = 'sort' | 'dedupe' | 'text2col' | 'find' | 'goalseek' | 'datatable' | 'slicer';
+export type DialogKind = 'names' | 'sort' | 'dedupe' | 'text2col' | 'find' | 'goalseek' | 'datatable' | 'slicer';
 
 type Apply = (data: E.SheetData, note: string, event: string) => void;
 type Props = {
@@ -97,6 +97,57 @@ export function ToolDialog({ kind, data, rect, active, onApply, onClose }: Props
   const [colIn, setColIn] = useState('');
   // --- Slicer ---
   const [slicerCol, setSlicerCol] = useState<number>(rc ? rc.c1 : 0);
+  // --- Name Manager ---
+  const [nmName, setNmName] = useState('');
+  const [nmRefers, setNmRefers] = useState('');
+
+  if (kind === 'names') {
+    const valid = /^[A-Za-z_][A-Za-z0-9_.]*$/.test(nmName) && !E.parseKey(nmName) && nmRefers.trim() !== '';
+    const existing = Object.entries(data.names ?? {});
+    return (
+      <Shell
+        title="Name Manager"
+        onClose={onClose}
+        footer={
+          <>
+            <Btn onClick={onClose}>Close</Btn>
+            <Btn
+              primary
+              disabled={!valid}
+              onClick={() => {
+                const refers = nmRefers.trim();
+                onApply({ ...data, names: { ...data.names, [nmName.toUpperCase()]: refers.startsWith('=') ? refers : refers.replace(/\$/g, '').toUpperCase() } }, `Name ${nmName.toUpperCase()} defined`, 'define-name');
+              }}
+            >
+              Add name
+            </Btn>
+          </>
+        }
+      >
+        <p className="text-xs text-[#1F4D3A]/70">
+          A name can point at cells (like <strong>B2:B9</strong>) or hold a formula (like <strong>=LAMBDA(x,x*0.2)</strong>), which turns it into your own function.
+        </p>
+        <label className="block">
+          <span className="mb-1 block text-xs font-semibold text-[#1F4D3A]/60">Name</span>
+          <input autoFocus aria-label="Name" className={inputCls} value={nmName} onChange={(e) => setNmName(e.target.value)} />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-xs font-semibold text-[#1F4D3A]/60">Refers to</span>
+          <input aria-label="Refers to" className={inputCls} placeholder="=LAMBDA(x,x*2)" value={nmRefers} onChange={(e) => setNmRefers(e.target.value)} />
+        </label>
+        {existing.length > 0 && (
+          <ul className="max-h-24 space-y-0.5 overflow-auto rounded border border-[#1F4D3A]/15 bg-[#F7F8F4] p-2 text-xs">
+            {existing.map(([k, v]) => (
+              <li key={k} className="flex justify-between gap-3">
+                <strong>{k}</strong>
+                <span className="truncate font-mono text-[#1F4D3A]/70">{v}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Shell>
+    );
+  }
 
   if (kind === 'sort') {
     if (!rc) return <Shell title="Sort" onClose={onClose} footer={<Btn onClick={onClose}>OK</Btn>}>Click a cell inside your data first.</Shell>;

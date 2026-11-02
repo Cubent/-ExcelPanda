@@ -54,7 +54,7 @@ export type SheetSnapshot = {
   editing: boolean;
 };
 
-export type ToolName = 'table' | 'totals' | 'sort' | 'filter' | 'dedupe' | 'text2col' | 'flash' | 'find' | 'slicer' | 'goalseek' | 'datatable';
+export type ToolName = 'names' | 'table' | 'totals' | 'sort' | 'filter' | 'dedupe' | 'text2col' | 'flash' | 'find' | 'slicer' | 'goalseek' | 'datatable';
 
 export type SheetHandle = {
   /** Merge cells in (only touching cells whose raw text differs). */
@@ -1177,6 +1177,7 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
   // --- derived render data ------------------------------------------------------------
   const items = useMemo(() => {
     const keys = new Set<string>(Object.keys(st.data.cells));
+    for (const k of ev.spillMembers()) keys.add(k);
     for (const [k, v] of Object.entries(st.data.styles)) if (v.bg) keys.add(k);
     // Conditional-format rules: which cells currently match, and the style they get.
     const tableStyle = new Map<string, Style>();
@@ -1469,6 +1470,7 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
         <div className="flex flex-wrap items-center gap-1.5 border-b border-[#1F4D3A]/10 bg-[#F1F5EF] px-2 py-1.5" role="toolbar" aria-label="Data tools">
           {(
             [
+              has('names') && ['Name Manager', 'Define named ranges and named formulas', () => setDialog('names')],
               has('table') && ['Table', 'Format as Table (Ctrl+T in Excel)', doTable],
               has('totals') && ['Total row', 'Show or hide the table total row', doTotals],
               has('sort') && ['Sort A→Z', 'Sort by the selected column', () => doQuickSort(true)],
@@ -1724,6 +1726,14 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
               {st.point && (
                 <div style={{ position: 'absolute', ...px(st.point), border: '2px dashed #2563EB', background: 'rgba(37,99,235,0.07)', pointerEvents: 'none', zIndex: 4 }} />
               )}
+
+              {/* the area a dynamic-array formula spills into */}
+              {!st.edit &&
+                (() => {
+                  const sr = ev.spillOf(activeKey);
+                  if (!sr) return null;
+                  return <div style={{ position: 'absolute', ...px(sr), border: '1.5px solid #3B82F6', pointerEvents: 'none', zIndex: 3, boxSizing: 'border-box' }} />;
+                })()}
 
               {/* selection border + fill handle */}
               {!st.edit && (

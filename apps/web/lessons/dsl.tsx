@@ -1,7 +1,7 @@
 // Small builders that keep lesson definitions short and consistent.
 import type { ReactNode } from 'react';
 import * as E from '@/components/sheet/engine';
-import type { ChartPanelConfig, LessonStep, PivotPanelConfig, SheetMeta, SheetView, StepCtx, ToolName } from './types';
+import type { ChartPanelConfig, LessonStep, ModelConfig, QueryConfig, PivotPanelConfig, SheetMeta, SheetView, StepCtx, ToolName } from './types';
 
 export const isF = (raw: string) => raw.trim().startsWith('=');
 /** True when the formula calls every one of the named functions. */
@@ -17,7 +17,7 @@ export const date = (y: number, m: number, d: number) => E.dateToSerial(y, m, d)
 export const near = (v: unknown, n: number, eps = 1e-6) => typeof v === 'number' && Math.abs(v - n) < eps;
 
 export type Want = E.Scalar | ((v: E.Scalar) => boolean);
-const matches = (v: E.Scalar, want: Want): boolean => {
+export const matches = (v: E.Scalar, want: Want): boolean => {
   if (typeof want === 'function') return want(v);
   if (typeof want === 'number') return near(v, want);
   if (typeof want === 'string') return typeof v === 'string' && squash(v) === squash(want);
@@ -39,6 +39,8 @@ type Base = {
   resetPanels?: boolean;
   pivot?: PivotPanelConfig;
   chart?: ChartPanelConfig;
+  query?: QueryConfig;
+  model?: ModelConfig;
 };
 
 /** An information-only step. */
@@ -82,6 +84,8 @@ export function task(
     resetPanels: o.resetPanels,
     pivot: o.pivot,
     chart: o.chart,
+    query: o.query,
+    model: o.model,
     solution: { cells: o.sol, events: o.ev },
     check: (c) => {
       if (c.editing) return false;
@@ -119,6 +123,8 @@ export function custom(
     resetPanels: o.resetPanels,
     pivot: o.pivot,
     chart: o.chart,
+    query: o.query,
+    model: o.model,
     check: o.check,
     solution: o.sol,
   };

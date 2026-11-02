@@ -132,7 +132,10 @@ export class XlError {
 }
 export type Scalar = number | string | boolean | XlError | null;
 type RangeVal = { range: true; vals: Scalar[]; rows: number; cols: number };
-type Val = Scalar | RangeVal;
+type Env = Record<string, Val>;
+type Lambda = { lambda: true; params: string[]; body: Node; env: Env } | { lambda: true; builtin: string };
+type Val = Scalar | RangeVal | Lambda;
+const isLambda = (v: Val): v is Lambda => typeof v === 'object' && v !== null && 'lambda' in v;
 
 const isRange = (v: Val): v is RangeVal => typeof v === 'object' && v !== null && 'range' in v;
 
@@ -232,7 +235,10 @@ export function literal(raw: string): Scalar {
 type Tok =
   | { t: 'num'; v: number }
   | { t: 'str'; v: string }
-  | { t: 'ref'; v: string; sheet?: string }
+  | { t: 'ref'; v: string; sheet?: string; spill?: boolean }
+  | { t: 'lb' }
+  | { t: 'rb' }
+  | { t: 'semi' }
   | { t: 'struct'; table?: string; col: string; row: boolean }
   | { t: 'name'; v: string }
   | { t: 'fn'; v: string }
@@ -290,8 +296,9 @@ function tokenize(src: string): Tok[] {
     }
     m = /^\$?[A-Za-z]{1,3}\$?\d+(?![\w.(!])/.exec(rest);
     if (m) {
-      out.push({ t: 'ref', v: m[0].replace(/\$/g, '').toUpperCase() });
-      i += m[0].length;
+      const spill = src[i + m[0].length] === '#';
+      out.push({ t: 'ref', v: m[0].replace(/\$/g, '').toUpperCase(), spill });
+      i += m[0].length + (spill ? 1 : 0);
       continue;
     }
     m = /^[A-Za-z_][A-Za-z0-9_.]*/.exec(rest);
@@ -310,6 +317,9 @@ function tokenize(src: string): Tok[] {
     if (ch === '(') out.push({ t: 'lp' });
     else if (ch === ')') out.push({ t: 'rp' });
     else if (ch === ',') out.push({ t: 'comma' });
+    else if (ch === '{') out.push({ t: 'lb' });
+    else if (ch === '}') out.push({ t: 'rb' });
+    else if (ch === ';') out.push({ t: 'semi' });
     else throw new XlError('#NAME?');
     i++;
   }
@@ -320,7 +330,10 @@ type Node =
   | { k: 'num'; v: number }
   | { k: 'str'; v: string }
   | { k: 'bool'; v: boolean }
-  | { k: 'ref'; key: string; sheet?: string }
+  | { k: 'ref'; key: string; sheet?: string; spill?: boolean }
+  | { k: 'arr'; rows: Node[][] }
+  | { k: 'call'; fn: Node; args: Node[] }
+  | { k: 'blank' }
   | { k: 'range'; a: string; b: string; sheet?: string }
   | { k: 'name'; name: string }
   | { k: 'struct'; table?: string; col: string; row: boolean }
@@ -384,8 +397,29 @@ function parse(tokens: Tok[]): Node {
     }
     return postfix();
   }
+  function parseArgs(): Node[] {
+    const args: Node[] = [];
+    if (tokens[p]?.t === 'rp') {
+      p++;
+      return args;
+    }
+    for (;;) {
+      if (tokens[p]?.t === 'comma' || tokens[p]?.t === 'rp') args.push({ k: 'blank' });
+      else args.push(cmp());
+      const n = tokens[p++];
+      if (!n) throw new XlError('#NAME?');
+      if (n.t === 'comma') continue;
+      if (n.t === 'rp') break;
+      throw new XlError('#NAME?');
+    }
+    return args;
+  }
   function postfix(): Node {
     let e = primary();
+    while (tokens[p]?.t === 'lp' && (e.k === 'fn' || e.k === 'call')) {
+      p++;
+      e = { k: 'call', fn: e, args: parseArgs() };
+    }
     while (isOp('%')) {
       p++;
       e = { k: 'pct', e };
@@ -405,7 +439,7 @@ function parse(tokens: Tok[]): Node {
         if (!t2 || t2.t !== 'ref') throw new XlError('#NAME?');
         return { k: 'range', a: t.v, b: t2.v, sheet: t.sheet };
       }
-      return { k: 'ref', key: t.v, sheet: t.sheet };
+      return { k: 'ref', key: t.v, sheet: t.sheet, spill: t.spill };
     }
     if (t.t === 'struct') return { k: 'struct', table: t.table, col: t.col, row: t.row };
     if (t.t === 'name') {
@@ -422,7 +456,8 @@ function parse(tokens: Tok[]): Node {
         return { k: 'fn', name: t.v, args };
       }
       for (;;) {
-        args.push(cmp());
+        if (tokens[p]?.t === 'comma' || tokens[p]?.t === 'rp') args.push({ k: 'blank' });
+        else args.push(cmp());
         const n = tokens[p++];
         if (!n) throw new XlError('#NAME?');
         if (n.t === 'comma') continue;
@@ -430,6 +465,22 @@ function parse(tokens: Tok[]): Node {
         throw new XlError('#NAME?');
       }
       return { k: 'fn', name: t.v, args };
+    }
+    if (t.t === 'lb') {
+      const rows: Node[][] = [[]];
+      for (;;) {
+        rows[rows.length - 1].push(cmp());
+        const n = tokens[p++];
+        if (!n) throw new XlError('#NAME?');
+        if (n.t === 'comma') continue;
+        if (n.t === 'semi') {
+          rows.push([]);
+          continue;
+        }
+        if (n.t === 'rb') break;
+        throw new XlError('#NAME?');
+      }
+      return { k: 'arr', rows };
     }
     if (t.t === 'lp') {
       const e = cmp();
@@ -447,6 +498,10 @@ function parse(tokens: Tok[]): Node {
 // --- evaluation -------------------------------------------------------------
 
 export type Evaluator = {
+  /** The rectangle a dynamic-array formula spills into, for its anchor cell or any cell inside it. */
+  spillOf(key: string): Rect | null;
+  /** Every cell that currently holds a spilled value (not an anchor). */
+  spillMembers(): string[];
   /** Evaluates a formula (starting with =) as if typed into a cell, for conditional-format rules. */
   evalFormula(formula: string): Scalar;
   value(key: string): Scalar;
@@ -454,7 +509,7 @@ export type Evaluator = {
 };
 
 function toNum(v: Val): number {
-  if (isRange(v)) throw new XlError('#VALUE!');
+  if (isRange(v) || isLambda(v)) throw new XlError('#VALUE!');
   if (v instanceof XlError) throw v;
   if (v === null) return 0;
   if (typeof v === 'number') return v;
@@ -465,7 +520,7 @@ function toNum(v: Val): number {
 }
 
 function toStr(v: Val): string {
-  if (isRange(v)) throw new XlError('#VALUE!');
+  if (isRange(v) || isLambda(v)) throw new XlError('#VALUE!');
   if (v instanceof XlError) throw v;
   if (v === null) return '';
   if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
@@ -474,7 +529,7 @@ function toStr(v: Val): string {
 }
 
 function toBool(v: Val): boolean {
-  if (isRange(v)) throw new XlError('#VALUE!');
+  if (isRange(v) || isLambda(v)) throw new XlError('#VALUE!');
   if (v instanceof XlError) throw v;
   if (v === null) return false;
   if (typeof v === 'boolean') return v;
@@ -622,12 +677,639 @@ function dateDif(a: number, b: number, unit: string): number {
   }
 }
 
+// --- arrays, lambdas, text and regex helpers ---------------------------------------------
+
+const mkArr = (rows: number, cols: number, vals: Scalar[]): RangeVal => ({ range: true, vals, rows, cols });
+const asArr = (v: Val): RangeVal => {
+  if (isLambda(v)) throw new XlError('#VALUE!');
+  return isRange(v) ? v : mkArr(1, 1, [v]);
+};
+const atRC = (a: RangeVal, r: number, c: number): Scalar => a.vals[r * a.cols + c];
+const fromRows = (rows: Scalar[][]): RangeVal => mkArr(rows.length, rows[0]?.length ?? 0, rows.flat());
+const rowsOf = (a: RangeVal): Scalar[][] => Array.from({ length: a.rows }, (_, r) => a.vals.slice(r * a.cols, (r + 1) * a.cols));
+const transposeArr = (a: RangeVal): RangeVal => fromRows(Array.from({ length: a.cols }, (_, c) => Array.from({ length: a.rows }, (_, r) => atRC(a, r, c))));
+const errOf = (e: unknown): XlError => (e instanceof XlError ? e : new XlError('#VALUE!'));
+const toInt = (v: Val | undefined, d: number): number => (v === undefined || v === null ? d : Math.trunc(toNum(v)));
+
+/** Applies an operator to two scalars (used by elementwise array maths). */
+function binScalar(op: string, l: Scalar, r: Scalar): Scalar {
+  if (op === '&') return toStr(l) + toStr(r);
+  if (['=', '<>', '<', '>', '<=', '>='].includes(op)) {
+    const c = compare(l, r);
+    return op === '=' ? c === 0 : op === '<>' ? c !== 0 : op === '<' ? c < 0 : op === '>' ? c > 0 : op === '<=' ? c <= 0 : c >= 0;
+  }
+  const a = toNum(l);
+  const b = toNum(r);
+  switch (op) {
+    case '+':
+      return a + b;
+    case '-':
+      return a - b;
+    case '*':
+      return a * b;
+    case '/':
+      if (b === 0) throw new XlError('#DIV/0!');
+      return a / b;
+    default: {
+      const v = a ** b;
+      if (!Number.isFinite(v)) throw new XlError('#NUM!');
+      return v;
+    }
+  }
+}
+
+/** Elementwise operation with Excel's broadcasting (a single row or column stretches to fit). */
+function broadcast2(a: Val, b: Val, fn: (x: Scalar, y: Scalar) => Scalar): Val {
+  if (!isRange(a) && !isRange(b)) return fn(a as Scalar, b as Scalar);
+  const A = asArr(a);
+  const B = asArr(b);
+  const dim = (x: number, y: number) => (x === 1 ? y : y === 1 ? x : Math.max(x, y));
+  const rows = dim(A.rows, B.rows);
+  const cols = dim(A.cols, B.cols);
+  const vals: Scalar[] = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const ra = A.rows === 1 ? 0 : r;
+      const ca = A.cols === 1 ? 0 : c;
+      const rb = B.rows === 1 ? 0 : r;
+      const cb = B.cols === 1 ? 0 : c;
+      if (ra >= A.rows || ca >= A.cols || rb >= B.rows || cb >= B.cols) {
+        vals.push(new XlError('#N/A'));
+        continue;
+      }
+      try {
+        vals.push(fn(atRC(A, ra, ca), atRC(B, rb, cb)));
+      } catch (e) {
+        vals.push(errOf(e));
+      }
+    }
+  }
+  return mkArr(rows, cols, vals);
+}
+
+function mapScalars(a: Val, fn: (x: Scalar) => Scalar): Val {
+  if (!isRange(a)) return fn(a as Scalar);
+  return mkArr(a.rows, a.cols, a.vals.map((x) => {
+    try {
+      return fn(x);
+    } catch (e) {
+      return errOf(e);
+    }
+  }));
+}
+
+/** Runs a scalar function over array arguments, element by element. */
+function liftOver(args: Val[], apply: (a: Val[]) => Val): Val {
+  const arrays = args.filter(isRange) as RangeVal[];
+  const rows = Math.max(...arrays.map((a) => a.rows));
+  const cols = Math.max(...arrays.map((a) => a.cols));
+  const vals: Scalar[] = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      let na = false;
+      const one = args.map((a) => {
+        if (!isRange(a)) return a;
+        const rr = a.rows === 1 ? 0 : r;
+        const cc = a.cols === 1 ? 0 : c;
+        if (rr >= a.rows || cc >= a.cols) {
+          na = true;
+          return null;
+        }
+        return atRC(a, rr, cc);
+      });
+      if (na) {
+        vals.push(new XlError('#N/A'));
+        continue;
+      }
+      try {
+        const v = apply(one);
+        vals.push(isRange(v) || isLambda(v) ? new XlError('#VALUE!') : v);
+      } catch (e) {
+        vals.push(errOf(e));
+      }
+    }
+  }
+  return mkArr(rows, cols, vals);
+}
+
+/** Scalar functions that automatically work on whole arrays. */
+const LIFT = new Set([
+  'ABS', 'INT', 'SQRT', 'ROUND', 'ROUNDUP', 'ROUNDDOWN', 'MOD', 'POWER', 'UPPER', 'LOWER', 'PROPER', 'TRIM', 'LEN', 'LEFT', 'RIGHT', 'MID', 'TEXT',
+  'VALUE', 'NOT', 'ISNUMBER', 'ISTEXT', 'ISBLANK', 'EXACT', 'SUBSTITUTE', 'FIND', 'SEARCH', 'YEAR', 'MONTH', 'DAY', 'WEEKDAY', 'DATE', 'EDATE',
+  'EOMONTH', 'CEILING', 'FLOOR', 'MROUND', 'TRUNC', 'REPT', 'DAYS', 'TEXTBEFORE', 'TEXTAFTER', 'REGEXTEST', 'REGEXREPLACE', 'ISNA', 'CLEAN',
+]);
+
+/** Function names that can be passed as a lambda (for example BYROW(A1:C5, SUM)). */
+const BUILTIN_LAMBDAS = new Set(['SUM', 'AVERAGE', 'MAX', 'MIN', 'COUNT', 'COUNTA', 'PRODUCT', 'MEDIAN', 'STDEV.S', 'STDEV.P', 'LEN', 'UPPER', 'LOWER', 'PROPER', 'TRIM', 'ABS', 'SQRT', 'ROUND']);
+
+const sortRank = (v: Scalar): number => (v === null || v === '' ? 4 : typeof v === 'number' ? 0 : typeof v === 'string' ? 1 : typeof v === 'boolean' ? 2 : 3);
+function cmpSortable(a: Scalar, b: Scalar): number {
+  const ra = sortRank(a);
+  const rb = sortRank(b);
+  if (ra !== rb) return ra - rb;
+  if (typeof a === 'number' && typeof b === 'number') return a - b;
+  if (typeof a === 'string' && typeof b === 'string') return a.toLowerCase().localeCompare(b.toLowerCase());
+  if (typeof a === 'boolean' && typeof b === 'boolean') return Number(a) - Number(b);
+  return 0;
+}
+const keyOfScalar = (v: Scalar) => `${typeof v}:${v instanceof XlError ? v.code : String(v ?? '').toLowerCase()}`;
+const truthy = (v: Scalar): boolean => {
+  if (v instanceof XlError) throw v;
+  return toBool(v);
+};
+
+type Invoke = (f: Lambda, a: Val[]) => Val;
+
+const splitTexts = (text: string, delims: string[], ci: boolean): string[] => {
+  const real = delims.filter((d) => d !== '');
+  if (!real.length) return [text];
+  const esc = real.map((d) => d.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+  return text.split(new RegExp(esc, ci ? 'i' : ''));
+};
+
+function textBeforeAfter(name: string, args: Val[]): Val {
+  const text = toStr(args[0]);
+  const delim = toStr(args[1]);
+  const inst = toInt(args[2], 1);
+  const ci = toInt(args[3], 0) === 1;
+  const matchEnd = toInt(args[4], 0) === 1;
+  const notFound = args[5];
+  const hay = ci ? text.toLowerCase() : text;
+  const needle = ci ? delim.toLowerCase() : delim;
+  const fail = (): Val => (notFound !== undefined && notFound !== null ? (notFound as Val) : new XlError('#N/A'));
+  if (needle === '' || inst === 0) return fail();
+  const positions: number[] = [];
+  for (let i = hay.indexOf(needle); i >= 0; i = hay.indexOf(needle, i + needle.length)) positions.push(i);
+  let idx: number;
+  if (inst > 0) idx = positions[inst - 1] ?? -1;
+  else idx = positions[positions.length + inst] ?? -1;
+  if (idx < 0) {
+    if (matchEnd && Math.abs(inst) === positions.length + 1) idx = inst > 0 ? text.length : 0;
+    else return fail();
+  }
+  const end = idx + (positions.includes(idx) ? needle.length : 0);
+  return name === 'TEXTBEFORE' ? text.slice(0, idx) : text.slice(end);
+}
+
+function makeRegex(pattern: string, ci: boolean, flags = ''): RegExp {
+  try {
+    return new RegExp(pattern, flags + (ci ? 'i' : ''));
+  } catch {
+    throw new XlError('#VALUE!');
+  }
+}
+
+function xmatchOne(look: Scalar, from: RangeVal, mode: number, search: number): number | null {
+  const idxs = from.vals.map((_, i) => i);
+  if (search < 0) idxs.reverse();
+  const live = (v: Scalar) => v !== null && !(v instanceof XlError);
+  if (mode === 2) {
+    const m = matcher(look);
+    const hit = idxs.find((i) => m(from.vals[i]));
+    return hit === undefined ? null : hit;
+  }
+  let hit = idxs.find((i) => live(from.vals[i]) && compare(from.vals[i], look) === 0);
+  if (hit === undefined && (mode === -1 || mode === 1)) {
+    let best = -1;
+    for (const i of idxs) {
+      const v = from.vals[i];
+      if (!live(v)) continue;
+      const c = compare(v, look);
+      if (mode === -1 && c < 0 && (best < 0 || compare(v, from.vals[best]) > 0)) best = i;
+      if (mode === 1 && c > 0 && (best < 0 || compare(v, from.vals[best]) < 0)) best = i;
+    }
+    if (best >= 0) hit = best;
+  }
+  return hit === undefined ? null : hit;
+}
+
+/** Dynamic-array and higher-order functions. Returns undefined when `name` is not one of them. */
+function arrayFn(name: string, args: Val[], invoke: Invoke): Val | undefined {
+  switch (name) {
+    case 'SEQUENCE': {
+      const rows = toInt(args[0], 1);
+      const cols = toInt(args[1], 1);
+      const start = args[2] === undefined || args[2] === null ? 1 : toNum(args[2]);
+      const step = args[3] === undefined || args[3] === null ? 1 : toNum(args[3]);
+      if (rows < 1 || cols < 1 || rows * cols > 20000) throw new XlError('#CALC!');
+      return mkArr(rows, cols, Array.from({ length: rows * cols }, (_, i) => start + step * i));
+    }
+    case 'RANDARRAY': {
+      const rows = toInt(args[0], 1);
+      const cols = toInt(args[1], 1);
+      const lo = args[2] === undefined || args[2] === null ? 0 : toNum(args[2]);
+      const hi = args[3] === undefined || args[3] === null ? 1 : toNum(args[3]);
+      const whole = args[4] !== undefined && args[4] !== null && toBool(args[4]);
+      if (rows < 1 || cols < 1 || rows * cols > 20000) throw new XlError('#CALC!');
+      return mkArr(rows, cols, Array.from({ length: rows * cols }, () => (whole ? Math.floor(lo + Math.random() * (hi - lo + 1)) : lo + Math.random() * (hi - lo))));
+    }
+    case 'ROWS':
+      return asArr(args[0]).rows;
+    case 'COLUMNS':
+      return asArr(args[0]).cols;
+    case 'TRANSPOSE':
+      return transposeArr(asArr(args[0]));
+    case 'FILTER': {
+      const A = asArr(args[0]);
+      const I = asArr(args[1]);
+      let out: Scalar[][];
+      if (I.cols === 1 && I.rows === A.rows) out = rowsOf(A).filter((_, r) => truthy(I.vals[r]));
+      else if (I.rows === 1 && I.cols === A.cols) out = rowsOf(transposeArr(A)).filter((_, c) => truthy(I.vals[c]));
+      else throw new XlError('#VALUE!');
+      if (!out.length) {
+        if (args[2] !== undefined && args[2] !== null) return args[2];
+        throw new XlError('#CALC!');
+      }
+      const res = fromRows(out);
+      return I.rows === 1 && I.cols !== 1 ? transposeArr(res) : res;
+    }
+    case 'SORT': {
+      let A = asArr(args[0]);
+      const idx = toInt(args[1], 1);
+      const order = toInt(args[2], 1) === -1 ? -1 : 1;
+      const byCol = args[3] !== undefined && args[3] !== null && toBool(args[3]);
+      if (byCol) A = transposeArr(A);
+      if (idx < 1 || idx > A.cols) throw new XlError('#VALUE!');
+      const rows = rowsOf(A).map((row, i) => ({ row, i }));
+      rows.sort((x, y) => {
+        const a = x.row[idx - 1];
+        const b = y.row[idx - 1];
+        const ra = sortRank(a);
+        const rb = sortRank(b);
+        if (ra === 4 || rb === 4) return ra === rb ? x.i - y.i : ra === 4 ? 1 : -1;
+        const c = cmpSortable(a, b) * order;
+        return c !== 0 ? c : x.i - y.i;
+      });
+      const out = fromRows(rows.map((x) => x.row));
+      return byCol ? transposeArr(out) : out;
+    }
+    case 'SORTBY': {
+      const A = asArr(args[0]);
+      const keys: { by: RangeVal; order: number }[] = [];
+      for (let i = 1; i < args.length; i += 2) {
+        const by = asArr(args[i]);
+        if (by.vals.length !== A.rows && by.vals.length !== A.cols) throw new XlError('#VALUE!');
+        keys.push({ by, order: toInt(args[i + 1], 1) === -1 ? -1 : 1 });
+      }
+      if (!keys.length) throw new XlError('#VALUE!');
+      const horizontal = keys[0].by.rows === 1 && A.cols === keys[0].by.cols && A.rows !== A.cols;
+      const base = horizontal ? transposeArr(A) : A;
+      const idxs = Array.from({ length: base.rows }, (_, i) => i);
+      idxs.sort((x, y) => {
+        for (const k of keys) {
+          const a = k.by.vals[x];
+          const b = k.by.vals[y];
+          const ra = sortRank(a);
+          const rb = sortRank(b);
+          if (ra === 4 || rb === 4) {
+            if (ra !== rb) return ra === 4 ? 1 : -1;
+            continue;
+          }
+          const c = cmpSortable(a, b) * k.order;
+          if (c !== 0) return c;
+        }
+        return x - y;
+      });
+      const out = fromRows(idxs.map((i) => rowsOf(base)[i]));
+      return horizontal ? transposeArr(out) : out;
+    }
+    case 'UNIQUE': {
+      let A = asArr(args[0]);
+      const byCol = args[1] !== undefined && args[1] !== null && toBool(args[1]);
+      const once = args[2] !== undefined && args[2] !== null && toBool(args[2]);
+      if (byCol) A = transposeArr(A);
+      const counts = new Map<string, number>();
+      const first = new Map<string, Scalar[]>();
+      for (const row of rowsOf(A)) {
+        const k = row.map(keyOfScalar).join('\u0001');
+        counts.set(k, (counts.get(k) ?? 0) + 1);
+        if (!first.has(k)) first.set(k, row);
+      }
+      const out = [...first.entries()].filter(([k]) => !once || counts.get(k) === 1).map(([, row]) => row);
+      if (!out.length) throw new XlError('#CALC!');
+      const res = fromRows(out);
+      return byCol ? transposeArr(res) : res;
+    }
+    case 'TAKE':
+    case 'DROP': {
+      const A = asArr(args[0]);
+      const take = name === 'TAKE';
+      const range = (n: number, len: number): [number, number] => (take ? (n >= 0 ? [0, Math.min(n, len)] : [Math.max(0, len + n), len]) : n >= 0 ? [Math.min(n, len), len] : [0, Math.max(0, len + n)]);
+      const [r1, r2] = args[1] === undefined || args[1] === null ? [0, A.rows] : range(toInt(args[1], 0), A.rows);
+      const [c1, c2] = args[2] === undefined || args[2] === null ? [0, A.cols] : range(toInt(args[2], 0), A.cols);
+      if (r2 <= r1 || c2 <= c1) throw new XlError('#CALC!');
+      return fromRows(rowsOf(A).slice(r1, r2).map((row) => row.slice(c1, c2)));
+    }
+    case 'CHOOSECOLS':
+    case 'CHOOSEROWS': {
+      const A = name === 'CHOOSECOLS' ? asArr(args[0]) : transposeArr(asArr(args[0]));
+      const picks = args.slice(1).flatMap((a) => (isRange(a) ? a.vals.map((v) => toInt(v, 0)) : [toInt(a, 0)]));
+      const out = rowsOf(A).map((row) =>
+        picks.map((p) => {
+          const i = p > 0 ? p - 1 : A.cols + p;
+          if (p === 0 || i < 0 || i >= A.cols) throw new XlError('#VALUE!');
+          return row[i];
+        }),
+      );
+      const res = fromRows(out);
+      return name === 'CHOOSECOLS' ? res : transposeArr(res);
+    }
+    case 'HSTACK':
+    case 'VSTACK': {
+      const parts = args.map(asArr);
+      if (name === 'HSTACK') {
+        const rows = Math.max(...parts.map((p) => p.rows));
+        return fromRows(Array.from({ length: rows }, (_, r) => parts.flatMap((p) => Array.from({ length: p.cols }, (_, c) => (r < p.rows ? atRC(p, r, c) : new XlError('#N/A'))))));
+      }
+      const cols = Math.max(...parts.map((p) => p.cols));
+      return fromRows(parts.flatMap((p) => rowsOf(p).map((row) => Array.from({ length: cols }, (_, c) => (c < row.length ? row[c] : new XlError('#N/A'))))));
+    }
+    case 'TOCOL':
+    case 'TOROW': {
+      const A = asArr(args[0]);
+      const ignore = toInt(args[1], 0);
+      const byCol = args[2] !== undefined && args[2] !== null && toBool(args[2]);
+      let vals = byCol ? transposeArr(A).vals : A.vals;
+      vals = vals.filter((v) => !((ignore === 1 || ignore === 3) && (v === null || v === '')) && !((ignore === 2 || ignore === 3) && v instanceof XlError));
+      if (!vals.length) throw new XlError('#CALC!');
+      return name === 'TOCOL' ? mkArr(vals.length, 1, vals) : mkArr(1, vals.length, vals);
+    }
+    case 'WRAPROWS':
+    case 'WRAPCOLS': {
+      const A = asArr(args[0]);
+      const n = toInt(args[1], 0);
+      if (n < 1) throw new XlError('#NUM!');
+      const pad = args[2] === undefined || args[2] === null ? new XlError('#N/A') : (args[2] as Scalar);
+      const vals = [...A.vals];
+      while (vals.length % n) vals.push(pad);
+      const chunks: Scalar[][] = [];
+      for (let i = 0; i < vals.length; i += n) chunks.push(vals.slice(i, i + n));
+      const res = fromRows(chunks);
+      return name === 'WRAPROWS' ? res : transposeArr(res);
+    }
+    case 'SUMPRODUCT': {
+      const arrs = args.map(asArr);
+      const size = arrs[0].vals.length;
+      if (arrs.some((a) => a.rows !== arrs[0].rows || a.cols !== arrs[0].cols)) throw new XlError('#VALUE!');
+      let total = 0;
+      for (let i = 0; i < size; i++) {
+        let p = 1;
+        for (const a of arrs) {
+          const v = a.vals[i];
+          if (v instanceof XlError) throw v;
+          p *= typeof v === 'number' ? v : 0;
+        }
+        total += p;
+      }
+      return total;
+    }
+    case 'XMATCH': {
+      const from = asArr(args[1]);
+      const mode = toInt(args[2], 0);
+      const search = toInt(args[3], 1);
+      const one = (look: Scalar): Scalar => {
+        const i = xmatchOne(look, from, mode, search);
+        return i === null ? new XlError('#N/A') : i + 1;
+      };
+      if (isRange(args[0])) return mapScalars(args[0], one);
+      const v = one(args[0] as Scalar);
+      if (v instanceof XlError) throw v;
+      return v;
+    }
+    case 'XLOOKUP': {
+      if (args.length < 3 || args.length > 6) throw new XlError('#VALUE!');
+      const from = asArr(args[1]);
+      const ret = asArr(args[2]);
+      const mode = toInt(args[4], 0);
+      const search = toInt(args[5], 1);
+      const vertical = from.cols === 1;
+      if ((vertical && ret.rows !== from.rows) || (!vertical && from.rows === 1 && ret.cols !== from.cols) || (!vertical && from.rows !== 1)) throw new XlError('#VALUE!');
+      const pick = (i: number): Val => (vertical ? (ret.cols === 1 ? ret.vals[i] : mkArr(1, ret.cols, ret.vals.slice(i * ret.cols, (i + 1) * ret.cols))) : ret.rows === 1 ? ret.vals[i] : mkArr(ret.rows, 1, Array.from({ length: ret.rows }, (_, r) => atRC(ret, r, i))));
+      const one = (look: Scalar): Val => {
+        const i = xmatchOne(look, from, mode, search);
+        if (i !== null) return pick(i);
+        if (args[3] !== undefined && args[3] !== null) return args[3];
+        throw new XlError('#N/A');
+      };
+      if (!isRange(args[0])) return one(args[0] as Scalar);
+      const looks = args[0];
+      const results = looks.vals.map((l) => {
+        try {
+          return one(l);
+        } catch (e) {
+          return errOf(e);
+        }
+      });
+      if (results.every((r) => !isRange(r))) return mkArr(looks.rows, looks.cols, results as Scalar[]);
+      return fromRows(results.flatMap((r) => (isRange(r) ? rowsOf(r) : [[r as Scalar]])));
+    }
+    case 'MAP': {
+      const f = args[args.length - 1];
+      if (!isLambda(f) || args.length < 2) throw new XlError('#VALUE!');
+      const arrs = args.slice(0, -1).map(asArr);
+      const rows = arrs[0].rows;
+      const cols = arrs[0].cols;
+      if (arrs.some((a) => a.rows !== rows || a.cols !== cols)) throw new XlError('#VALUE!');
+      return mkArr(rows, cols, arrs[0].vals.map((_, i) => {
+        try {
+          const v = invoke(f, arrs.map((a) => a.vals[i]));
+          return isRange(v) || isLambda(v) ? new XlError('#CALC!') : v;
+        } catch (e) {
+          return errOf(e);
+        }
+      }));
+    }
+    case 'REDUCE':
+    case 'SCAN': {
+      const f = args[args.length - 1];
+      if (!isLambda(f)) throw new XlError('#VALUE!');
+      const hasInit = args.length === 3;
+      const A = asArr(args[hasInit ? 1 : 0]);
+      let acc: Val = hasInit ? args[0] : (A.vals[0] ?? null);
+      const out: Scalar[] = [];
+      A.vals.forEach((v, i) => {
+        if (!hasInit && i === 0) {
+          out.push(acc as Scalar);
+          return;
+        }
+        acc = invoke(f, [acc, v]);
+        out.push(isRange(acc) || isLambda(acc) ? new XlError('#CALC!') : acc);
+      });
+      return name === 'REDUCE' ? acc : mkArr(A.rows, A.cols, out);
+    }
+    case 'BYROW':
+    case 'BYCOL': {
+      const f = args[1];
+      if (!isLambda(f)) throw new XlError('#VALUE!');
+      const A = asArr(args[0]);
+      const rowWise = name === 'BYROW';
+      const n = rowWise ? A.rows : A.cols;
+      const vals: Scalar[] = Array.from({ length: n }, (_, i) => {
+        const slice = rowWise ? mkArr(1, A.cols, A.vals.slice(i * A.cols, (i + 1) * A.cols)) : mkArr(A.rows, 1, Array.from({ length: A.rows }, (_, r) => atRC(A, r, i)));
+        try {
+          const v = invoke(f, [slice]);
+          return isRange(v) || isLambda(v) ? new XlError('#CALC!') : v;
+        } catch (e) {
+          return errOf(e);
+        }
+      });
+      return rowWise ? mkArr(n, 1, vals) : mkArr(1, n, vals);
+    }
+    case 'MAKEARRAY': {
+      const rows = toInt(args[0], 0);
+      const cols = toInt(args[1], 0);
+      const f = args[2];
+      if (!isLambda(f) || rows < 1 || cols < 1 || rows * cols > 20000) throw new XlError('#VALUE!');
+      const vals: Scalar[] = [];
+      for (let r = 1; r <= rows; r++) {
+        for (let c = 1; c <= cols; c++) {
+          try {
+            const v = invoke(f, [r, c]);
+            vals.push(isRange(v) || isLambda(v) ? new XlError('#CALC!') : v);
+          } catch (e) {
+            vals.push(errOf(e));
+          }
+        }
+      }
+      return mkArr(rows, cols, vals);
+    }
+    case 'TEXTSPLIT': {
+      const text = toStr(args[0]);
+      const colD = (args[1] === undefined || args[1] === null ? [''] : isRange(args[1]) ? args[1].vals.map(toStr) : [toStr(args[1])]) as string[];
+      const rowD = (args[2] === undefined || args[2] === null ? [] : isRange(args[2]) ? args[2].vals.map(toStr) : [toStr(args[2])]) as string[];
+      const ignore = args[3] !== undefined && args[3] !== null && toBool(args[3]);
+      const ci = toInt(args[4], 0) === 1;
+      const pad: Scalar = args[5] === undefined || args[5] === null ? new XlError('#N/A') : (args[5] as Scalar);
+      const rowParts = rowD.length ? splitTexts(text, rowD, ci) : [text];
+      const grid = rowParts.map((rp) => {
+        let parts = colD.some((d) => d !== '') ? splitTexts(rp, colD, ci) : [rp];
+        if (ignore) parts = parts.filter((p) => p !== '');
+        return parts as Scalar[];
+      });
+      const width = Math.max(...grid.map((g) => g.length));
+      return fromRows(grid.map((g) => [...g, ...Array.from({ length: width - g.length }, () => pad)]));
+    }
+    case 'TEXTBEFORE':
+    case 'TEXTAFTER':
+      return textBeforeAfter(name, args);
+    case 'REGEXTEST': {
+      const re = makeRegex(toStr(args[1]), toInt(args[2], 0) === 1);
+      return re.test(toStr(args[0]));
+    }
+    case 'REGEXEXTRACT': {
+      const mode = toInt(args[2], 0);
+      const ci = toInt(args[3], 0) === 1;
+      const pattern = toStr(args[1]);
+      const one = (t: Scalar): Val => {
+        const text = toStr(t);
+        if (mode === 1) {
+          const all = [...text.matchAll(makeRegex(pattern, ci, 'g'))].map((m) => m[0]);
+          if (!all.length) throw new XlError('#N/A');
+          return mkArr(all.length, 1, all);
+        }
+        const m = makeRegex(pattern, ci).exec(text);
+        if (!m) throw new XlError('#N/A');
+        if (mode === 2) {
+          const groups = m.slice(1).map((g) => g ?? '');
+          if (!groups.length) throw new XlError('#N/A');
+          return mkArr(1, groups.length, groups);
+        }
+        return m[0];
+      };
+      if (isRange(args[0]) && mode === 0) return mapScalars(args[0], (t) => one(t) as Scalar);
+      return one(args[0] as Scalar);
+    }
+    case 'REGEXREPLACE': {
+      const text = toStr(args[0]);
+      const occ = toInt(args[3], 0);
+      const ci = toInt(args[4], 0) === 1;
+      const repl = toStr(args[2]);
+      const pattern = toStr(args[1]);
+      if (occ === 0) return text.replace(makeRegex(pattern, ci, 'g'), repl);
+      const matches = [...text.matchAll(makeRegex(pattern, ci, 'g'))];
+      const m = occ > 0 ? matches[occ - 1] : matches[matches.length + occ];
+      if (!m || m.index === undefined) return text;
+      const piece = m[0].replace(makeRegex(pattern, ci), repl);
+      return text.slice(0, m.index) + piece + text.slice(m.index + m[0].length);
+    }
+    default:
+      return undefined;
+  }
+}
+
 export function buildEvaluator(data: SheetData): Evaluator {
   const memo = new Map<string, Scalar>();
   const stack = new Set<string>();
   const cache = new Map<string, Node | XlError>();
 
+  let env: Env = {};
   let curKey = '';
+  let primed = false;
+  let priming = false;
+  const spills = new Map<string, Scalar>();
+  let prevSpills = new Map<string, Scalar>();
+  const spillRects = new Map<string, Rect>();
+  let prevRects = new Map<string, Rect>();
+  const memberOf = new Map<string, string>();
+
+  function settleArray(key: string, v: RangeVal): Scalar {
+    const first = v.vals[0] === null || v.vals[0] === undefined ? 0 : v.vals[0];
+    if (v.vals.length <= 1) return first;
+    const p = parseKey(key);
+    if (!p) return new XlError('#REF!');
+    const rc: Rect = { c1: p.c, r1: p.r, c2: p.c + v.cols - 1, r2: p.r + v.rows - 1 };
+    if (!inBounds(rc.c2, rc.r2)) return new XlError('#SPILL!');
+    for (const t of data.tables ?? []) {
+      const tr = parseRectLabel(t.range);
+      if (tr && rc.c1 <= tr.c2 && rc.c2 >= tr.c1 && rc.r1 <= tr.r2 && rc.r2 >= tr.r1) return new XlError('#SPILL!');
+    }
+    for (let r = rc.r1; r <= rc.r2; r++) {
+      for (let c = rc.c1; c <= rc.c2; c++) {
+        const k = keyOf(c, r);
+        if (k === key) continue;
+        if ((data.cells[k] ?? '') !== '' || (memberOf.has(k) && memberOf.get(k) !== key)) return new XlError('#SPILL!');
+      }
+    }
+    spillRects.set(key, rc);
+    for (let r = 0; r < v.rows; r++) {
+      for (let c = 0; c < v.cols; c++) {
+        if (r === 0 && c === 0) continue;
+        const k = keyOf(rc.c1 + c, rc.r1 + r);
+        const x = atRC(v, r, c);
+        spills.set(k, x === null ? 0 : x);
+        memberOf.set(k, key);
+      }
+    }
+    return first;
+  }
+
+  function prime() {
+    if (primed || priming) return;
+    priming = true;
+    const keys = Object.keys(data.cells)
+      .filter((k) => (data.cells[k] ?? '').startsWith('=') && (data.cells[k] ?? '').length > 1)
+      .sort((a, b) => {
+        const pa = parseKey(a);
+        const pb = parseKey(b);
+        return pa && pb ? pa.r - pb.r || pa.c - pb.c : 0;
+      });
+    if (keys.some((k) => /[A-Z]\(|#|\{/.test((data.cells[k] ?? '').toUpperCase()))) {
+      for (let pass = 0; pass < 5; pass++) {
+        prevSpills = new Map(spills);
+        prevRects = new Map(spillRects);
+        spills.clear();
+        spillRects.clear();
+        memberOf.clear();
+        memo.clear();
+        stack.clear();
+        for (const k of keys) cellValue(k);
+        if (JSON.stringify([...prevSpills]) === JSON.stringify([...spills])) break;
+      }
+    }
+    priming = false;
+    primed = true;
+  }
+
   function cellValue(key: string): Scalar {
     const cached = memo.get(key);
     if (cached !== undefined) return cached;
@@ -653,7 +1335,7 @@ export function buildEvaluator(data: SheetData): Evaluator {
           if (ast instanceof XlError) out = ast;
           else {
             const v = evalNode(ast);
-            out = isRange(v) ? new XlError('#VALUE!') : v === null ? 0 : v;
+            out = isLambda(v) ? new XlError('#CALC!') : isRange(v) ? settleArray(key, v) : v === null ? 0 : v;
           }
         } catch (e) {
           out = e instanceof XlError ? e : new XlError('#VALUE!');
@@ -661,6 +1343,8 @@ export function buildEvaluator(data: SheetData): Evaluator {
         curKey = prevKey;
         stack.delete(key);
       }
+    } else if (raw === '' && (spills.has(key) || prevSpills.has(key))) {
+      out = spills.get(key) ?? prevSpills.get(key) ?? null;
     } else {
       out = literal(raw);
     }
@@ -706,6 +1390,59 @@ export function buildEvaluator(data: SheetData): Evaluator {
     if (col < 0) throw new XlError('#REF!');
     return { col, r1: rc.r1 + 1, r2: tbl.totals ? rc.r2 - 1 : rc.r2 };
   }
+  const nameCache = new Map<string, Node | XlError>();
+  const namedFormula = (name: string): string | null => {
+    const hit = Object.keys(data.names ?? {}).find((k) => k.toUpperCase() === name.toUpperCase());
+    const v = hit ? (data.names as Record<string, string>)[hit] : undefined;
+    return v && v.trim().startsWith('=') ? v.trim() : null;
+  };
+  const evalNamedFormula = (text: string): Val => {
+    let ast = nameCache.get(text);
+    if (!ast) {
+      try {
+        ast = parse(tokenize(text.slice(1)));
+      } catch (e) {
+        ast = errOf(e);
+      }
+      nameCache.set(text, ast);
+    }
+    if (ast instanceof XlError) throw ast;
+    const saved = env;
+    env = {};
+    try {
+      return evalNode(ast);
+    } finally {
+      env = saved;
+    }
+  };
+  function invoke(f: Lambda, a: Val[]): Val {
+    if ('builtin' in f) return applyFn(f.builtin, a);
+    const saved = env;
+    env = { ...f.env };
+    f.params.forEach((p, i) => {
+      env[p.toUpperCase()] = a[i] === undefined ? null : a[i];
+    });
+    try {
+      return evalNode(f.body);
+    } finally {
+      env = saved;
+    }
+  }
+  function lambdaNamed(name: string): Lambda | null {
+    const e = env[name.toUpperCase()];
+    if (e !== undefined && isLambda(e)) return e;
+    const text = namedFormula(name);
+    if (!text) return null;
+    const v = evalNamedFormula(text);
+    return isLambda(v) ? v : null;
+  }
+  function spillRange(key: string): Val {
+    const rc = spillRects.get(key) ?? prevRects.get(key);
+    if (!rc) throw new XlError('#REF!');
+    const vals: Scalar[] = [];
+    for (let r = rc.r1; r <= rc.r2; r++) for (let c = rc.c1; c <= rc.c2; c++) vals.push(cellValue(keyOf(c, r)));
+    return mkArr(rc.r2 - rc.r1 + 1, rc.c2 - rc.c1 + 1, vals);
+  }
   const resolveName = (name: string): Node => {
     const hit = Object.keys(data.names ?? {}).find((k) => k.toUpperCase() === name.toUpperCase());
     if (!hit) throw new XlError('#NAME?');
@@ -746,6 +1483,8 @@ export function buildEvaluator(data: SheetData): Evaluator {
       case 'bool':
         return n.v;
       case 'ref': {
+        if (!n.sheet && !n.spill && env[n.key] !== undefined) return env[n.key];
+        if (n.spill) return spillRange(n.key);
         if (n.sheet) return extValue(n.sheet, n.key);
         const p = parseKey(n.key);
         if (!p || !inBounds(p.c, p.r)) throw new XlError('#REF!');
@@ -753,8 +1492,26 @@ export function buildEvaluator(data: SheetData): Evaluator {
       }
       case 'range':
         return n.sheet ? extRange(n.sheet, n.a, n.b) : rangeVal(n.a, n.b);
-      case 'name':
+      case 'blank':
+        return null;
+      case 'arr': {
+        const rows = n.rows.map((r) => r.map((c) => evalNode(c)));
+        const width = Math.max(...rows.map((r) => r.length));
+        return mkArr(rows.length, width, rows.flatMap((r) => Array.from({ length: width }, (_, i) => (r[i] === undefined ? new XlError('#N/A') : (r[i] as Scalar)))));
+      }
+      case 'call': {
+        const f = evalNode(n.fn);
+        if (!isLambda(f)) throw new XlError('#VALUE!');
+        return invoke(f, n.args.map((a) => evalNode(a)));
+      }
+      case 'name': {
+        const up = n.name.toUpperCase();
+        if (env[up] !== undefined) return env[up];
+        const named = namedFormula(n.name);
+        if (named) return evalNamedFormula(named);
+        if (BUILTIN_LAMBDAS.has(up) && !Object.keys(data.names ?? {}).some((k) => k.toUpperCase() === up)) return { lambda: true, builtin: up };
         return evalNode(resolveName(n.name));
+      }
       case 'struct': {
         const { col, r1, r2 } = structInfo(n);
         if (n.row) {
@@ -766,52 +1523,14 @@ export function buildEvaluator(data: SheetData): Evaluator {
         for (let r = r1; r <= r2; r++) vals.push(cellValue(keyOf(col, r)));
         return { range: true, vals, rows: r2 - r1 + 1, cols: 1 };
       }
-      case 'un': {
-        const v = toNum(evalNode(n.e));
-        return n.op === '-' ? -v : v;
-      }
+      case 'un':
+        return mapScalars(evalNode(n.e), (x) => (n.op === '-' ? -toNum(x) : toNum(x)));
       case 'pct':
-        return toNum(evalNode(n.e)) / 100;
+        return mapScalars(evalNode(n.e), (x) => toNum(x) / 100);
       case 'bin': {
-        if (n.op === '&') return toStr(evalNode(n.l)) + toStr(evalNode(n.r));
-        if (['=', '<>', '<', '>', '<=', '>='].includes(n.op)) {
-          const l = evalNode(n.l);
-          const r = evalNode(n.r);
-          if (isRange(l) || isRange(r)) throw new XlError('#VALUE!');
-          const c = compare(l, r);
-          switch (n.op) {
-            case '=':
-              return c === 0;
-            case '<>':
-              return c !== 0;
-            case '<':
-              return c < 0;
-            case '>':
-              return c > 0;
-            case '<=':
-              return c <= 0;
-            default:
-              return c >= 0;
-          }
-        }
-        const a = toNum(evalNode(n.l));
-        const b = toNum(evalNode(n.r));
-        switch (n.op) {
-          case '+':
-            return a + b;
-          case '-':
-            return a - b;
-          case '*':
-            return a * b;
-          case '/':
-            if (b === 0) throw new XlError('#DIV/0!');
-            return a / b;
-          default: {
-            const v = a ** b;
-            if (!Number.isFinite(v)) throw new XlError('#NUM!');
-            return v;
-          }
-        }
+        const l = evalNode(n.l);
+        const r = evalNode(n.r);
+        return broadcast2(l, r, (x, y) => binScalar(n.op, x, y));
       }
       case 'fn':
         return callFn(n.name, n.args);
@@ -822,15 +1541,137 @@ export function buildEvaluator(data: SheetData): Evaluator {
     // Lazy functions: only evaluate the branch that is needed.
     if (name === 'IF') {
       if (argNodes.length < 2 || argNodes.length > 3) throw new XlError('#VALUE!');
-      const cond = toBool(evalNode(argNodes[0]));
+      const condV = evalNode(argNodes[0]);
+      if (isRange(condV)) {
+        const tv = evalNode(argNodes[1]);
+        const fv: Val = argNodes[2] && argNodes[2].k !== 'blank' ? evalNode(argNodes[2]) : false;
+        const pick = (v: Val, r: number, c: number): Scalar => (isRange(v) ? atRC(v, v.rows === 1 ? 0 : r, v.cols === 1 ? 0 : c) : (v as Scalar));
+        return mkArr(condV.rows, condV.cols, condV.vals.map((cv, i) => {
+          const r = Math.floor(i / condV.cols);
+          const c = i % condV.cols;
+          try {
+            return toBool(cv) ? pick(tv, r, c) : pick(fv, r, c);
+          } catch (e) {
+            return errOf(e);
+          }
+        }));
+      }
+      const cond = toBool(condV);
       if (cond) return evalNode(argNodes[1]);
       return argNodes[2] ? evalNode(argNodes[2]) : false;
+    }
+    if (name === 'LET') {
+      if (argNodes.length < 3 || argNodes.length % 2 === 0) throw new XlError('#VALUE!');
+      const saved = env;
+      env = { ...env };
+      try {
+        for (let i = 0; i < argNodes.length - 1; i += 2) {
+          const nm = argNodes[i];
+          const id = nm.k === 'name' ? nm.name : nm.k === 'ref' ? nm.key : null;
+          if (!id) throw new XlError('#NAME?');
+          // Errors are values inside LET, so ISNA(r) or IFERROR(r, ...) can inspect them.
+          try {
+            env[id.toUpperCase()] = evalNode(argNodes[i + 1]);
+          } catch (e) {
+            if (e instanceof XlError) env[id.toUpperCase()] = e;
+            else throw e;
+          }
+        }
+        return evalNode(argNodes[argNodes.length - 1]);
+      } finally {
+        env = saved;
+      }
+    }
+    if (name === 'LAMBDA') {
+      if (!argNodes.length) throw new XlError('#VALUE!');
+      const params = argNodes.slice(0, -1).map((a) => {
+        const id = a.k === 'name' ? a.name : a.k === 'ref' ? a.key : null;
+        if (!id) throw new XlError('#NAME?');
+        return id;
+      });
+      return { lambda: true, params, body: argNodes[argNodes.length - 1], env: { ...env } };
+    }
+    if (name === 'ROW' || name === 'COLUMN') {
+      const isRow = name === 'ROW';
+      const node = argNodes[0];
+      if (!node || node.k === 'blank') {
+        const here = parseKey(curKey);
+        if (!here) throw new XlError('#VALUE!');
+        return isRow ? here.r + 1 : here.c + 1;
+      }
+      if (node.k === 'ref' && !node.sheet) {
+        const pp = parseKey(node.key);
+        if (!pp) throw new XlError('#REF!');
+        return isRow ? pp.r + 1 : pp.c + 1;
+      }
+      if (node.k === 'range' && !node.sheet) {
+        const pa = parseKey(node.a);
+        const pb = parseKey(node.b);
+        if (!pa || !pb) throw new XlError('#REF!');
+        const rc = rectOf(pa, pb);
+        const n = isRow ? rc.r2 - rc.r1 + 1 : rc.c2 - rc.c1 + 1;
+        const vals = Array.from({ length: n }, (_, i) => (isRow ? rc.r1 : rc.c1) + i + 1);
+        return isRow ? mkArr(n, 1, vals) : mkArr(1, n, vals);
+      }
+      throw new XlError('#VALUE!');
+    }
+    if (name === 'FORMULATEXT' || name === 'ISFORMULA') {
+      const node = argNodes[0];
+      if (!node || node.k !== 'ref' || node.sheet) throw new XlError('#VALUE!');
+      const raw = data.cells[node.key] ?? '';
+      const isF = raw.startsWith('=') && raw.length > 1;
+      if (name === 'ISFORMULA') return isF;
+      if (!isF) throw new XlError('#N/A');
+      return raw;
+    }
+    if (name === 'INDIRECT') {
+      const text = toStr(evalNode(argNodes[0])).trim();
+      const m = /^(?:(?:'([^']+)'|([A-Za-z_][\w.]*))!)?(\$?[A-Za-z]{1,3}\$?\d+)(?::(\$?[A-Za-z]{1,3}\$?\d+))?$/.exec(text);
+      if (!m) {
+        if (namedFormula(text) === null && Object.keys(data.names ?? {}).some((k) => k.toUpperCase() === text.toUpperCase())) return evalNode(resolveName(text));
+        throw new XlError('#REF!');
+      }
+      const sheet = m[1] ?? m[2];
+      const a = m[3].replace(/\$/g, '').toUpperCase();
+      const b = m[4]?.replace(/\$/g, '').toUpperCase();
+      if (sheet) return b ? extRange(sheet, a, b) : extValue(sheet, a);
+      if (b) return rangeVal(a, b);
+      const pp = parseKey(a);
+      if (!pp || !inBounds(pp.c, pp.r)) throw new XlError('#REF!');
+      return cellValue(a);
+    }
+    if (name === 'OFFSET') {
+      const node = argNodes[0];
+      let rc: Rect | null = null;
+      if (node?.k === 'ref' && !node.sheet) {
+        const pp = parseKey(node.key);
+        if (pp) rc = { c1: pp.c, r1: pp.r, c2: pp.c, r2: pp.r };
+      } else if (node?.k === 'range' && !node.sheet) {
+        const pa = parseKey(node.a);
+        const pb = parseKey(node.b);
+        if (pa && pb) rc = rectOf(pa, pb);
+      }
+      if (!rc) throw new XlError('#VALUE!');
+      const dr = toInt(evalNode(argNodes[1]), 0);
+      const dc = toInt(evalNode(argNodes[2]), 0);
+      const h = argNodes[3] && argNodes[3].k !== 'blank' ? toInt(evalNode(argNodes[3]), 1) : rc.r2 - rc.r1 + 1;
+      const w = argNodes[4] && argNodes[4].k !== 'blank' ? toInt(evalNode(argNodes[4]), 1) : rc.c2 - rc.c1 + 1;
+      const r1 = rc.r1 + dr;
+      const c1 = rc.c1 + dc;
+      if (h < 1 || w < 1 || !inBounds(c1, r1) || !inBounds(c1 + w - 1, r1 + h - 1)) throw new XlError('#REF!');
+      if (h === 1 && w === 1) return cellValue(keyOf(c1, r1));
+      return rangeVal(keyOf(c1, r1), keyOf(c1 + w - 1, r1 + h - 1));
     }
     if (name === 'IFERROR') {
       if (argNodes.length !== 2) throw new XlError('#VALUE!');
       try {
         const v = evalNode(argNodes[0]);
-        if (!isRange(v) && v instanceof XlError) return evalNode(argNodes[1]);
+        if (isRange(v)) {
+          if (!v.vals.some((x) => x instanceof XlError)) return v;
+          const alt = evalNode(argNodes[1]);
+          return mkArr(v.rows, v.cols, v.vals.map((x, i) => (x instanceof XlError ? (isRange(alt) ? alt.vals[i % alt.vals.length] : (alt as Scalar)) : x)));
+        }
+        if (v instanceof XlError) return evalNode(argNodes[1]);
         return v;
       } catch (e) {
         if (e instanceof XlError) return evalNode(argNodes[1]);
@@ -863,7 +1704,7 @@ export function buildEvaluator(data: SheetData): Evaluator {
       let i = 1;
       for (; i + 1 < argNodes.length; i += 2) {
         const cand = evalNode(argNodes[i]);
-        if (!isRange(cand) && compare(target, cand) === 0) return evalNode(argNodes[i + 1]);
+        if (!isRange(cand) && !isLambda(cand) && compare(target as Scalar, cand) === 0) return evalNode(argNodes[i + 1]);
       }
       if (i < argNodes.length) return evalNode(argNodes[i]); // default value
       throw new XlError('#N/A');
@@ -892,7 +1733,7 @@ export function buildEvaluator(data: SheetData): Evaluator {
         } else {
           const v = evalNode(a);
           if (isRange(v)) vals.push(...v.vals);
-          else vals.push(v);
+          else vals.push(v as Scalar);
         }
       }
       const nums = vals.filter((v): v is number => typeof v === 'number');
@@ -948,7 +1789,27 @@ export function buildEvaluator(data: SheetData): Evaluator {
       }
     }
 
-    const args = argNodes.map(evalNode);
+    return applyFn(name, argNodes.map((a) => evalNode(a)));
+  }
+
+  function applyFn(name: string, args: Val[]): Val {
+    // Criteria functions given an array of criteria return one answer per criterion (e.g. SUMIFS(..., UNIQUE(...)#)).
+    const critIdx =
+      name === 'COUNTIF' || name === 'SUMIF' || name === 'AVERAGEIF'
+        ? [1]
+        : name === 'COUNTIFS'
+          ? args.map((_, i) => i).filter((i) => i % 2 === 1)
+          : name === 'SUMIFS' || name === 'AVERAGEIFS' || name === 'MAXIFS' || name === 'MINIFS'
+            ? args.map((_, i) => i).filter((i) => i >= 2 && i % 2 === 0)
+            : [];
+    const arrayCrit = critIdx.find((i) => isRange(args[i]));
+    if (arrayCrit !== undefined) return mapScalars(args[arrayCrit], (c) => {
+      const v = applyFn(name, args.map((a, i) => (i === arrayCrit ? c : a)));
+      return isRange(v) || isLambda(v) ? new XlError('#VALUE!') : v;
+    });
+    if (LIFT.has(name) && args.some(isRange)) return liftOver(args, (a) => applyFn(name, a));
+    const af = arrayFn(name, args, invoke);
+    if (af !== undefined) return af;
     const need = (min: number, max = min) => {
       if (args.length < min || args.length > max) throw new XlError('#VALUE!');
     };
@@ -1105,16 +1966,16 @@ export function buildEvaluator(data: SheetData): Evaluator {
         const live = (v: Scalar) => v !== null && !(v instanceof XlError);
         let hit = -1;
         if (mode === 2) {
-          const m2 = matcher(look);
+          const m2 = matcher(look as Scalar);
           hit = idxs.find((i) => m2(from.vals[i])) ?? -1;
         } else {
-          hit = idxs.find((i) => live(from.vals[i]) && compare(from.vals[i], look) === 0) ?? -1;
+          hit = idxs.find((i) => live(from.vals[i]) && compare(from.vals[i], look as Scalar) === 0) ?? -1;
           if (hit < 0 && (mode === -1 || mode === 1)) {
             let best = -1;
             for (const i of idxs) {
               const v = from.vals[i];
               if (!live(v)) continue;
-              const c = compare(v, look);
+              const c = compare(v, look as Scalar);
               if (mode === -1 && c < 0 && (best < 0 || compare(v, from.vals[best]) > 0)) best = i;
               if (mode === 1 && c > 0 && (best < 0 || compare(v, from.vals[best]) < 0)) best = i;
             }
@@ -1152,6 +2013,11 @@ export function buildEvaluator(data: SheetData): Evaluator {
         if (!isRange(rg)) throw new XlError('#VALUE!');
         const r = Math.trunc(toNum(args[1]));
         const c = args[2] === undefined ? (rg.cols === 1 ? 1 : 0) : Math.trunc(toNum(args[2]));
+        // Row 0 means "the whole column", column 0 means "the whole row" (a 2-D range only).
+        if (rg.cols > 1 && rg.rows > 1 && args[2] !== undefined) {
+          if (r === 0 && c >= 1 && c <= rg.cols) return mkArr(rg.rows, 1, Array.from({ length: rg.rows }, (_, i) => rg.vals[i * rg.cols + c - 1]));
+          if (c === 0 && r >= 1 && r <= rg.rows) return mkArr(1, rg.cols, rg.vals.slice((r - 1) * rg.cols, r * rg.cols));
+        }
         if (rg.cols === 1 || rg.rows === 1) {
           const idx = (rg.cols === 1 ? r : rg.rows === 1 && args[2] === undefined ? r : c) - 1;
           if (idx < 0 || idx >= rg.vals.length) throw new XlError('#REF!');
@@ -1473,8 +2339,11 @@ export function buildEvaluator(data: SheetData): Evaluator {
       case 'ISNA':
         need(1);
         return args[0] instanceof XlError && args[0].code === '#N/A';
-      default:
+      default: {
+        const lam = lambdaNamed(name);
+        if (lam) return invoke(lam, args);
         throw new XlError('#NAME?');
+      }
     }
   }
 
@@ -1518,7 +2387,7 @@ export function buildEvaluator(data: SheetData): Evaluator {
       if (!isRange(rg) || rg.vals.length !== n) throw new XlError('#VALUE!');
       const crit = pairs[i + 1];
       if (isRange(crit)) throw new XlError('#VALUE!');
-      const m = matcher(crit);
+      const m = matcher(crit as Scalar);
       rg.vals.forEach((v, j) => {
         if (!m(v)) mask[j] = false;
       });
@@ -1541,16 +2410,21 @@ export function buildEvaluator(data: SheetData): Evaluator {
   }
 
   const evalFormula = (formula: string): Scalar => {
+    prime();
     try {
       const ast = parse(tokenize(formula.replace(/^=/, '')));
       const v = evalNode(ast);
-      return isRange(v) ? new XlError('#VALUE!') : v;
+      return isRange(v) || isLambda(v) ? new XlError('#VALUE!') : v;
     } catch (e) {
       return e instanceof XlError ? e : new XlError('#VALUE!');
     }
   };
-  const value = (key: string) => cellValue(key);
+  const value = (key: string) => {
+    prime();
+    return cellValue(key);
+  };
   const display = (key: string) => {
+    prime();
     const raw = data.cells[key] ?? '';
     let style = data.styles[key];
     let hint = raw;
@@ -1563,7 +2437,16 @@ export function buildEvaluator(data: SheetData): Evaluator {
     }
     return formatValue(cellValue(key), style, hint);
   };
-  return { value, display, evalFormula };
+  const spillOf = (key: string): Rect | null => {
+    prime();
+    const anchor = spillRects.has(key) ? key : memberOf.get(key);
+    return anchor ? (spillRects.get(anchor) ?? null) : null;
+  };
+  const spillMembers = (): string[] => {
+    prime();
+    return [...spills.keys()];
+  };
+  return { value, display, evalFormula, spillOf, spillMembers };
 }
 
 // --- formatting -------------------------------------------------------------
