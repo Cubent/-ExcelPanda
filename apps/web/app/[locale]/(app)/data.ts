@@ -24,6 +24,8 @@ export type MapNode = {
 };
 export type MapUnit = {
   id: string;
+  /** URL name, e.g. "excel-basics" for /dashboard/excel-basics. */
+  slug: string;
   number: number;
   title: string;
   blurb: string;
@@ -31,7 +33,10 @@ export type MapUnit = {
 };
 export type CourseMap = {
   courseId: string;
+  /** URL name, e.g. "excel-basics" for /dashboard/excel-basics. */
+  slug: string;
   title: string;
+  description: string;
   units: MapUnit[];
   total: number;
   completed: number;
@@ -42,8 +47,8 @@ export type CourseMap = {
 // First published course, with per-lesson state for this user. Lessons unlock
 // in order: everything before the first unfinished lesson is done, that one is
 // current, the rest are locked.
-export const getCourseMap = cache(async (userId: string): Promise<CourseMap | null> => {
-  const course = await database.course.findFirst({
+export const getCourseMaps = cache(async (userId: string): Promise<CourseMap[]> => {
+  const courses = await database.course.findMany({
     where: { published: true },
     orderBy: { order: 'asc' },
     include: {
@@ -53,21 +58,23 @@ export const getCourseMap = cache(async (userId: string): Promise<CourseMap | nu
       },
     },
   });
-  if (!course) return null;
+  if (courses.length === 0) return [];
 
   const progress = await database.userLessonProgress.findMany({
-    where: { clerkUserId: userId, lesson: { unit: { courseId: course.id } } },
+    where: { clerkUserId: userId },
     select: { lessonId: true },
   });
   const done = new Set(progress.map((p) => p.lessonId));
+  // Lesson URLs are global (/lesson/<slug>), so slugs are unique across every course.
+  const usedSlugs = new Set<string>();
 
+  return courses.map((course) => {
   let currentAssigned = false;
   let current: MapNode | null = null;
   let total = 0;
   let completed = 0;
   let unitsDone = 0;
 
-  const usedSlugs = new Set<string>();
   const units: MapUnit[] = course.units.map((u) => {
     const nodes: MapNode[] = u.lessons.map((l) => {
       let state: NodeState;
@@ -80,7 +87,7 @@ export const getCourseMap = cache(async (userId: string): Promise<CourseMap | nu
         state = 'locked';
       }
       let slug = l.title.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'lesson';
-      if (usedSlugs.has(slug)) slug = `${slug}-${u.order}-${l.order}`;
+      if (usedSlugs.has(slug)) slug = `${slug}-${course.slug}`;
       usedSlugs.add(slug);
       const node: MapNode = { id: l.id, slug, title: l.title, icon: l.icon, kind: l.kind, xp: l.xp, state, open: UNLOCK_ALL || state !== 'locked' };
       if (state === 'current') current = node;
@@ -89,11 +96,32 @@ export const getCourseMap = cache(async (userId: string): Promise<CourseMap | nu
       return node;
     });
     if (nodes.length > 0 && nodes.every((n) => n.state === 'done')) unitsDone += 1;
-    return { id: u.id, number: u.order, title: u.title, blurb: u.blurb, nodes };
+    const slug =
+      u.title
+        .toLowerCase()
+        .replace(/&/g, ' and ')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || `unit-${u.order}`;
+    return { id: u.id, slug, number: u.order, title: u.title, blurb: u.blurb, nodes };
   });
 
-  return { courseId: course.id, title: course.title, units, total, completed, unitsDone, current };
+  return { courseId: course.id, slug: course.slug, title: course.title, description: course.description, units, total, completed, unitsDone, current };
+  });
 });
+
+/** The first published course (kept for pages that only need one). */
+export const getCourseMap = cache(async (userId: string): Promise<CourseMap | null> => (await getCourseMaps(userId))[0] ?? null);
+
+/** Every lesson node across all published courses, with its unit. */
+export function findLesson(maps: CourseMap[], idOrSlug: string) {
+  for (const map of maps) {
+    for (const unit of map.units) {
+      const node = unit.nodes.find((n) => n.slug === idOrSlug || n.id === idOrSlug);
+      if (node) return { map, unit, node };
+    }
+  }
+  return null;
+}
 
 // ---------------------------------------------------------------------------
 // Stats, streaks and quests
@@ -208,3 +236,12 @@ export const getLeaderboard = cache(async (userId: string): Promise<Ranked[]> =>
     rank: i + 1,
   }));
 });
+
+// Courses that are not published yet, shown as "coming soon" cards.
+export const getUpcomingCourses = cache(async () =>
+  database.course.findMany({
+    where: { published: false },
+    orderBy: { order: 'asc' },
+    select: { id: true, title: true, description: true },
+  }),
+);

@@ -14,7 +14,7 @@ export function setSheetSize(cols: number, rows: number) {
 export type Pos = { c: number; r: number };
 export type Rect = { c1: number; r1: number; c2: number; r2: number };
 
-export type NumFmt = 'general' | 'number' | 'currency' | 'percent';
+export type NumFmt = 'general' | 'number' | 'currency' | 'percent' | 'date';
 export type Style = {
   b?: boolean;
   i?: boolean;
@@ -26,10 +26,21 @@ export type Style = {
   color?: string;
 };
 
+/** Conditional-format rule: `formula` is written for the top-left cell of `range`. */
+export type CfRule = { range: string; formula: string; style: Style };
+
 export type SheetData = {
   cells: Record<string, string>;
   styles: Record<string, Style>;
   colW: Record<number, number>;
+  /** Named ranges, e.g. { TAXRATE: "B1", PRICES: "B2:B9" }. */
+  names?: Record<string, string>;
+  /** Read-only extra sheets that formulas can reference, e.g. Rates!B2. */
+  ext?: Record<string, Record<string, string>>;
+  /** Conditional formatting rules (display only). */
+  cf?: CfRule[];
+  /** Dropdown lists by cell key or range label, e.g. { "C2:C9": ["Yes", "No"] }. */
+  lists?: Record<string, string[]>;
 };
 
 export const emptyData = (): SheetData => ({ cells: {}, styles: {}, colW: {} });
@@ -110,6 +121,75 @@ type Val = Scalar | RangeVal;
 
 const isRange = (v: Val): v is RangeVal => typeof v === 'object' && v !== null && 'range' in v;
 
+// --- dates ------------------------------------------------------------------
+
+const DAY_MS = 86_400_000;
+const EPOCH = Date.UTC(1899, 11, 30); // Excel serial 0 (valid for dates after Feb 1900)
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+export const dateToSerial = (y: number, m: number, d: number) => Math.round((Date.UTC(y, m - 1, d) - EPOCH) / DAY_MS);
+export function serialToParts(n: number) {
+  const dt = new Date(EPOCH + Math.floor(n) * DAY_MS);
+  return { y: dt.getUTCFullYear(), m: dt.getUTCMonth() + 1, d: dt.getUTCDate(), wd: dt.getUTCDay() };
+}
+export function todaySerial() {
+  const n = new Date();
+  return dateToSerial(n.getFullYear(), n.getMonth() + 1, n.getDate());
+}
+const daysInMonth = (y: number, m: number) => new Date(Date.UTC(y, m, 0)).getUTCDate();
+
+/** Parses typed date text: 2026-03-15, 3/15/2026, 15 Mar 2026, Mar 15, 2026. */
+export function parseDateText(text: string): number | null {
+  const t = text.trim();
+  let y: number;
+  let m: number;
+  let d: number;
+  let x: RegExpExecArray | null;
+  const monthIdx = (name: string) => MONTH_NAMES.findIndex((n) => n.toLowerCase().startsWith(name.toLowerCase().slice(0, 3))) + 1;
+  if ((x = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t))) [y, m, d] = [+x[1], +x[2], +x[3]];
+  else if ((x = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(t))) [y, m, d] = [+x[3], +x[1], +x[2]];
+  else if ((x = /^(\d{1,2}) ([A-Za-z]{3,9}) (\d{4})$/.exec(t))) [y, m, d] = [+x[3], monthIdx(x[2]), +x[1]];
+  else if ((x = /^([A-Za-z]{3,9}) (\d{1,2}),? (\d{4})$/.exec(t))) [y, m, d] = [+x[3], monthIdx(x[1]), +x[2]];
+  else return null;
+  if (m < 1 || m > 12 || d < 1 || d > daysInMonth(y, m) || y < 1900) return null;
+  return dateToSerial(y, m, d);
+}
+
+/** Formats a serial with Excel-style date codes (yyyy, mmm, dd, ddd, h:mm ...). */
+export function formatDate(serial: number, pattern = 'd mmm yyyy'): string {
+  const { y, m, d, wd } = serialToParts(serial);
+  const frac = serial - Math.floor(serial);
+  const secs = Math.round(frac * 86400);
+  const hh = Math.floor(secs / 3600) % 24;
+  const mi = Math.floor((secs % 3600) / 60);
+  const ss = secs % 60;
+  const ampm = /AM\/PM/i.test(pattern);
+  const pad = (n: number, w = 2) => String(n).padStart(w, '0');
+  return pattern.replace(/AM\/PM|yyyy|yy|mmmm|mmm|mm|m|dddd|ddd|dd|d|hh|h|ss|s/gi, (tok, off: number) => {
+    const t = tok.toLowerCase();
+    const minuteCtx = (t === 'mm' || t === 'm') && (pattern[off - 1] === ':' || pattern[off + tok.length] === ':' || /h/i.test(pattern.slice(Math.max(0, off - 3), off)));
+    if (t === 'am/pm') return hh >= 12 ? 'PM' : 'AM';
+    if (t === 'yyyy') return String(y);
+    if (t === 'yy') return pad(y % 100);
+    if (minuteCtx) return t === 'mm' ? pad(mi) : String(mi);
+    if (t === 'mmmm') return MONTH_NAMES[m - 1];
+    if (t === 'mmm') return MONTH_NAMES[m - 1].slice(0, 3);
+    if (t === 'mm') return pad(m);
+    if (t === 'm') return String(m);
+    if (t === 'dddd') return DAY_NAMES[wd];
+    if (t === 'ddd') return DAY_NAMES[wd].slice(0, 3);
+    if (t === 'dd') return pad(d);
+    if (t === 'd') return String(d);
+    if (t === 'hh' || t === 'h') {
+      const h = ampm ? hh % 12 || 12 : hh;
+      return t === 'hh' ? pad(h) : String(h);
+    }
+    if (t === 'ss') return pad(ss);
+    return String(ss);
+  });
+}
+
 // Interprets what the user typed (not starting with "=") as a typed value.
 export function literal(raw: string): Scalar {
   const t = raw.trim();
@@ -127,6 +207,8 @@ export function literal(raw: string): Scalar {
     return n;
   }
   if (/^[-+]?\d+(\.\d+)?e[-+]?\d+$/i.test(compact)) return Number.parseFloat(compact);
+  const date = parseDateText(t);
+  if (date !== null) return date;
   return raw;
 }
 
@@ -135,7 +217,7 @@ export function literal(raw: string): Scalar {
 type Tok =
   | { t: 'num'; v: number }
   | { t: 'str'; v: string }
-  | { t: 'ref'; v: string }
+  | { t: 'ref'; v: string; sheet?: string }
   | { t: 'name'; v: string }
   | { t: 'fn'; v: string }
   | { t: 'op'; v: string }
@@ -178,7 +260,13 @@ function tokenize(src: string): Tok[] {
       i += m[0].length;
       continue;
     }
-    m = /^\$?[A-Za-z]{1,3}\$?\d+(?![\w.(])/.exec(rest);
+    m = /^(?:'([^']+)'|([A-Za-z_][A-Za-z0-9_]*))!\$?([A-Za-z]{1,3})\$?(\d+)(?![\w.(])/.exec(rest);
+    if (m) {
+      out.push({ t: 'ref', v: `${m[3]}${m[4]}`.toUpperCase(), sheet: m[1] ?? m[2] });
+      i += m[0].length;
+      continue;
+    }
+    m = /^\$?[A-Za-z]{1,3}\$?\d+(?![\w.(!])/.exec(rest);
     if (m) {
       out.push({ t: 'ref', v: m[0].replace(/\$/g, '').toUpperCase() });
       i += m[0].length;
@@ -210,8 +298,9 @@ type Node =
   | { k: 'num'; v: number }
   | { k: 'str'; v: string }
   | { k: 'bool'; v: boolean }
-  | { k: 'ref'; key: string }
-  | { k: 'range'; a: string; b: string }
+  | { k: 'ref'; key: string; sheet?: string }
+  | { k: 'range'; a: string; b: string; sheet?: string }
+  | { k: 'name'; name: string }
   | { k: 'un'; op: string; e: Node }
   | { k: 'pct'; e: Node }
   | { k: 'bin'; op: string; l: Node; r: Node }
@@ -291,14 +380,14 @@ function parse(tokens: Tok[]): Node {
         p++;
         const t2 = tokens[p++];
         if (!t2 || t2.t !== 'ref') throw new XlError('#NAME?');
-        return { k: 'range', a: t.v, b: t2.v };
+        return { k: 'range', a: t.v, b: t2.v, sheet: t.sheet };
       }
-      return { k: 'ref', key: t.v };
+      return { k: 'ref', key: t.v, sheet: t.sheet };
     }
     if (t.t === 'name') {
       if (t.v === 'TRUE') return { k: 'bool', v: true };
       if (t.v === 'FALSE') return { k: 'bool', v: false };
-      throw new XlError('#NAME?');
+      return { k: 'name', name: t.v };
     }
     if (t.t === 'fn') {
       if (tokens[p]?.t !== 'lp') throw new XlError('#NAME?');
@@ -334,6 +423,8 @@ function parse(tokens: Tok[]): Node {
 // --- evaluation -------------------------------------------------------------
 
 export type Evaluator = {
+  /** Evaluates a formula (starting with =) as if typed into a cell, for conditional-format rules. */
+  evalFormula(formula: string): Scalar;
   value(key: string): Scalar;
   display(key: string): string;
 };
@@ -438,6 +529,75 @@ function matcher(crit: Scalar): (v: Scalar) => boolean {
   };
 }
 
+// Formats a number with an Excel-style pattern ("0.00", "#,##0", "$#,##0.00", "0%", "00000").
+function formatNumberPattern(v: number, pattern: string): string {
+  const m = /^([^#0,.%]*)([#0,.]+)(%?)(.*)$/.exec(pattern);
+  if (!m) return pattern;
+  const [, prefix, core, pct, suffix] = m;
+  const [intPart, decPart = ''] = core.split('.');
+  const decimals = decPart.replace(/,/g, '').length;
+  const minInt = (intPart.match(/0/g) ?? []).length;
+  const grouped = intPart.includes(',');
+  const n = pct ? v * 100 : v;
+  const fixed = Math.abs(n).toFixed(decimals);
+  let [i, d = ''] = fixed.split('.');
+  i = i.padStart(minInt, '0');
+  if (minInt === 0 && i === '0' && decimals > 0) i = '';
+  if (grouped) i = i.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return `${n < 0 ? '-' : ''}${prefix}${i}${d ? `.${d}` : ''}${pct}${suffix}`;
+}
+
+function textFormat(v: Scalar, pattern: string): string {
+  if (typeof v !== 'number') return toStr(v);
+  if (/[ymdhs]/i.test(pattern.replace(/"[^"]*"/g, ''))) return formatDate(v, pattern);
+  return formatNumberPattern(v, pattern);
+}
+
+function isWeekend(serial: number) {
+  const wd = serialToParts(serial).wd;
+  return wd === 0 || wd === 6;
+}
+
+function addMonths(serial: number, months: number) {
+  const { y, m, d } = serialToParts(serial);
+  const t = y * 12 + (m - 1) + months;
+  const ny = Math.floor(t / 12);
+  const nm = (t % 12) + 1;
+  return { y: ny, m: nm, d: Math.min(d, daysInMonth(ny, nm)) };
+}
+
+function dateDif(a: number, b: number, unit: string): number {
+  if (a > b) throw new XlError('#NUM!');
+  const s1 = serialToParts(a);
+  const e1 = serialToParts(b);
+  const months = (e1.y - s1.y) * 12 + (e1.m - s1.m) - (e1.d < s1.d ? 1 : 0);
+  switch (unit) {
+    case 'D':
+      return Math.floor(b) - Math.floor(a);
+    case 'M':
+      return months;
+    case 'Y':
+      return Math.floor(months / 12);
+    case 'YM':
+      return months % 12;
+    case 'YD': {
+      const clamp = (y: number) => dateToSerial(y, s1.m, Math.min(s1.d, daysInMonth(y, s1.m)));
+      let start = clamp(e1.y);
+      if (start > b) start = clamp(e1.y - 1);
+      return Math.floor(b) - start;
+    }
+    case 'MD': {
+      // Excel's own "MD" is unreliable near month ends; this is the sane reading.
+      if (e1.d >= s1.d) return e1.d - s1.d;
+      const pm = e1.m === 1 ? 12 : e1.m - 1;
+      const py = e1.m === 1 ? e1.y - 1 : e1.y;
+      return e1.d + daysInMonth(py, pm) - s1.d;
+    }
+    default:
+      throw new XlError('#NUM!');
+  }
+}
+
 export function buildEvaluator(data: SheetData): Evaluator {
   const memo = new Map<string, Scalar>();
   const stack = new Set<string>();
@@ -480,6 +640,33 @@ export function buildEvaluator(data: SheetData): Evaluator {
     return out;
   }
 
+  const extSheet = (name: string): Record<string, string> | null => {
+    const hit = Object.keys(data.ext ?? {}).find((k) => k.toLowerCase() === name.toLowerCase());
+    return hit ? (data.ext as Record<string, Record<string, string>>)[hit] : null;
+  };
+  const extValue = (sheet: string, key: string): Scalar => {
+    const sh = extSheet(sheet);
+    if (!sh) throw new XlError('#REF!');
+    const raw = sh[key] ?? '';
+    return raw === '' ? null : literal(raw);
+  };
+  function extRange(sheet: string, aKey: string, bKey: string): RangeVal {
+    const a = parseKey(aKey);
+    const b = parseKey(bKey);
+    if (!a || !b || !extSheet(sheet)) throw new XlError('#REF!');
+    const rc = rectOf(a, b);
+    const vals: Scalar[] = [];
+    for (let r = rc.r1; r <= rc.r2; r++) for (let c = rc.c1; c <= rc.c2; c++) vals.push(extValue(sheet, keyOf(c, r)));
+    return { range: true, vals, rows: rc.r2 - rc.r1 + 1, cols: rc.c2 - rc.c1 + 1 };
+  }
+  const resolveName = (name: string): Node => {
+    const hit = Object.keys(data.names ?? {}).find((k) => k.toUpperCase() === name.toUpperCase());
+    if (!hit) throw new XlError('#NAME?');
+    const [a, b] = ((data.names as Record<string, string>)[hit] ?? '').replace(/\$/g, '').toUpperCase().split(':');
+    if (!a) throw new XlError('#NAME?');
+    return b ? { k: 'range', a, b } : { k: 'ref', key: a };
+  };
+
   function rangeVal(aKey: string, bKey: string): RangeVal {
     const a = parseKey(aKey);
     const b = parseKey(bKey);
@@ -512,12 +699,15 @@ export function buildEvaluator(data: SheetData): Evaluator {
       case 'bool':
         return n.v;
       case 'ref': {
+        if (n.sheet) return extValue(n.sheet, n.key);
         const p = parseKey(n.key);
         if (!p || !inBounds(p.c, p.r)) throw new XlError('#REF!');
         return cellValue(n.key);
       }
       case 'range':
-        return rangeVal(n.a, n.b);
+        return n.sheet ? extRange(n.sheet, n.a, n.b) : rangeVal(n.a, n.b);
+      case 'name':
+        return evalNode(resolveName(n.name));
       case 'un': {
         const v = toNum(evalNode(n.e));
         return n.op === '-' ? -v : v;
@@ -590,6 +780,52 @@ export function buildEvaluator(data: SheetData): Evaluator {
       }
     }
 
+    if (name === 'IFNA') {
+      if (argNodes.length !== 2) throw new XlError('#VALUE!');
+      try {
+        const v = evalNode(argNodes[0]);
+        if (!isRange(v) && v instanceof XlError && v.code === '#N/A') return evalNode(argNodes[1]);
+        return v;
+      } catch (e) {
+        if (e instanceof XlError && e.code === '#N/A') return evalNode(argNodes[1]);
+        throw e;
+      }
+    }
+    if (name === 'IFS') {
+      if (argNodes.length < 2 || argNodes.length % 2 !== 0) throw new XlError('#VALUE!');
+      for (let i = 0; i < argNodes.length; i += 2) {
+        if (toBool(evalNode(argNodes[i]))) return evalNode(argNodes[i + 1]);
+      }
+      throw new XlError('#N/A');
+    }
+    if (name === 'SWITCH') {
+      if (argNodes.length < 3) throw new XlError('#VALUE!');
+      const target = evalNode(argNodes[0]);
+      if (isRange(target)) throw new XlError('#VALUE!');
+      let i = 1;
+      for (; i + 1 < argNodes.length; i += 2) {
+        const cand = evalNode(argNodes[i]);
+        if (!isRange(cand) && compare(target, cand) === 0) return evalNode(argNodes[i + 1]);
+      }
+      if (i < argNodes.length) return evalNode(argNodes[i]); // default value
+      throw new XlError('#N/A');
+    }
+    if (name === 'CHOOSE') {
+      if (argNodes.length < 2) throw new XlError('#VALUE!');
+      const idx = Math.trunc(toNum(evalNode(argNodes[0])));
+      if (idx < 1 || idx >= argNodes.length) throw new XlError('#VALUE!');
+      return evalNode(argNodes[idx]);
+    }
+    if (name === 'ISNA') {
+      if (argNodes.length !== 1) throw new XlError('#VALUE!');
+      try {
+        const v = evalNode(argNodes[0]);
+        return !isRange(v) && v instanceof XlError && v.code === '#N/A';
+      } catch (e) {
+        if (e instanceof XlError) return e.code === '#N/A';
+        throw e;
+      }
+    }
     if (name === 'ISERROR') {
       if (argNodes.length !== 1) throw new XlError('#VALUE!');
       try {
@@ -748,21 +984,56 @@ export function buildEvaluator(data: SheetData): Evaluator {
         return s;
       }
       case 'XLOOKUP': {
-        need(3, 4);
+        need(3, 6);
         const [look, from, ret] = args;
-        if (!isRange(from) || !isRange(ret) || from.vals.length !== ret.vals.length) throw new XlError('#VALUE!');
-        const i = from.vals.findIndex((v) => v !== null && !(v instanceof XlError) && compare(v, look as Scalar) === 0);
-        if (i >= 0) return ret.vals[i];
+        if (isRange(look) || !isRange(from) || !isRange(ret) || from.vals.length !== ret.vals.length) throw new XlError('#VALUE!');
+        const mode = args[4] === undefined ? 0 : Math.trunc(toNum(args[4]));
+        const rev = args[5] !== undefined && toNum(args[5]) === -1;
+        const idxs = from.vals.map((_, i) => i);
+        if (rev) idxs.reverse();
+        const live = (v: Scalar) => v !== null && !(v instanceof XlError);
+        let hit = -1;
+        if (mode === 2) {
+          const m2 = matcher(look);
+          hit = idxs.find((i) => m2(from.vals[i])) ?? -1;
+        } else {
+          hit = idxs.find((i) => live(from.vals[i]) && compare(from.vals[i], look) === 0) ?? -1;
+          if (hit < 0 && (mode === -1 || mode === 1)) {
+            let best = -1;
+            for (const i of idxs) {
+              const v = from.vals[i];
+              if (!live(v)) continue;
+              const c = compare(v, look);
+              if (mode === -1 && c < 0 && (best < 0 || compare(v, from.vals[best]) > 0)) best = i;
+              if (mode === 1 && c > 0 && (best < 0 || compare(v, from.vals[best]) < 0)) best = i;
+            }
+            hit = best;
+          }
+        }
+        if (hit >= 0) return ret.vals[hit];
         if (args[3] !== undefined) return args[3] as Scalar;
         throw new XlError('#N/A');
       }
       case 'MATCH': {
         need(2, 3);
         const rg = args[1];
-        if (!isRange(rg)) throw new XlError('#VALUE!');
-        const i = rg.vals.findIndex((v) => v !== null && !(v instanceof XlError) && compare(v, args[0] as Scalar) === 0);
-        if (i < 0) throw new XlError('#N/A');
-        return i + 1;
+        if (!isRange(rg) || isRange(args[0])) throw new XlError('#VALUE!');
+        const type = args[2] === undefined ? 1 : Math.trunc(toNum(args[2]));
+        const live = (v: Scalar) => v !== null && !(v instanceof XlError);
+        let pos = -1;
+        if (type === 0) {
+          pos = rg.vals.findIndex((v) => live(v) && compare(v, args[0] as Scalar) === 0);
+        } else {
+          for (let i = 0; i < rg.vals.length; i++) {
+            const v = rg.vals[i];
+            if (!live(v)) continue;
+            const c = compare(v, args[0] as Scalar);
+            if (type === 1 ? c <= 0 : c >= 0) pos = i;
+            else break;
+          }
+        }
+        if (pos < 0) throw new XlError('#N/A');
+        return pos + 1;
       }
       case 'INDEX': {
         need(2, 3);
@@ -778,17 +1049,34 @@ export function buildEvaluator(data: SheetData): Evaluator {
         if (r < 1 || r > rg.rows || c < 1 || c > rg.cols) throw new XlError('#REF!');
         return rg.vals[(r - 1) * rg.cols + (c - 1)];
       }
-      case 'VLOOKUP': {
+      case 'VLOOKUP':
+      case 'HLOOKUP': {
         need(3, 4);
         const tbl = args[1];
-        if (!isRange(tbl)) throw new XlError('#VALUE!');
-        const col = Math.trunc(toNum(args[2]));
-        if (col < 1 || col > tbl.cols) throw new XlError('#REF!');
-        for (let r = 0; r < tbl.rows; r++) {
-          const v = tbl.vals[r * tbl.cols];
-          if (v !== null && !(v instanceof XlError) && compare(v, args[0] as Scalar) === 0) return tbl.vals[r * tbl.cols + col - 1];
+        if (!isRange(tbl) || isRange(args[0])) throw new XlError('#VALUE!');
+        const idx = Math.trunc(toNum(args[2]));
+        const approx = args[3] === undefined ? true : toBool(args[3]);
+        const horizontal = name === 'HLOOKUP';
+        const lines = horizontal ? tbl.cols : tbl.rows;
+        const depth = horizontal ? tbl.rows : tbl.cols;
+        if (idx < 1 || idx > depth) throw new XlError('#REF!');
+        const key = (i: number) => tbl.vals[horizontal ? i : i * tbl.cols];
+        const out = (i: number) => tbl.vals[horizontal ? (idx - 1) * tbl.cols + i : i * tbl.cols + idx - 1];
+        let found = -1;
+        for (let i = 0; i < lines; i++) {
+          const v = key(i);
+          if (v === null || v instanceof XlError) continue;
+          const c = compare(v, args[0] as Scalar);
+          if (approx) {
+            if (c <= 0) found = i;
+            else break;
+          } else if (c === 0) {
+            found = i;
+            break;
+          }
         }
-        throw new XlError('#N/A');
+        if (found < 0) throw new XlError('#N/A');
+        return out(found);
       }
       case 'SUBSTITUTE': {
         need(3);
@@ -818,9 +1106,263 @@ export function buildEvaluator(data: SheetData): Evaluator {
         const rg = args[0];
         return isRange(rg) ? rg.vals.filter((v) => v === null || v === '').length : 0;
       }
+      // ---- multi-criteria aggregates
+      case 'SUMIFS':
+      case 'AVERAGEIFS':
+      case 'MAXIFS':
+      case 'MINIFS': {
+        if (args.length < 3 || args.length % 2 === 0) throw new XlError('#VALUE!');
+        const target = args[0];
+        if (!isRange(target)) throw new XlError('#VALUE!');
+        const mask = critMask(args.slice(1), target.vals.length);
+        const nums: number[] = [];
+        target.vals.forEach((v, i) => {
+          if (mask[i] && typeof v === 'number') nums.push(v);
+        });
+        if (name === 'SUMIFS') return nums.reduce((t, v) => t + v, 0);
+        if (name === 'AVERAGEIFS') {
+          if (!nums.length) throw new XlError('#DIV/0!');
+          return nums.reduce((t, v) => t + v, 0) / nums.length;
+        }
+        if (!nums.length) return 0;
+        return name === 'MAXIFS' ? Math.max(...nums) : Math.min(...nums);
+      }
+      case 'COUNTIFS': {
+        if (args.length < 2 || args.length % 2 !== 0) throw new XlError('#VALUE!');
+        const first = args[0];
+        if (!isRange(first)) throw new XlError('#VALUE!');
+        return critMask(args, first.vals.length).filter(Boolean).length;
+      }
+      case 'AVERAGEIF': {
+        need(2, 3);
+        const rg = args[0];
+        const avg = args[2] ?? rg;
+        if (!isRange(rg) || !isRange(avg)) throw new XlError('#VALUE!');
+        const m = matcher(args[1] as Scalar);
+        const nums: number[] = [];
+        rg.vals.forEach((v, i) => {
+          const a = avg.vals[i];
+          if (m(v) && typeof a === 'number') nums.push(a);
+        });
+        if (!nums.length) throw new XlError('#DIV/0!');
+        return nums.reduce((t, v) => t + v, 0) / nums.length;
+      }
+      // ---- ranking & statistics
+      case 'LARGE':
+      case 'SMALL': {
+        need(2);
+        const nums = flatNums([args[0]]).sort((a, b) => (name === 'LARGE' ? b - a : a - b));
+        const k = Math.trunc(toNum(args[1]));
+        if (k < 1 || k > nums.length) throw new XlError('#NUM!');
+        return nums[k - 1];
+      }
+      case 'RANK':
+      case 'RANK.EQ': {
+        need(2, 3);
+        const v = toNum(args[0]);
+        const nums = flatNums([args[1]]);
+        if (!nums.includes(v)) throw new XlError('#N/A');
+        const asc = args[2] !== undefined && toNum(args[2]) !== 0;
+        return nums.filter((x) => (asc ? x < v : x > v)).length + 1;
+      }
+      case 'MODE':
+      case 'MODE.SNGL': {
+        const nums = flatNums(args);
+        const counts = new Map<number, number>();
+        for (const n of nums) counts.set(n, (counts.get(n) ?? 0) + 1);
+        let best: number | null = null;
+        let bestN = 1;
+        for (const n of nums) {
+          const c = counts.get(n) ?? 0;
+          if (c > bestN) {
+            best = n;
+            bestN = c;
+          }
+        }
+        if (best === null) throw new XlError('#N/A');
+        return best;
+      }
+      case 'STDEV':
+      case 'STDEV.S':
+      case 'STDEV.P':
+      case 'VAR':
+      case 'VAR.S':
+      case 'VAR.P': {
+        const nums = flatNums(args);
+        const pop = name.endsWith('.P');
+        if (nums.length < (pop ? 1 : 2)) throw new XlError('#DIV/0!');
+        const mean = nums.reduce((t, v) => t + v, 0) / nums.length;
+        const ss = nums.reduce((t, v) => t + (v - mean) ** 2, 0);
+        const variance = ss / (pop ? nums.length : nums.length - 1);
+        return name.startsWith('STDEV') ? Math.sqrt(variance) : variance;
+      }
+      case 'CEILING':
+      case 'FLOOR':
+      case 'MROUND': {
+        need(1, 2);
+        const n = toNum(args[0]);
+        const sig = args[1] === undefined ? 1 : toNum(args[1]);
+        if (sig === 0) return 0;
+        const q = n / sig;
+        const r = name === 'CEILING' ? Math.ceil(q - 1e-12) : name === 'FLOOR' ? Math.floor(q + 1e-12) : Math.round(q + Math.sign(q) * 1e-12);
+        return Number.parseFloat((r * sig).toPrecision(14));
+      }
+      case 'TRUNC': {
+        need(1, 2);
+        const d = args[1] === undefined ? 0 : Math.trunc(toNum(args[1]));
+        const f = 10 ** d;
+        return Math.trunc(toNum(args[0]) * f) / f;
+      }
+      // ---- text
+      case 'FIND':
+      case 'SEARCH': {
+        need(2, 3);
+        const needle = toStr(args[0]);
+        const hay = toStr(args[1]);
+        const start = args[2] === undefined ? 1 : Math.trunc(toNum(args[2]));
+        if (start < 1 || start > hay.length + 1) throw new XlError('#VALUE!');
+        let idx = -1;
+        if (name === 'FIND') idx = hay.indexOf(needle, start - 1);
+        else if (/[*?]/.test(needle)) {
+          const re = new RegExp(needle.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.'), 'i');
+          const mm = re.exec(hay.slice(start - 1));
+          idx = mm ? mm.index + start - 1 : -1;
+        } else idx = hay.toLowerCase().indexOf(needle.toLowerCase(), start - 1);
+        if (idx < 0) throw new XlError('#VALUE!');
+        return idx + 1;
+      }
+      case 'TEXTJOIN': {
+        if (args.length < 3) throw new XlError('#VALUE!');
+        const delim = toStr(args[0]);
+        const skip = toBool(args[1]);
+        const parts: string[] = [];
+        for (const a of args.slice(2)) {
+          const list = isRange(a) ? a.vals : [a];
+          for (const v of list) {
+            if (v instanceof XlError) throw v;
+            const t = toStr(v);
+            if (skip && t === '') continue;
+            parts.push(t);
+          }
+        }
+        return parts.join(delim);
+      }
+      case 'CLEAN':
+        need(1);
+        // eslint-disable-next-line no-control-regex
+        return toStr(args[0]).replace(/[\x00-\x1f]/g, '');
+      case 'EXACT':
+        need(2);
+        return toStr(args[0]) === toStr(args[1]);
+      case 'REPT': {
+        need(2);
+        const n = Math.trunc(toNum(args[1]));
+        if (n < 0) throw new XlError('#VALUE!');
+        return toStr(args[0]).repeat(n);
+      }
+      case 'TEXT':
+        need(2);
+        return textFormat(args[0] as Scalar, toStr(args[1]));
+      // ---- dates & times
+      case 'TODAY':
+        need(0);
+        return todaySerial();
+      case 'NOW': {
+        need(0);
+        const n = new Date();
+        return todaySerial() + (n.getHours() * 3600 + n.getMinutes() * 60 + n.getSeconds()) / 86400;
+      }
+      case 'DATE': {
+        need(3);
+        const y = Math.trunc(toNum(args[0]));
+        const m = Math.trunc(toNum(args[1]));
+        const d = Math.trunc(toNum(args[2]));
+        return dateToSerial(y < 100 ? 1900 + y : y, m, d);
+      }
+      case 'DATEVALUE': {
+        need(1);
+        const v = parseDateText(toStr(args[0]));
+        if (v === null) throw new XlError('#VALUE!');
+        return v;
+      }
+      case 'YEAR':
+      case 'MONTH':
+      case 'DAY': {
+        need(1);
+        const parts = serialToParts(toNum(args[0]));
+        return name === 'YEAR' ? parts.y : name === 'MONTH' ? parts.m : parts.d;
+      }
+      case 'WEEKDAY': {
+        need(1, 2);
+        const wd = serialToParts(toNum(args[0])).wd; // 0 = Sunday
+        const type = args[1] === undefined ? 1 : Math.trunc(toNum(args[1]));
+        if (type === 1) return wd + 1;
+        if (type === 2) return ((wd + 6) % 7) + 1;
+        if (type === 3) return (wd + 6) % 7;
+        throw new XlError('#NUM!');
+      }
+      case 'DAYS':
+        need(2);
+        return Math.floor(toNum(args[0])) - Math.floor(toNum(args[1]));
+      case 'DATEDIF':
+        need(3);
+        return dateDif(toNum(args[0]), toNum(args[1]), toStr(args[2]).toUpperCase());
+      case 'EDATE': {
+        need(2);
+        const t = addMonths(toNum(args[0]), Math.trunc(toNum(args[1])));
+        return dateToSerial(t.y, t.m, t.d);
+      }
+      case 'EOMONTH': {
+        need(2);
+        const t = addMonths(toNum(args[0]), Math.trunc(toNum(args[1])));
+        return dateToSerial(t.y, t.m, daysInMonth(t.y, t.m));
+      }
+      case 'WORKDAY':
+      case 'NETWORKDAYS': {
+        need(2, 3);
+        const hol = new Set<number>();
+        if (args[2] !== undefined) for (const h of isRange(args[2]) ? args[2].vals : [args[2]]) if (typeof h === 'number') hol.add(Math.floor(h));
+        const startD = Math.floor(toNum(args[0]));
+        if (name === 'WORKDAY') {
+          let left = Math.trunc(toNum(args[1]));
+          const step = left < 0 ? -1 : 1;
+          let cur = startD;
+          while (left !== 0) {
+            cur += step;
+            if (!isWeekend(cur) && !hol.has(cur)) left -= step;
+          }
+          return cur;
+        }
+        const endD = Math.floor(toNum(args[1]));
+        const [lo, hi] = startD <= endD ? [startD, endD] : [endD, startD];
+        let n = 0;
+        for (let d = lo; d <= hi; d++) if (!isWeekend(d) && !hol.has(d)) n++;
+        return startD <= endD ? n : -n;
+      }
+      case 'NA':
+        throw new XlError('#N/A');
+      case 'ISNA':
+        need(1);
+        return args[0] instanceof XlError && args[0].code === '#N/A';
       default:
         throw new XlError('#NAME?');
     }
+  }
+
+  // Row-by-row AND of (range, criteria) pairs for the *IFS functions.
+  function critMask(pairs: Val[], n: number): boolean[] {
+    const mask: boolean[] = Array.from({ length: n }, () => true);
+    for (let i = 0; i < pairs.length; i += 2) {
+      const rg = pairs[i];
+      if (!isRange(rg) || rg.vals.length !== n) throw new XlError('#VALUE!');
+      const crit = pairs[i + 1];
+      if (isRange(crit)) throw new XlError('#VALUE!');
+      const m = matcher(crit);
+      rg.vals.forEach((v, j) => {
+        if (!m(v)) mask[j] = false;
+      });
+    }
+    return mask;
   }
 
   function flatBools(args: Val[]): boolean[] {
@@ -837,9 +1379,30 @@ export function buildEvaluator(data: SheetData): Evaluator {
     return out;
   }
 
+  const evalFormula = (formula: string): Scalar => {
+    try {
+      const ast = parse(tokenize(formula.replace(/^=/, '')));
+      const v = evalNode(ast);
+      return isRange(v) ? new XlError('#VALUE!') : v;
+    } catch (e) {
+      return e instanceof XlError ? e : new XlError('#VALUE!');
+    }
+  };
   const value = (key: string) => cellValue(key);
-  const display = (key: string) => formatValue(cellValue(key), data.styles[key], data.cells[key] ?? '');
-  return { value, display };
+  const display = (key: string) => {
+    const raw = data.cells[key] ?? '';
+    let style = data.styles[key];
+    let hint = raw;
+    // A bare reference (=C1) shows in the same format as the cell it points at, like Excel.
+    const m = /^=\s*\$?([A-Z]{1,3})\$?(\d+)\s*$/i.exec(raw);
+    if (m && (!style || !style.fmt || style.fmt === 'general')) {
+      const ref = `${m[1].toUpperCase()}${m[2]}`;
+      hint = data.cells[ref] ?? '';
+      if (data.styles[ref]?.fmt === 'date') style = { ...style, fmt: 'date' };
+    }
+    return formatValue(cellValue(key), style, hint);
+  };
+  return { value, display, evalFormula };
 }
 
 // --- formatting -------------------------------------------------------------
@@ -857,8 +1420,15 @@ export function formatValue(v: Scalar, style: Style | undefined, raw: string): s
   if (v === null) return '';
   if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
   if (typeof v === 'string') return v;
-  const fmt = style?.fmt ?? 'general';
+  let fmt: NumFmt = style?.fmt ?? 'general';
   const dec = style?.dec;
+  if (fmt === 'general') {
+    if (raw.startsWith('=')) {
+      if (/^=\s*NOW\s*\(/i.test(raw)) return formatDate(v, 'd mmm yyyy h:mm');
+      if (/^=\s*(DATE|TODAY|EDATE|EOMONTH|WORKDAY|DATEVALUE)\s*\(/i.test(raw)) fmt = 'date';
+    } else if (parseDateText(raw) !== null) fmt = 'date';
+  }
+  if (fmt === 'date') return formatDate(v, 'd mmm yyyy');
   const grouped = (n: number, d: number) =>
     n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
   if (fmt === 'number') return grouped(v, dec ?? 2);
@@ -878,7 +1448,7 @@ export function adjustFormula(raw: string, dc: number, dr: number): string {
     .split(/("(?:[^"]|"")*")/)
     .map((seg, idx) => {
       if (idx % 2 === 1) return seg;
-      return seg.replace(/(?<![A-Za-z0-9_.])(\$?)([A-Za-z]{1,3})(\$?)(\d+)(?![\w.(])/g, (_m, ac, col, ar, row) => {
+      return seg.replace(/(?<![A-Za-z0-9_.])(\$?)([A-Za-z]{1,3})(\$?)(\d+)(?![\w.(!])/g, (_m, ac, col, ar, row) => {
         const c = ac ? colIndex(col) : colIndex(col) + dc;
         const r = ar ? +row - 1 : +row - 1 + dr;
         if (!inBounds(c, r)) return '#REF!';
@@ -890,7 +1460,7 @@ export function adjustFormula(raw: string, dc: number, dr: number): string {
 
 // Cycles the reference touching `caret` through A1 -> $A$1 -> A$1 -> $A1 (F4).
 export function cycleAbsolute(text: string, caret: number): { text: string; caret: number } {
-  const re = /(?<![A-Za-z0-9_.])(\$?)([A-Za-z]{1,3})(\$?)(\d+)(?![\w.(])/g;
+  const re = /(?<![A-Za-z0-9_.])(\$?)([A-Za-z]{1,3})(\$?)(\d+)(?![\w.(!])/g;
   let m: RegExpExecArray | null = re.exec(text);
   while (m) {
     const start = m.index;

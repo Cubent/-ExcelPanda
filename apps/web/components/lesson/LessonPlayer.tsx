@@ -51,11 +51,15 @@ type Props = {
   unitTitle: string;
   xp: number;
   alreadyDone: boolean;
+  /** Where "back" and the exit button go: the course timeline. */
+  courseHref?: string;
+  /** The following lesson, for the "Next lesson" button. */
+  next?: { href: string; title: string } | null;
   /** Server action that records completion (bound to this lesson). */
   onComplete: () => Promise<{ ok: boolean; xp: number; gems: number }>;
 };
 
-export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, onComplete }: Props) {
+export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHref = '/dashboard', next: nextLesson = null, onComplete }: Props) {
   const lesson = getLessonContent(contentKey);
   const mac = useIsMac();
   const t = (x: string) => (mac ? macify(x) : x);
@@ -124,8 +128,17 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, onComplet
     if (!step) return;
     eventsRef.current = new Set();
     setShowHint(false);
-    if (step.fresh) gridRef.current?.reset({ ...E.emptyData(), cells: { ...step.seed } });
-    else if (step.seed) gridRef.current?.apply(step.seed);
+    const meta = {
+      names: { ...lesson?.meta?.names, ...step.meta?.names },
+      ext: step.meta?.ext ?? lesson?.meta?.ext,
+      cf: step.meta?.cf ?? lesson?.meta?.cf,
+      lists: step.meta?.lists ?? lesson?.meta?.lists,
+    };
+    if (step.fresh) gridRef.current?.reset({ ...E.emptyData(), cells: { ...step.seed }, ...meta });
+    else {
+      if (step.seed) gridRef.current?.apply(step.seed);
+      gridRef.current?.setMeta(meta);
+    }
     if (step.select) gridRef.current?.select(step.select);
     gridRef.current?.focus();
     bump((n) => n + 1);
@@ -329,7 +342,7 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, onComplet
       </Link>
       <header className="flex items-center gap-4 px-4 pb-3 pt-2 sm:px-6">
         <Link
-          href="/dashboard"
+          href={courseHref}
           aria-label="Exit lesson"
           className="flex size-9 items-center justify-center rounded-xl text-[#1F4D3A]/60 transition-colors hover:bg-[#1F4D3A]/8 hover:text-[#1F4D3A]"
         >
@@ -480,12 +493,26 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, onComplet
                 Try again
               </button>
             ) : (
-              <Link
-                href="/dashboard"
-                className={`mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1F4D3A] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#173d2e] ${save === 'saving' ? 'pointer-events-none opacity-50' : ''}`}
-              >
-                Back to your path <ArrowRight size={16} />
-              </Link>
+              <div className={`mt-8 flex flex-col gap-3 ${save === 'saving' ? 'pointer-events-none opacity-50' : ''}`}>
+                {nextLesson && (
+                  <Link
+                    href={nextLesson.href}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1F4D3A] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#173d2e]"
+                  >
+                    <span className="truncate">Next lesson: {nextLesson.title}</span> <ArrowRight size={16} className="shrink-0" />
+                  </Link>
+                )}
+                <Link
+                  href={courseHref}
+                  className={
+                    nextLesson
+                      ? 'flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#1F4D3A]/15 px-5 py-3 text-sm font-semibold text-[#1F4D3A] transition-colors hover:bg-[#1F4D3A]/5'
+                      : 'flex w-full items-center justify-center gap-2 rounded-xl bg-[#1F4D3A] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#173d2e]'
+                  }
+                >
+                  Back to your path {!nextLesson && <ArrowRight size={16} />}
+                </Link>
+              </div>
             )}
           </div>
         </div>

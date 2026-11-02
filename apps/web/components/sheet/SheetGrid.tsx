@@ -57,6 +57,8 @@ export type SheetHandle = {
   apply(cells: Record<string, string>): void;
   /** Replace the whole sheet and clear undo history. */
   reset(data?: SheetData): void;
+  /** Set named ranges (merged), extra read-only sheets, conditional formats and dropdown lists. */
+  setMeta(meta: Pick<SheetData, 'names' | 'ext' | 'cf' | 'lists'>): void;
   select(label: string): void;
   focus(): void;
 };
@@ -435,6 +437,7 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
 
   const [nameDraft, setNameDraft] = useState<string | null>(null);
   const [menu, setMenu] = useState<null | 'fill' | 'color'>(null);
+  const [listOpen, setListOpen] = useState(false);
 
   // --- layout metrics ---------------------------------------------------------
   const widths = useMemo(
@@ -464,6 +467,19 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
       reset(data) {
         const base = selectAt(ref.current, ZERO);
         commit({ ...base, data: { ...E.emptyData(), ...(data ?? {}) }, past: [], future: [], edit: null, clip: null, fill: null, point: null });
+      },
+      setMeta(meta) {
+        const s = ref.current;
+        commit({
+          ...s,
+          data: {
+            ...s.data,
+            names: { ...s.data.names, ...meta.names },
+            ext: meta.ext ?? s.data.ext,
+            cf: meta.cf ?? s.data.cf,
+            lists: meta.lists ?? s.data.lists,
+          },
+        });
       },
       select(label) {
         const rc = E.parseRectLabel(label);
@@ -753,9 +769,9 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
         commit(pushData(s, setCells(s.data, { [E.keyOf(s.active.c, s.active.r)]: `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}` })));
         return;
       }
-      if (shift && (k === '$' || k === '%' || k === '!' || k === '~')) {
+      if (shift && (k === '$' || k === '%' || k === '!' || k === '~' || k === '#')) {
         e.preventDefault();
-        const map: Record<string, E.NumFmt> = { $: 'currency', '%': 'percent', '!': 'number', '~': 'general' };
+        const map: Record<string, E.NumFmt> = { $: 'currency', '%': 'percent', '!': 'number', '~': 'general', '#': 'date' };
         emit(`ctrl+shift+${k}`);
         const fmt = map[k];
         commit(applyStyle(s, (cur) => ({ ...cur, fmt, dec: undefined })));
@@ -770,6 +786,12 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
       emit('shift+space');
       return;
     }
+    if (e.altKey && k === 'ArrowDown' && activeList) {
+      e.preventDefault();
+      setListOpen(true);
+      return;
+    }
+    if (listOpen) setListOpen(false);
     if (e.altKey && k === '=') {
       e.preventDefault();
       emit('autosum');
@@ -1101,6 +1123,22 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
   const items = useMemo(() => {
     const keys = new Set<string>(Object.keys(st.data.cells));
     for (const [k, v] of Object.entries(st.data.styles)) if (v.bg) keys.add(k);
+    // Conditional-format rules: which cells currently match, and the style they get.
+    const cfStyle = new Map<string, Style>();
+    for (const rule of st.data.cf ?? []) {
+      const rc = E.parseRectLabel(rule.range);
+      if (!rc) continue;
+      for (let r = rc.r1; r <= rc.r2; r++) {
+        for (let c = rc.c1; c <= rc.c2; c++) {
+          const v = ev.evalFormula(E.adjustFormula(rule.formula, c - rc.c1, r - rc.r1));
+          if (v === true || (typeof v === 'number' && v !== 0)) {
+            const key = E.keyOf(c, r);
+            cfStyle.set(key, { ...cfStyle.get(key), ...rule.style });
+            keys.add(key);
+          }
+        }
+      }
+    }
     const out: {
       key: string;
       left: number;
@@ -1115,7 +1153,7 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
     for (const key of keys) {
       const p = E.parseKey(key);
       if (!p || !E.inBounds(p.c, p.r)) continue;
-      const style = st.data.styles[key] ?? {};
+      const style = cfStyle.has(key) ? { ...st.data.styles[key], ...cfStyle.get(key) } : (st.data.styles[key] ?? {});
       const val = ev.value(key);
       let text = ev.display(key);
       const isNum = typeof val === 'number';
@@ -1153,6 +1191,20 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
   }, [rect, ev]);
 
   const activeKey = E.keyOf(st.active.c, st.active.r);
+  const activeList = useMemo(() => {
+    for (const [range, list] of Object.entries(st.data.lists ?? {})) {
+      const rc = E.parseRectLabel(range);
+      if (rc && st.active.c >= rc.c1 && st.active.c <= rc.c2 && st.active.r >= rc.r1 && st.active.r <= rc.r2) return list;
+    }
+    return null;
+  }, [st.data.lists, st.active]);
+  const pickFromList = (value: string) => {
+    const s = ref.current;
+    emit('dropdown');
+    commit(pushData(s, setCells(s.data, { [E.keyOf(s.active.c, s.active.r)]: value })));
+    setListOpen(false);
+    scrollRef.current?.focus({ preventScroll: true });
+  };
   const activeStyle = st.data.styles[activeKey] ?? {};
   const barText = st.edit ? st.edit.text : (st.data.cells[activeKey] ?? '');
 
@@ -1300,11 +1352,18 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
-              const rc = E.parseRectLabel(nameDraft ?? '');
+              const typed = (nameDraft ?? '').trim();
+              const known = Object.entries(ref.current.data.names ?? {}).find(([k]) => k.toUpperCase() === typed.toUpperCase());
+              const rc = E.parseRectLabel(known ? known[1] : typed);
               if (rc) {
-                emit('name-box');
+                emit(known ? 'name-jump' : 'name-box');
                 const s = ref.current;
                 commit({ ...s, origin: { c: rc.c1, r: rc.r1 }, focus: { c: rc.c2, r: rc.r2 }, active: { c: rc.c1, r: rc.r1 } });
+              } else if (/^[A-Za-z_][A-Za-z0-9_.]*$/.test(typed) && !E.parseKey(typed) && !/^[A-Za-z]{1,3}:[A-Za-z]{1,3}$/.test(typed)) {
+                // Typing a new name over a selection defines a named range, like Excel.
+                emit('define-name');
+                const s = ref.current;
+                commit({ ...s, data: { ...s.data, names: { ...s.data.names, [typed.toUpperCase()]: E.rectLabel(E.rectOf(s.origin, s.focus)) } } });
               }
               setNameDraft(null);
               scrollRef.current?.focus({ preventScroll: true });
@@ -1522,6 +1581,46 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
                       dragRef.current = { kind: 'fill', src: rectOfState(ref.current) };
                     }}
                   />
+                </div>
+              )}
+
+              {/* dropdown arrow + list for cells with a list */}
+              {!st.edit && activeList && (
+                <div style={{ position: 'absolute', left: lefts[st.active.c], top: st.active.r * ROW_H, width: widths[st.active.c], height: ROW_H, zIndex: 8, pointerEvents: 'none' }}>
+                  <button
+                    type="button"
+                    aria-label="Open list"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setListOpen((o) => !o);
+                    }}
+                    style={{ position: 'absolute', right: 1, top: 1, width: 18, height: ROW_H - 2, pointerEvents: 'auto', background: '#E9EDE7', border: '1px solid #C9D3CB', fontSize: 9, color: '#1F4D3A', cursor: 'pointer' }}
+                  >
+                    ▼
+                  </button>
+                  {listOpen && (
+                    <div
+                      style={{ position: 'absolute', left: 0, top: ROW_H, minWidth: widths[st.active.c], pointerEvents: 'auto', background: '#fff', border: '1px solid #1F4D3A', boxShadow: '0 6px 16px rgba(0,0,0,0.18)', zIndex: 60 }}
+                    >
+                      {activeList.map((opt) => (
+                        <div
+                          key={opt}
+                          role="option"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            pickFromList(opt);
+                          }}
+                          style={{ padding: '3px 8px', fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = '#DCE8DF')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = '#fff')}
+                        >
+                          {opt}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 

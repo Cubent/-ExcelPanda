@@ -2,7 +2,7 @@
 
 import { auth } from '@clerk/nextjs/server';
 import { database } from '@repo/database';
-import { getCourseMap, todayUtc } from '../(app)/data';
+import { findLesson, getCourseMaps, todayUtc } from '../(app)/data';
 
 const GEMS = { LESSON: 2, CHEST: 15, TEST: 20 } as const;
 
@@ -14,8 +14,7 @@ export async function completeLesson(lessonId: string): Promise<CompleteResult> 
   const { userId } = await auth();
   if (!userId) return { ok: false, xp: 0, gems: 0 };
 
-  const map = await getCourseMap(userId);
-  const node = map?.units.flatMap((u) => u.nodes).find((n) => n.id === lessonId);
+  const node = findLesson(await getCourseMaps(userId), lessonId)?.node;
   if (!node) return { ok: false, xp: 0, gems: 0 };
   // Already completed (or not unlocked yet): nothing to award.
   if (node.state === 'done') return { ok: true, xp: 0, gems: 0 };

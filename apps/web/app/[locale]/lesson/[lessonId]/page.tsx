@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { LessonPlayer } from '@/components/lesson/LessonPlayer';
 import { getLessonContent } from '@/lessons/registry';
-import { getCourseMap } from '../../(app)/data';
+import { findLesson, getCourseMaps } from '../../(app)/data';
 import { getProfile } from '../../(app)/get-profile';
 import { Btn, Card, Pill } from '../../(app)/ui';
 import { completeLesson } from '../actions';
@@ -15,11 +15,16 @@ export const dynamic = 'force-dynamic';
 export default async function LessonPage({ params }: { params: Promise<{ lessonId: string }> }) {
   const { lessonId: slug } = await params;
   const { userId } = await getProfile();
-  const map = await getCourseMap(userId);
+  const maps = await getCourseMaps(userId);
 
-  const unit = map?.units.find((u) => u.nodes.some((n) => n.slug === slug || n.id === slug));
-  const node = unit?.nodes.find((n) => n.slug === slug || n.id === slug);
-  if (!unit || !node) notFound();
+  const found = findLesson(maps, slug);
+  if (!found) notFound();
+  const { unit, node, map } = found;
+  const courseHref = `/dashboard/${map.slug}`;
+  // The next lesson on the timeline (it may be in the next unit).
+  const flat = map.units.flatMap((u) => u.nodes);
+  const nextNode = flat[flat.findIndex((n) => n.id === node.id) + 1];
+  const next = nextNode && nextNode.open ? { href: `/lesson/${nextNode.slug}`, title: nextNode.title } : null;
   if (!node.open) redirect('/dashboard');
 
   const row = await database.lesson.findUnique({ where: { id: node.id }, select: { contentKey: true } });
@@ -28,10 +33,13 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonI
   if (content) {
     return (
       <LessonPlayer
+        key={node.id}
         contentKey={content.key}
         unitTitle={unit.title}
         xp={node.xp}
         alreadyDone={node.state === 'done'}
+        courseHref={courseHref}
+        next={next}
         onComplete={completeLesson.bind(null, node.id)}
       />
     );
@@ -41,7 +49,7 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonI
   return (
     <div className="mx-auto w-full max-w-[760px] px-4 py-10 text-[#1F4D3A]">
       <Link
-        href="/dashboard"
+        href={courseHref}
         className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-[#1F4D3A]/60 hover:text-[#1F4D3A]"
       >
         <ArrowLeft size={16} /> Back to your path

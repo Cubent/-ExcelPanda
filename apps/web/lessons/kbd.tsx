@@ -22,3 +22,12 @@ export function Cell({ children }: { children: ReactNode }) {
     </span>
   );
 }
+
+// A formula or code snippet to type, e.g. <F>{'=SUM(A1:A5)'}</F>. Pass the text as a string child.
+export function F({ children }: { children: string }) {
+  return (
+    <code className="rounded-md bg-[#1F4D3A]/8 px-1.5 py-0.5 font-mono text-[13px] font-semibold text-[#1F4D3A]">
+      {children}
+    </code>
+  );
+}

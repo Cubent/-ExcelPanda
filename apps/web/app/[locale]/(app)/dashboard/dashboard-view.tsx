@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   BookOpen,
   Calculator,
   ChartColumn,
@@ -34,7 +35,9 @@ import {
   type Ranked,
   type Stats,
 } from '../data';
-import { Bar, Btn, Card, IconBox, Label, Pill, Stat, type Tone } from '../ui';
+import type { ReactNode } from 'react';
+import { ChartFigure, Dots, FxFigure, PandaFigure, SheetFigure, SigmaFigure, StarFigure } from './art';
+import { Bar, Btn, Card, IconBox, Label, Pill, SectionTitle, Stat, type Tone } from '../ui';
 
 // Lucide icon per lesson `icon` key stored in the database.
 const ICONS: Record<string, LucideIcon> = {
@@ -116,19 +119,11 @@ function PathNode({ node, offset, mascot }: { node: MapNode; offset: number; mas
         {node.title}
       </span>
 
-      {mascot && (
-        <img
-          src="/animateos-logo (4).png"
-          alt=""
-          className="absolute left-1/2 top-2 ml-16 hidden size-16 rounded-2xl object-cover shadow-md sm:block"
-          style={{ animation: 'dash-float 2.6s ease-in-out infinite' }}
-        />
-      )}
     </div>
   );
 }
 
-function UnitSection({ unit, first }: { unit: MapUnit; first: boolean }) {
+export function UnitSection({ unit, first }: { unit: MapUnit; first: boolean }) {
   const locked = unit.nodes.every((n) => n.state === 'locked');
   const currentIdx = unit.nodes.findIndex((n) => n.state === 'current');
   const done = unit.nodes.filter((n) => n.state === 'done').length;
@@ -185,17 +180,10 @@ function EmptyPath() {
 
 const WEEK = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-export function DashboardView({
-  name,
-  map,
-  stats,
-  board,
-}: {
-  name?: string;
-  map: CourseMap | null;
-  stats: Stats;
-  board: Ranked[];
-}) {
+type RailProps = { map: CourseMap | null; stats: Stats; board: Ranked[] };
+
+/** Shared page frame: main column on the left, stats rail on the right. */
+export function DashboardLayout({ map, stats, board, children }: RailProps & { children: ReactNode }) {
   const pct = map && map.total > 0 ? Math.round((map.completed / map.total) * 100) : 0;
   const remaining = map ? map.total - map.completed : 0;
 
@@ -212,22 +200,7 @@ export function DashboardView({
   return (
     <div className="flex w-full">
       <main className="min-w-0 flex-1 px-4 pb-32 pt-9 lg:px-12 lg:pb-16">
-        <div className="mx-auto w-full max-w-[820px]">
-          <div className="mb-8">
-            <h1 className="text-[28px] font-semibold leading-tight tracking-tight">
-              {name ? `Welcome back, ${name}` : 'Welcome back'}
-            </h1>
-            <p className="mt-1.5 text-[15px] text-[#1F4D3A]/60">
-              {map ? `${map.title} · pick up right where you left off.` : 'Pick up right where you left off.'}
-            </p>
-          </div>
-
-          {map && map.units.length > 0 ? (
-            map.units.map((unit, i) => <UnitSection key={unit.id} unit={unit} first={i === 0} />)
-          ) : (
-            <EmptyPath />
-          )}
-        </div>
+        <div className="mx-auto w-full max-w-[820px]">{children}</div>
       </main>
 
       <aside className="sticky top-0 hidden h-screen w-[380px] shrink-0 flex-col gap-4 overflow-y-auto py-9 pr-8 xl:flex">
@@ -297,28 +270,6 @@ export function DashboardView({
           </div>
         </Card>
 
-        {map && (
-          <Card className="!p-5">
-            <Label>Course progress</Label>
-            <div className="mt-2 flex items-end justify-between">
-              <h3 className="text-[15px] font-semibold">{map.title}</h3>
-              <span className="text-2xl font-semibold tracking-tight">{pct}%</span>
-            </div>
-            <div className="mt-3">
-              <Bar value={pct} max={100} height={8} color="linear-gradient(90deg,#1F4D3A,#7FA800)" />
-            </div>
-            <p className="mt-3 text-[13px] text-[#1F4D3A]/60">
-              {remaining === 0 ? (
-                'Course complete. Well done!'
-              ) : (
-                <>
-                  <span className="font-semibold text-[#1F4D3A]">{remaining}</span> {remaining === 1 ? 'lesson' : 'lessons'} to go.
-                </>
-              )}
-            </p>
-          </Card>
-        )}
-
         <Card className="!p-5">
           <div className="flex items-center justify-between">
             <h3 className="text-[15px] font-semibold">This week</h3>
@@ -365,5 +316,147 @@ export function DashboardView({
         </div>
       </aside>
     </div>
+  );
+}
+
+// --- course map page -------------------------------------------------------
+
+export function CourseView({ map, stats, board }: RailProps & { map: CourseMap }) {
+  const pct = map.total > 0 ? Math.round((map.completed / map.total) * 100) : 0;
+  return (
+    <DashboardLayout map={map} stats={stats} board={board}>
+      <Link href="/dashboard" className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-[#1F4D3A]/60 hover:text-[#1F4D3A]">
+        <ArrowLeft size={16} /> All courses
+      </Link>
+      <div className="mb-8">
+        <h1 className="text-[28px] font-semibold leading-tight tracking-tight">{map.title}</h1>
+        <p className="mt-1.5 text-[15px] text-[#1F4D3A]/60">
+          {pct}% complete · {map.total - map.completed} lessons to go
+        </p>
+      </div>
+      {map.units.map((unit, i) => (
+        <UnitSection key={unit.id} unit={unit} first={i === 0} />
+      ))}
+    </DashboardLayout>
+  );
+}
+
+// --- overview: courses ------------------------------------------------------
+
+export function DashboardView({
+  name,
+  maps,
+  stats,
+  board,
+  upcoming,
+}: Omit<RailProps, 'map'> & { name?: string; maps: CourseMap[]; upcoming: { id: string; title: string; description: string }[] }) {
+  // Pick up the course you have started, otherwise the first one with something left to do.
+  const active = maps.find((m) => m.completed > 0 && m.current) ?? maps.find((m) => m.current) ?? maps[0] ?? null;
+  const pct = active && active.total > 0 ? Math.round((active.completed / active.total) * 100) : 0;
+  const next = active?.current ?? null;
+  const nextUnit = next ? active?.units.find((u) => u.nodes.some((n) => n.id === next.id)) : null;
+
+  return (
+    <DashboardLayout map={active} stats={stats} board={board}>
+      <div className="mb-7">
+        <h1 className="text-[28px] font-semibold leading-tight tracking-tight">
+          {name ? `Welcome back, ${name}` : 'Welcome back'}
+        </h1>
+        {active && (
+          <p className="mt-1.5 text-[15px] text-[#1F4D3A]/60">
+            {active.title} · {pct}% complete · {active.total - active.completed} lessons to go
+          </p>
+        )}
+      </div>
+
+      {next && nextUnit && (
+        <Link
+          href={`/lesson/${next.slug}`}
+          className="mb-9 flex items-center gap-4 rounded-2xl bg-[#1F4D3A] p-5 text-white shadow-sm transition-transform hover:-translate-y-0.5"
+        >
+          <PandaFigure size={56} className="shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium text-white/60">Continue where you left off</p>
+            <h2 className="truncate text-lg font-semibold tracking-tight">{next.title}</h2>
+          </div>
+          <span className="flex shrink-0 items-center gap-1 rounded-xl bg-[#C7F000] px-4 py-2 text-sm font-semibold text-[#1F4D3A]">
+            Start <ChevronRight size={16} />
+          </span>
+        </Link>
+      )}
+
+      <section>
+        <SectionTitle>Courses</SectionTitle>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {maps.filter((m) => m.units.length > 0).map((m, mi) => {
+            const mpct = m.total > 0 ? Math.round((m.completed / m.total) * 100) : 0;
+            const status = m.completed >= m.total && m.total > 0 ? 'Complete' : m.completed > 0 ? 'In progress' : 'New';
+            return (
+              <Link
+                key={m.courseId}
+                href={`/dashboard/${m.slug}`}
+                className="group flex flex-col overflow-hidden rounded-3xl border-2 border-b-4 border-[#1F4D3A]/20 bg-white transition-all hover:-translate-y-0.5 hover:border-[#1F4D3A]/40 active:translate-y-0.5 active:border-b-2"
+              >
+                {mi % 2 === 0 ? (
+                  <div className="relative h-40 overflow-hidden bg-[#C7F000]/55">
+                    <Dots className="absolute inset-0 h-full w-full" />
+                    <SheetFigure size={104} className="absolute left-[14%] top-6 -rotate-6 transition-transform group-hover:-rotate-3" />
+                    <ChartFigure size={84} className="absolute right-[10%] top-3 rotate-6" />
+                    <FxFigure size={54} className="absolute bottom-3 right-[34%] -rotate-12" />
+                    <StarFigure size={30} className="absolute bottom-4 right-4 rotate-12" />
+                  </div>
+                ) : (
+                  <div className="relative h-40 overflow-hidden bg-[#FFE9A8]">
+                    <Dots className="absolute inset-0 h-full w-full" />
+                    <FxFigure size={112} className="absolute left-[12%] top-4 -rotate-6 transition-transform group-hover:-rotate-3" />
+                    <SigmaFigure size={84} className="absolute right-[14%] top-5 rotate-6" />
+                    <StarFigure size={32} className="absolute bottom-5 left-[8%] rotate-12" />
+                  </div>
+                )}
+                <div className="flex flex-1 flex-col p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-xl font-semibold tracking-tight">{m.title}</h3>
+                    <Pill tone={status === 'New' ? 'gray' : 'lime'}>{status}</Pill>
+                  </div>
+                  <p className="mt-1 text-[13px] leading-relaxed text-[#1F4D3A]/60">{m.description}</p>
+                  <p className="mt-3 text-xs font-medium text-[#1F4D3A]/50">
+                    {m.units.length} units · {m.total} lessons
+                  </p>
+                  <div className="mt-4">
+                    <Bar value={m.completed} max={Math.max(m.total, 1)} height={8} />
+                    <p className="mt-2 text-xs font-medium text-[#1F4D3A]/50">{mpct}% complete</p>
+                  </div>
+                  <span className="mt-4 flex items-center justify-center rounded-2xl border-b-4 border-[#0F2A1F] bg-[#1F4D3A] py-3 text-sm font-bold uppercase tracking-wide text-white group-hover:bg-[#245a43]">
+                    {m.completed > 0 ? 'Continue' : 'Start'}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+          {upcoming.map((c, i) => (
+            <div key={c.id} className="flex flex-col overflow-hidden rounded-3xl border-2 border-b-4 border-[#1F4D3A]/12 bg-white">
+              <div className={`relative h-40 overflow-hidden ${i % 2 === 0 ? 'bg-[#DDF4EC]' : 'bg-[#FFF3D1]'}`}>
+                <Dots className="absolute inset-0 h-full w-full" />
+                <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-60 grayscale-[40%]">
+                  {i % 2 === 0 ? <FxFigure size={84} className="-rotate-6" /> : <SigmaFigure size={84} className="rotate-6" />}
+                  <StarFigure size={38} className="rotate-12" />
+                </div>
+              </div>
+              <div className="flex flex-1 flex-col p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-xl font-semibold tracking-tight">{c.title}</h3>
+                  <Pill tone="gray">Coming soon</Pill>
+                </div>
+                <p className="mt-1 text-[13px] leading-relaxed text-[#1F4D3A]/60">{c.description}</p>
+                <span className="mt-5 flex items-center justify-center rounded-2xl border-b-4 border-[#1F4D3A]/15 bg-[#1F4D3A]/8 py-3 text-sm font-bold uppercase tracking-wide text-[#1F4D3A]/40">
+                  Locked
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+        {maps.length === 0 && upcoming.length === 0 && <EmptyPath />}
+      </section>
+    </DashboardLayout>
   );
 }

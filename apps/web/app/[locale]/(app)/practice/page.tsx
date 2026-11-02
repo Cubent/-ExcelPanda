@@ -9,7 +9,7 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
-import { getCourseMap } from '../data';
+import { getCourseMaps } from '../data';
 import { getProfile } from '../get-profile';
 import { Btn, Card, IconBox, Page, PageHeader, Pill, SectionTitle, type Tone } from '../ui';
 
@@ -28,8 +28,8 @@ const MODES: { icon: LucideIcon; tone: Tone; title: string; blurb: string }[] = 
 
 export default async function PracticePage() {
   const { userId } = await getProfile();
-  const map = await getCourseMap(userId);
-  const current = map?.current ?? null;
+  const maps = await getCourseMaps(userId);
+  const current = (maps.find((m) => m.completed > 0 && m.current) ?? maps.find((m) => m.current))?.current ?? null;
 
   return (
     <Page>

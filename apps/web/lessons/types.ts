@@ -18,6 +18,9 @@ export type StepCtx = {
   activeKey: string;
 };
 
+/** Extra sheet features a lesson can switch on: named ranges, other sheets, conditional formats, dropdown lists. */
+export type SheetMeta = Pick<SheetData, 'names' | 'ext' | 'cf' | 'lists'>;
+
 export type LessonStep = {
   id: string;
   title: string;
@@ -29,13 +32,19 @@ export type LessonStep = {
   seed?: Record<string, string>;
   /** Wipe the sheet first so only the seed is on it (use when stray data would break the task). */
   fresh?: boolean;
+  /** Sheet features for this step (merged over the lesson's `meta`). */
+  meta?: SheetMeta;
   /** Selection placed when the step starts, e.g. "A3". */
   select?: string;
+  /** Test-only: a correct answer used by the automated lesson tests. Never shown to learners. */
+  solution?: { cells?: Record<string, string>; styles?: Record<string, Style>; events?: string[]; names?: Record<string, string>; select?: string };
   /** Omit for an info-only step that can always be continued. */
   check?: (c: StepCtx) => boolean;
 };
 
 export type LessonContent = {
+  /** Sheet features available for the whole lesson. */
+  meta?: SheetMeta;
   /** Show the formatting toolbar for this lesson (needed for fill colour, alignment). */
   toolbar?: boolean;
   key: string;
