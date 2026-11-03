@@ -13,15 +13,6 @@ const FAQS: { q: string; a: string }[] = [{"q": "How do I learn Excel from scrat
 
 const TOPICS: { t: string; d: string }[] = [{"t": "Excel formulas", "d": "Write SUM, IF, COUNTIF and nested formulas that work the first time, and learn to read error messages."}, {"t": "Lookups and references", "d": "Pull data across sheets with XLOOKUP, VLOOKUP and INDEX/MATCH, and understand absolute versus relative references."}, {"t": "Pivot tables", "d": "Summarize thousands of rows in a few clicks, group dates, and build reports that update on refresh."}, {"t": "Charts and visuals", "d": "Pick the right chart, format it cleanly and make the key point obvious at a glance."}, {"t": "Data cleaning", "d": "Fix messy exports with TRIM, TEXTSPLIT, Flash Fill and Power Query basics."}, {"t": "Keyboard shortcuts", "d": "Navigate, select and format without the mouse and finish routine work in a fraction of the time."}];
 
-const lessons = [
-  { title: 'Formulas', sub: 'SUM, IF, AVERAGE', cells: ['12', '30', '=SUM(A1:B1)', '42'] },
-  { title: 'Lookups', sub: 'XLOOKUP, INDEX/MATCH', cells: ['A-17', 'Pens', '=XLOOKUP', '$2.40'] },
-  { title: 'Pivot tables', sub: 'Summarize in clicks', cells: ['North', '120', 'South', '98'] },
-  { title: 'Charts', sub: 'Show the story', cells: ['Q1', '▂', 'Q2', '▆'] },
-  { title: 'Cleaning data', sub: 'TRIM, TEXTSPLIT', cells: [' ann ', 'Ann', ' bob', 'Bob'] },
-  { title: 'Shortcuts', sub: 'Work 3× faster', cells: ['Ctrl', '+', 'Shift', '↓'] },
-];
-
 const steps = [
   { n: '01', title: 'Do the task', body: 'Every lesson drops you into a real spreadsheet with one small goal. No videos to sit through.' },
   { n: '02', title: 'Get instant feedback', body: 'We check your formula as you type and show you why it works, or why it didn’t.' },
@@ -38,21 +29,6 @@ const skills = [
   'Automate with dynamic arrays',
   'Move faster with shortcuts',
 ];
-
-const Grid = ({ cells, accent = false }: { cells: string[]; accent?: boolean }) => (
-  <div className="grid grid-cols-2 overflow-hidden rounded-lg border border-[#1F4D3A]/15 bg-white text-xs">
-    {cells.map((c, i) => (
-      <div
-        key={i}
-        className={`border-b border-r border-[#1F4D3A]/10 px-3 py-2 font-mono ${
-          accent && c.startsWith('=') ? 'bg-[#C7F000]/60 font-semibold' : ''
-        }`}
-      >
-        {c}
-      </div>
-    ))}
-  </div>
-);
 
 const ExcelMock = () => (
   <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-[#1F4D3A]/10 bg-white">
@@ -136,13 +112,12 @@ const floaters = [
 ];
 
 const Home = () => (
-  <div className="text-[#1F4D3A]">
+  <div className="min-h-screen bg-white text-[#1F4D3A]">
     <SiteHeader />
 
     {/* Hero */}
     <section className="mx-auto max-w-4xl px-6 pb-20 pt-20 text-center sm:pt-28">
-      <img src="/animateos-logo (4).png" alt="ExcelPanda logo" className="mx-auto mb-6 size-16 rounded-2xl" />
-      <h1 className="text-6xl font-semibold leading-[1.05] tracking-tight sm:text-8xl">
+      <h1 className="text-5xl font-semibold leading-[1.05] tracking-tight sm:text-7xl">
         Master Excel,
         <br />
         <span className="relative inline-block">
@@ -191,34 +166,8 @@ const Home = () => (
       </div>
     </section>
 
-    {/* Lesson library */}
-    <section id="paths" className="py-20">
-      <h2 className="mx-auto max-w-2xl px-6 text-center text-4xl font-semibold tracking-tight sm:text-5xl">
-        Find the skill you need in seconds.
-      </h2>
-      <div className="mt-4 flex justify-center gap-2 text-sm">
-        {['Formulas', 'Data', 'Visuals', 'Speed'].map((t, i) => (
-          <span key={t} className={`rounded-full px-4 py-1.5 ${i === 0 ? 'bg-[#1F4D3A] text-[#C7F000]' : 'bg-white text-[#1F4D3A]/60'}`}>
-            {t}
-          </span>
-        ))}
-      </div>
-      <div className="mt-12 flex gap-5 overflow-x-auto px-6 pb-6 sm:justify-center">
-        {lessons.map((l, i) => (
-          <article
-            key={l.title}
-            className="w-60 shrink-0 rounded-3xl border border-[#1F4D3A]/10 bg-white p-4"
-          >
-            <Grid cells={l.cells} accent={i % 2 === 0} />
-            <h3 className="mt-4 font-semibold">{l.title}</h3>
-            <p className="text-sm text-[#1F4D3A]/60">{l.sub}</p>
-          </article>
-        ))}
-      </div>
-    </section>
-
     {/* Journeys */}
-    <section className="mx-auto max-w-6xl px-6 py-20">
+    <section id="paths" className="mx-auto max-w-6xl px-6 py-20">
       <h2 className="mx-auto max-w-2xl text-center text-4xl font-semibold tracking-tight sm:text-5xl">
         Follow a path from beginner to confident.
       </h2>
@@ -346,6 +295,9 @@ const Home = () => (
         </table>
       </div>
     </section>
+
+    {/* SEO: course catalogue */}
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({"@context": "https://schema.org", "@type": "ItemList", "name": "ExcelPanda courses", "itemListElement": [{"@type": "ListItem", "position": 1, "item": {"@type": "Course", "name": "Excel Basics", "description": "From your first formula to pivot tables and dashboards.", "provider": {"@type": "Organization", "name": "ExcelPanda", "sameAs": "https://www.excelpanda.org"}, "isAccessibleForFree": true, "inLanguage": "en"}}, {"@type": "ListItem", "position": 2, "item": {"@type": "Course", "name": "Formulas & Functions", "description": "Logic, text, dates, lookups and stats: the functions that do most real work.", "provider": {"@type": "Organization", "name": "ExcelPanda", "sameAs": "https://www.excelpanda.org"}, "isAccessibleForFree": true, "inLanguage": "en"}}, {"@type": "ListItem", "position": 3, "item": {"@type": "Course", "name": "Data Analysis & Pivots", "description": "Tables, cleaning, PivotTables, charts and what-if analysis.", "provider": {"@type": "Organization", "name": "ExcelPanda", "sameAs": "https://www.excelpanda.org"}, "isAccessibleForFree": true, "inLanguage": "en"}}, {"@type": "ListItem", "position": 4, "item": {"@type": "Course", "name": "Advanced Formulas", "description": "Dynamic arrays, LET, LAMBDA, regex and the modern way to write formulas.", "provider": {"@type": "Organization", "name": "ExcelPanda", "sameAs": "https://www.excelpanda.org"}, "isAccessibleForFree": true, "inLanguage": "en"}}, {"@type": "ListItem", "position": 5, "item": {"@type": "Course", "name": "Data & Dashboards", "description": "Power Query, data models with DAX, and dashboards that refresh in one click.", "provider": {"@type": "Organization", "name": "ExcelPanda", "sameAs": "https://www.excelpanda.org"}, "isAccessibleForFree": true, "inLanguage": "en"}}, {"@type": "ListItem", "position": 6, "item": {"@type": "Course", "name": "Excel for Finance", "description": "Loans, NPV and IRR, budgets, financial statements and robust models.", "provider": {"@type": "Organization", "name": "ExcelPanda", "sameAs": "https://www.excelpanda.org"}, "isAccessibleForFree": true, "inLanguage": "en"}}, {"@type": "ListItem", "position": 7, "item": {"@type": "Course", "name": "Excel Automation", "description": "Shortcuts, macros, VBA, Office Scripts and Power Automate.", "provider": {"@type": "Organization", "name": "ExcelPanda", "sameAs": "https://www.excelpanda.org"}, "isAccessibleForFree": true, "inLanguage": "en"}}]}) }} />
 
     {/* SEO: FAQ */}
     <section id="faq" className="mx-auto max-w-3xl px-6 py-24">

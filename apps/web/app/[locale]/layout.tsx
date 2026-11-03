@@ -15,10 +15,10 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.excelpanda.com'),
-  title: 'ExcelPanda – Master Excel, Hands On',
-  description: 'ExcelPanda helps you master Excel hands on, with practical tutorials, real-world exercises and step-by-step guides.',
-  keywords: ['ExcelPanda', 'Excel tutorials', 'learn Excel', 'Excel formulas', 'Excel hands on'],
+  metadataBase: new URL('https://www.excelpanda.org'),
+  title: 'ExcelPanda: Learn Excel Hands On, Formulas to VBA',
+  description: 'Learn Excel by doing. Short interactive lessons on formulas, lookups, pivot tables, Power Query, DAX, finance modelling and VBA, in your browser with nothing to install.',
+  keywords: ['learn Excel online', 'Excel tutorials', 'Excel formulas', 'Excel pivot tables', 'Excel VBA tutorial', 'Power Query', 'Excel for finance', 'interactive Excel lessons', 'ExcelPanda'],
   alternates: {
     canonical: '/',
   },
@@ -34,16 +34,16 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: 'ExcelPanda – Master Excel, Hands On',
-    description: 'ExcelPanda helps you master Excel hands on, with practical tutorials, real-world exercises and step-by-step guides.',
-    url: 'https://www.excelpanda.com',
+    title: 'ExcelPanda: Learn Excel Hands On, Formulas to VBA',
+    description: 'Learn Excel by doing. Short interactive lessons on formulas, lookups, pivot tables, Power Query, DAX, finance modelling and VBA, in your browser with nothing to install.',
+    url: 'https://www.excelpanda.org',
     siteName: 'ExcelPanda',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'ExcelPanda – Master Excel, Hands On',
+        alt: 'ExcelPanda: Learn Excel Hands On, Formulas to VBA',
       },
     ],
     locale: 'en_US',
@@ -51,8 +51,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ExcelPanda – Master Excel, Hands On',
-    description: 'ExcelPanda helps you master Excel hands on, with practical tutorials, real-world exercises and step-by-step guides.',
+    title: 'ExcelPanda: Learn Excel Hands On, Formulas to VBA',
+    description: 'Learn Excel by doing. Short interactive lessons on formulas, lookups, pivot tables, Power Query, DAX, finance modelling and VBA, in your browser with nothing to install.',
     images: ['/og-image.png'],
   },
   manifest: '/manifest.json',
@@ -97,10 +97,10 @@ const RootLayout = async ({ children, params }: RootLayoutProperties) => {
             "@context": "https://schema.org",
             "@type": "EducationalOrganization",
             "name": "ExcelPanda",
-            "alternateName": "ExcelPanda – Master Excel, Hands On",
-            "description": "ExcelPanda helps you master Excel hands on, with practical tutorials, real-world exercises and step-by-step guides.",
-            "url": "https://www.excelpanda.com",
-            "logo": "https://www.excelpanda.com/favicon.png",
+            "alternateName": "ExcelPanda",
+            "description": "Learn Excel by doing. Short interactive lessons on formulas, lookups, pivot tables, Power Query, DAX, finance modelling and VBA, in your browser with nothing to install.",
+            "url": "https://www.excelpanda.org",
+            "logo": "https://www.excelpanda.org/favicon.png",
           })
         }}
       />

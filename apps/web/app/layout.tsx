@@ -9,10 +9,10 @@ import { UmamiAnalytics } from '../components/umami-analytics';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.excelpanda.com'),
-  title: 'ExcelPanda – Master Excel, Hands On',
-  description: 'ExcelPanda helps you master Excel hands on, with practical tutorials, real-world exercises and step-by-step guides.',
-  keywords: ['ExcelPanda', 'Excel tutorials', 'learn Excel', 'Excel formulas', 'Excel hands on'],
+  metadataBase: new URL('https://www.excelpanda.org'),
+  title: 'ExcelPanda: Learn Excel Hands On, Formulas to VBA',
+  description: 'Learn Excel by doing. Short interactive lessons on formulas, lookups, pivot tables, Power Query, DAX, finance modelling and VBA, in your browser with nothing to install.',
+  keywords: ['learn Excel online', 'Excel tutorials', 'Excel formulas', 'Excel pivot tables', 'Excel VBA tutorial', 'Power Query', 'Excel for finance', 'interactive Excel lessons', 'ExcelPanda'],
   robots: {
     index: true,
     follow: true,
@@ -35,16 +35,16 @@ export const metadata: Metadata = {
     apple: '/apple-touch-icon.png?v=3',
   },
   openGraph: {
-    title: 'ExcelPanda – Master Excel, Hands On',
-    description: 'ExcelPanda helps you master Excel hands on, with practical tutorials, real-world exercises and step-by-step guides.',
+    title: 'ExcelPanda: Learn Excel Hands On, Formulas to VBA',
+    description: 'Learn Excel by doing. Short interactive lessons on formulas, lookups, pivot tables, Power Query, DAX, finance modelling and VBA, in your browser with nothing to install.',
     type: 'website',
     locale: 'en_US',
     siteName: 'ExcelPanda',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ExcelPanda – Master Excel, Hands On',
-    description: 'ExcelPanda helps you master Excel hands on, with practical tutorials, real-world exercises and step-by-step guides.',
+    title: 'ExcelPanda: Learn Excel Hands On, Formulas to VBA',
+    description: 'Learn Excel by doing. Short interactive lessons on formulas, lookups, pivot tables, Power Query, DAX, finance modelling and VBA, in your browser with nothing to install.',
   },
 };
 

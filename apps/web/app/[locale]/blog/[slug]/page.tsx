@@ -6,6 +6,7 @@ import {
   formatPostDate,
   getAllPosts,
   getPostBySlug,
+  BLOG_INDEXABLE,
 } from '@/lib/blog';
 import { JsonLd } from '@repo/seo/json-ld';
 import type {
@@ -42,6 +43,7 @@ export const generateMetadata = async ({
     path: `/blog/${post.slug}`,
     noSuffix: true,
     keywords: post.keywords,
+    robots: BLOG_INDEXABLE ? undefined : { index: false, follow: false },
     alternates: { canonical: `${SITE_URL}/blog/${post.slug}` },
     openGraph: {
       type: 'article',

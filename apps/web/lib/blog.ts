@@ -1,7 +1,12 @@
 import { posts } from '@/content/blog';
 import type { BlogPost } from '@/content/blog/types';
 
-export const SITE_URL = 'https://www.excelpanda.com';
+export const SITE_URL = 'https://www.excelpanda.org';
+/**
+ * The existing posts are about medical licensing exams, not Excel. Search engines should not index them under
+ * excelpanda.org. Set to true once the blog is replaced with Excel articles.
+ */
+export const BLOG_INDEXABLE = false;
 
 export const getAllPosts = (): BlogPost[] =>
   [...posts].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));

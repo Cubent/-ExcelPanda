@@ -1,4 +1,4 @@
-import { SITE_URL, formatPostDate, getAllPosts } from '@/lib/blog';
+import { BLOG_INDEXABLE, SITE_URL, formatPostDate, getAllPosts } from '@/lib/blog';
 import { createMetadata } from '@repo/seo/metadata';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -11,6 +11,7 @@ export const metadata: Metadata = createMetadata({
     'Guides for USMLE Step 1, Step 2 CK and Step 3 preparation, including question bank comparisons, study strategy and how to use spaced repetition.',
   path: '/blog',
   keywords: ['USMLE study guides', 'USMLE question bank comparison', 'USMLE preparation blog'],
+  robots: BLOG_INDEXABLE ? undefined : { index: false, follow: false },
   alternates: {
     canonical: `${SITE_URL}/blog`,
     types: { 'application/rss+xml': `${SITE_URL}/blog/feed.xml` },

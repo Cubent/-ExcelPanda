@@ -1,15 +1,18 @@
 {
-  "name": "ExcelPanda – Master Excel, Hands On",
+  "name": "ExcelPanda: Learn Excel Hands On",
   "short_name": "ExcelPanda",
-  "description": "The all-in-one USMLE prep platform behind a 95% pass rate, with an adaptive Qbank, AI-powered practice, and personalized study guides for Step 1, Step 2 CK, Step 3, and the ABIM Exam.",
+  "description": "Learn Excel by doing. Short interactive lessons on formulas, lookups, pivot tables, Power Query, DAX, finance modelling and VBA, in your browser with nothing to install.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#06005A",
+  "theme_color": "#1F4D3A",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
-  "categories": ["education", "medical"],
+  "categories": [
+    "education",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "/favicon.png?v=3",

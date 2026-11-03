@@ -11,13 +11,12 @@ type MetadataGenerator = Omit<Metadata, 'description' | 'title'> & {
 
 const defaultImage = '/og-image.png';
 
-const applicationName = 'MedPrep Institute';
+const applicationName = 'ExcelPanda';
 const author: Metadata['authors'] = {
-  name: 'MedPrep Institute',
-  url: 'https://www.medprepinstitute.org/',
+  name: 'ExcelPanda',
+  url: 'https://www.excelpanda.org/',
 };
-const publisher = 'MedPrep Institute';
-const twitterHandle = '@medprepinstitute';
+const publisher = 'ExcelPanda';
 const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
 const productionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
 
@@ -67,7 +66,6 @@ export const createMetadata = ({
     publisher,
     twitter: {
       card: 'summary_large_image',
-      creator: twitterHandle,
       images: [resolvedImage],
     },
   };

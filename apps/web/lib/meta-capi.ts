@@ -52,7 +52,7 @@ export const sendMetaPurchase = async ({
               event_time: eventTime,
               event_id: eventId,
               action_source: 'website',
-              event_source_url: 'https://www.excelpanda.com/',
+              event_source_url: 'https://www.excelpanda.org/',
               user_data: userData,
               custom_data: { value, currency: currency.toUpperCase() },
             },

@@ -15,15 +15,13 @@ import { Btn, Card, IconBox, Page, PageHeader, Pill, SectionTitle, type Tone } f
 
 export const metadata = { title: 'Practice – ExcelPanda' };
 
-// Practice modes are planned but need lesson content first, so they are
-// shown as upcoming rather than faking progress.
-const MODES: { icon: LucideIcon; tone: Tone; title: string; blurb: string }[] = [
-  { icon: Zap, tone: 'amber', title: 'Quick drill', blurb: 'Five fast questions on what you learned this week.' },
-  { icon: Wrench, tone: 'coral', title: 'Fix your mistakes', blurb: 'Replay the questions you missed until they stick.' },
-  { icon: Layers, tone: 'teal', title: 'Formula flashcards', blurb: 'Flip through the functions you use most.' },
-  { icon: Timer, tone: 'violet', title: 'Timed challenge', blurb: 'Beat the clock on real spreadsheet tasks.' },
-  { icon: Puzzle, tone: 'green', title: 'Real-world cases', blurb: 'Budgets, reports and inventory sheets, step by step.' },
-  { icon: Keyboard, tone: 'gray', title: 'Shortcut trainer', blurb: 'Learn the keyboard moves that save hours.' },
+const MODES: { icon: LucideIcon; tone: Tone; title: string; blurb: string; href: string; cta: string }[] = [
+  { icon: Zap, tone: 'amber', title: 'Quick drill', blurb: 'Five fast tasks drawn from the lessons you have finished.', href: '/train/quick', cta: 'Start drill' },
+  { icon: Wrench, tone: 'coral', title: 'Fix your mistakes', blurb: 'Replay the steps where you needed a hint or skipped, until they stick.', href: '/train/mistakes', cta: 'Replay mistakes' },
+  { icon: Layers, tone: 'teal', title: 'Formula flashcards', blurb: 'Flip through the functions you use most.', href: '/train/flashcards', cta: 'Open flashcards' },
+  { icon: Timer, tone: 'violet', title: 'Timed challenge', blurb: 'Six spreadsheet tasks in five minutes. Beat the clock.', href: '/train/timed', cta: 'Start challenge' },
+  { icon: Puzzle, tone: 'green', title: 'Real-world cases', blurb: 'Budgets, reports and inventory sheets, step by step.', href: '/train/cases', cta: 'Pick a case' },
+  { icon: Keyboard, tone: 'gray', title: 'Shortcut trainer', blurb: 'Learn the keyboard moves that save hours.', href: '/train/shortcuts', cta: 'Train shortcuts' },
 ];
 
 export default async function PracticePage() {
@@ -33,7 +31,7 @@ export default async function PracticePage() {
 
   return (
     <Page>
-      <PageHeader title="Practice" subtitle="Short sessions, steady progress. More ways to train are on the way." />
+      <PageHeader title="Practice" subtitle="Short sessions, steady progress. Practice earns no XP, so there is no pressure." />
 
       <div
         className="relative overflow-hidden rounded-2xl p-8 text-white shadow-sm"
@@ -47,7 +45,7 @@ export default async function PracticePage() {
           <p className="mt-2 text-[15px] leading-relaxed text-white/75">
             {current
               ? 'Continue where you left off on your learning path.'
-              : 'New lessons and practice modes are coming soon.'}
+              : 'Keep your skills sharp with the training modes below.'}
           </p>
           {current && (
             <div className="mt-6 flex items-center gap-4">
@@ -67,12 +65,11 @@ export default async function PracticePage() {
           <Card key={m.title} className="flex flex-col">
             <div className="flex items-start justify-between">
               <IconBox icon={m.icon} tone={m.tone} />
-              <Pill tone="gray">Soon</Pill>
             </div>
             <h3 className="mt-5 text-base font-semibold">{m.title}</h3>
             <p className="mt-1 flex-1 text-sm leading-relaxed text-[#1F4D3A]/60">{m.blurb}</p>
-            <Btn variant="secondary" className="mt-5 w-full" disabled>
-              Coming soon
+            <Btn variant="secondary" className="mt-5 w-full" href={m.href}>
+              {m.cta} <ArrowRight size={16} />
             </Btn>
           </Card>
         ))}

@@ -17,7 +17,7 @@ import { macify, useIsMac } from '@/lessons/platform';
 import { getLessonContent } from '@/lessons/registry';
 import { setSheetSize } from '@/components/sheet/engine';
 import { playComplete, playNext, playSuccess } from './sounds';
-import type { SheetView, StepCtx } from '@/lessons/types';
+import type { LessonContent, SheetView, StepCtx } from '@/lessons/types';
 
 const PRAISE = ['Well done!', 'Nice one!', 'Perfect!', 'You nailed it!', 'Spot on!', 'Great job!', 'Excellent!', 'Boom, correct!'];
 
@@ -65,10 +65,36 @@ type Props = {
   next?: { href: string; title: string } | null;
   /** Server action that records completion (bound to this lesson). */
   onComplete: () => Promise<{ ok: boolean; xp: number; gems: number }>;
+  /** Lesson content built on the fly (practice sessions), instead of one from the registry. */
+  content?: LessonContent;
+  /** Practice mode: no XP, a Skip button, and optionally a countdown in seconds. */
+  practice?: { mode: string; limitSec?: number };
 };
 
-export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHref = '/dashboard', next: nextLesson = null, onComplete }: Props) {
-  const lesson = getLessonContent(contentKey);
+const MISSED_KEY = 'xp-missed';
+const readMissed = (): string[] => {
+  try {
+    const v = JSON.parse(localStorage.getItem(MISSED_KEY) ?? '[]');
+    return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+};
+const writeMissed = (list: string[]) => {
+  try {
+    localStorage.setItem(MISSED_KEY, JSON.stringify(list.slice(-80)));
+  } catch {}
+};
+/** Steps you needed a hint for, or skipped. "Fix your mistakes" replays them. */
+export const addMissed = (id: string) => {
+  const l = readMissed();
+  if (!l.includes(id)) writeMissed([...l, id]);
+};
+export const removeMissed = (id: string) => writeMissed(readMissed().filter((x) => x !== id));
+export const getMissed = readMissed;
+
+export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHref = '/dashboard', next: nextLesson = null, onComplete, content, practice }: Props) {
+  const lesson = content ?? getLessonContent(contentKey);
   const mac = useIsMac();
   const t = (x: string) => (mac ? macify(x) : x);
   const gridRef = useRef<SheetHandle>(null);
@@ -157,7 +183,7 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
   }, [index, finished, stepKey, dataKey]);
   // Keep a copy of the sheet for the current step so a reload can restore it.
   useEffect(() => {
-    if (!stepLoaded.current || finished || !snap || restoreData.current) return;
+    if (!stepLoaded.current || finished || alreadyDone || !snap || restoreData.current) return;
     try {
       localStorage.setItem(dataKey, JSON.stringify({ index, data: snap.data }));
     } catch {}
@@ -176,6 +202,13 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
     return Math.floor((xp * (k + 1)) / checkIdx.length) - Math.floor((xp * k) / checkIdx.length);
   };
   const step = steps[index];
+  const hinted = useRef(new Set<number>());
+  const solvedSet = useRef(new Set<number>());
+  const missedId = (i: number) => {
+    const sid = steps[i]?.id ?? '';
+    return sid.includes(':') ? sid : `${lesson?.key}:${sid}`;
+  };
+  const [left, setLeft] = useState(practice?.limitSec ?? 0);
   const pivotCfg = step?.pivot ?? lesson?.pivot;
   const chartCfg = step?.chart ?? lesson?.chart;
   const queryCfg = step?.query ?? lesson?.query;
@@ -269,6 +302,8 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
     const solved = !!step?.check && done;
     if (solved && !wasDone.current) {
       wasDone.current = true;
+      solvedSet.current.add(index);
+      if (practice && !hinted.current.has(index)) removeMissed(missedId(index));
       if (opts.sound) playSuccess();
       const n = praiseCount.current++;
       setPraise({ text: PRAISE[n % PRAISE.length], n, xp: stepXp(index) });
@@ -305,6 +340,21 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
     return () => window.removeEventListener('keydown', onKey, true);
   }, []);
 
+
+  // Practice countdown: when it reaches zero the session ends.
+  useEffect(() => {
+    if (!practice?.limitSec || finished) return;
+    const t = setInterval(() => setLeft((l) => l - 1), 1000);
+    return () => clearInterval(t);
+  }, [practice?.limitSec, finished]);
+  useEffect(() => {
+    if (practice?.limitSec && left <= 0 && !finished) {
+      if (opts.sound) playComplete();
+      setFinished(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [left]);
+
   if (!lesson || !step) return null;
 
   const total = steps.length;
@@ -319,6 +369,11 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
     } catch {
       setSave('error');
     }
+  };
+
+  const skip = () => {
+    if (step.check) addMissed(missedId(index));
+    next();
   };
 
   const next = () => {
@@ -365,7 +420,14 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
           <span className={opts.layout === 'center' ? 'truncate' : ''}>{t(step.hint)}</span>
         </div>
       ) : (
-        <button type="button" onClick={() => setShowHint(true)} className="flex items-center gap-1.5 text-sm font-semibold text-[#1F4D3A]/60 hover:text-[#1F4D3A]">
+        <button
+          type="button"
+          onClick={() => {
+            setShowHint(true);
+            hinted.current.add(index);
+            addMissed(missedId(index));
+          }}
+          className="flex items-center gap-1.5 text-sm font-semibold text-[#1F4D3A]/60 hover:text-[#1F4D3A]">
           <Lightbulb size={15} /> Show a hint
         </button>
       )
@@ -379,7 +441,7 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
   };
   const continueBtn = (cls: string) => (
     <div className={`flex shrink-0 gap-2 ${cls.includes('w-full') ? 'w-full' : ''}`}>
-      {index > 0 && (
+      {index > 0 && !practice && (
         <button
           type="button"
           onClick={back}
@@ -387,6 +449,11 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
           className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-[#1F4D3A]/25 bg-white px-4 py-3 text-sm font-semibold text-[#1F4D3A] transition-colors hover:bg-[#1F4D3A]/5"
         >
           <ArrowLeft size={16} /> Back
+        </button>
+      )}
+      {practice && step.check && !done && (
+        <button type="button" onClick={skip} className="flex shrink-0 items-center justify-center rounded-xl border border-[#1F4D3A]/25 bg-white px-4 py-3 text-sm font-semibold text-[#1F4D3A]/70 transition-colors hover:bg-[#1F4D3A]/5">
+          Skip
         </button>
       )}
       <button
@@ -456,6 +523,11 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
             style={{ width: `${progress}%` }}
           />
         </div>
+        {practice?.limitSec && !finished && (
+          <span className={`w-14 rounded-lg px-2 py-1 text-center text-sm font-bold tabular-nums ${left <= 30 ? 'bg-[#FDECEA] text-[#C0392B]' : 'bg-[#1F4D3A]/8 text-[#1F4D3A]'}`} aria-label="Time left">
+            {Math.floor(Math.max(left, 0) / 60)}:{String(Math.max(left, 0) % 60).padStart(2, '0')}
+          </span>
+        )}
         <span className="w-10 text-right text-sm font-semibold text-[#1F4D3A]/60">
           {finished ? total : index + 1}/{total}
         </span>
@@ -546,16 +618,23 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
               </span>
             </div>
             <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1F4D3A]/50">{unitTitle}</p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight">Lesson complete</h1>
-            <p className="mt-1.5 text-[15px] text-[#1F4D3A]/60">You finished “{lesson.title}”.</p>
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight">{practice ? 'Session complete' : 'Lesson complete'}</h1>
+            <p className="mt-1.5 text-[15px] text-[#1F4D3A]/60">
+              {practice ? `${lesson.title}: you solved ${solvedSet.current.size} of ${checkCount}.` : `You finished “${lesson.title}”.`}
+            </p>
 
             <div className="mt-8 grid grid-cols-3 gap-3">
-              {(
-                [
+              {(practice
+                ? ([
+                    { icon: Target, label: 'Solved', value: `${solvedSet.current.size}/${checkCount}`, tone: 'bg-[#1F4D3A]/8 text-[#1F4D3A]' },
+                    { icon: Zap, label: 'Skipped or hinted', value: String(hinted.current.size + Math.max(0, checkCount - solvedSet.current.size - hinted.current.size)), tone: 'bg-[#FFF3D1] text-[#9A6B00]' },
+                    { icon: Gem, label: practice.limitSec ? 'Time left' : 'Mode', value: practice.limitSec ? `${Math.floor(Math.max(left, 0) / 60)}:${String(Math.max(left, 0) % 60).padStart(2, '0')}` : practice.mode, tone: 'bg-[#E3F4F1] text-[#14594F]' },
+                  ] as const)
+                : ([
                   { icon: Zap, label: 'XP earned', value: alreadyDone ? '0' : save === 'saved' ? `+${earned.xp || xp}` : save === 'error' ? '–' : '…', tone: 'bg-[#FFF3D1] text-[#9A6B00]' },
                   { icon: Gem, label: 'Gems', value: alreadyDone ? '0' : save === 'saved' ? `+${earned.gems}` : save === 'error' ? '–' : '…', tone: 'bg-[#E3F4F1] text-[#14594F]' },
                   { icon: Target, label: 'Steps done', value: `${checkCount}/${checkCount}`, tone: 'bg-[#1F4D3A]/8 text-[#1F4D3A]' },
-                ] as const
+                ] as const)
               ).map(({ icon: Icon, label, value, tone }, i) => (
                 <div
                   key={label}
@@ -576,7 +655,7 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
               <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1F4D3A]/45">What you practised</p>
               <div className="mt-2.5 flex flex-wrap gap-2">
                 {steps
-                  .filter((s) => s.check)
+                  .filter((s, i) => s.check && (!practice || solvedSet.current.has(i)))
                   .map((s) => (
                     <span key={s.id} className="inline-flex items-center gap-1.5 rounded-full border border-[#1F4D3A]/10 bg-white px-3 py-1.5 text-xs font-medium text-[#1F4D3A]/80">
                       <CheckCircle2 size={13} className="text-[#2A9D8F]" />
@@ -612,7 +691,7 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
                       : 'flex w-full items-center justify-center gap-2 rounded-xl bg-[#1F4D3A] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#173d2e]'
                   }
                 >
-                  Back to your path {!nextLesson && <ArrowRight size={16} />}
+                  {practice ? 'Back to practice' : 'Back to your path'} {!nextLesson && <ArrowRight size={16} />}
                 </Link>
               </div>
             )}

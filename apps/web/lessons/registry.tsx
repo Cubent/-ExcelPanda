@@ -73,6 +73,8 @@ import { AUTO1 } from './auto1';
 import { AUTO2 } from './auto2';
 import { AUTO3 } from './auto3';
 import { AUTO4 } from './auto4';
+import { CASES } from './cases';
+import { shortcutTrainer } from './shortcuts';
 import { meetTheGrid } from './meet-the-grid';
 import type { LessonContent } from './types';
 import { basicMath, cellsRanges, formatting, sumAverage, unit1Test } from './unit1';
@@ -80,7 +82,7 @@ import { countifSumif, fixErrors, ifStatements, unit2Test, xlookup } from './uni
 import { chartsPop, cleanData, dashboards, firstPivot, unit3Test } from './unit3';
 
 // Lesson content keyed by the `contentKey` stored on each lesson in the DB.
-const ALL: LessonContent[] = [
+export const ALL: LessonContent[] = [
   meetTheGrid,
   cellsRanges,
   basicMath,
@@ -115,7 +117,7 @@ const ALL: LessonContent[] = [
   ADV2.booleanArrays, ADV2.sumproductLesson, ADV2.arrayConstants, ADV2.reshapeFunctions, ADV2.tocolWrap, ADV2.unit3Test,
   ADV2.xlookupArrays, ADV2.xmatchLesson, ADV2.nearestTwoWay, ADV2.indirectOffset, ADV2.manySheets, ADV2.unit4Test,
   ADV3.textSplitLesson, ADV3.regexLesson, ADV3.debuggingLesson, ADV3.performanceLesson, ADV3.errorProofing, ADV3.finalTest,
-  ...DD1, ...DD2, ...DD3, ...DD4, ...DD5, ...FIN1, ...FIN2, ...AUTO1, ...AUTO2, ...AUTO3, ...AUTO4,
+  ...DD1, ...DD2, ...DD3, ...DD4, ...DD5, ...FIN1, ...FIN2, ...AUTO1, ...AUTO2, ...AUTO3, ...AUTO4, ...CASES, shortcutTrainer,
 ];
 
 const LESSONS: Record<string, LessonContent> = Object.fromEntries(ALL.map((l) => [l.key, l]));

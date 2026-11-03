@@ -90,7 +90,7 @@ export const UmamiAnalytics = () => {
         src={UMAMI_SCRIPT_URL}
         data-website-id={UMAMI_WEBSITE_ID}
         // Only count the real site, not localhost or preview deployments.
-        data-domains="www.excelpanda.com,excelpanda.com"
+        data-domains="www.excelpanda.org,excelpanda.org"
         data-before-send="mpUmamiBeforeSend"
         strategy="afterInteractive"
         defer
