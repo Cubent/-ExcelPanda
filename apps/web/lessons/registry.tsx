@@ -67,6 +67,12 @@ import { DD2 } from './dd2';
 import { DD3 } from './dd3';
 import { DD4 } from './dd4';
 import { DD5 } from './dd5';
+import { FIN1 } from './fin1';
+import { FIN2 } from './fin2';
+import { AUTO1 } from './auto1';
+import { AUTO2 } from './auto2';
+import { AUTO3 } from './auto3';
+import { AUTO4 } from './auto4';
 import { meetTheGrid } from './meet-the-grid';
 import type { LessonContent } from './types';
 import { basicMath, cellsRanges, formatting, sumAverage, unit1Test } from './unit1';
@@ -109,7 +115,7 @@ const ALL: LessonContent[] = [
   ADV2.booleanArrays, ADV2.sumproductLesson, ADV2.arrayConstants, ADV2.reshapeFunctions, ADV2.tocolWrap, ADV2.unit3Test,
   ADV2.xlookupArrays, ADV2.xmatchLesson, ADV2.nearestTwoWay, ADV2.indirectOffset, ADV2.manySheets, ADV2.unit4Test,
   ADV3.textSplitLesson, ADV3.regexLesson, ADV3.debuggingLesson, ADV3.performanceLesson, ADV3.errorProofing, ADV3.finalTest,
-  ...DD1, ...DD2, ...DD3, ...DD4, ...DD5,
+  ...DD1, ...DD2, ...DD3, ...DD4, ...DD5, ...FIN1, ...FIN2, ...AUTO1, ...AUTO2, ...AUTO3, ...AUTO4,
 ];
 
 const LESSONS: Record<string, LessonContent> = Object.fromEntries(ALL.map((l) => [l.key, l]));

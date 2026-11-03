@@ -1,7 +1,7 @@
 // Small builders that keep lesson definitions short and consistent.
 import type { ReactNode } from 'react';
 import * as E from '@/components/sheet/engine';
-import type { ChartPanelConfig, LessonStep, ModelConfig, QueryConfig, PivotPanelConfig, SheetMeta, SheetView, StepCtx, ToolName } from './types';
+import type { ChartPanelConfig, FlowConfig, LessonStep, MacroConfig, ModelConfig, QueryConfig, PivotPanelConfig, SheetMeta, SheetView, StepCtx, ToolName } from './types';
 
 export const isF = (raw: string) => raw.trim().startsWith('=');
 /** True when the formula calls every one of the named functions. */
@@ -41,6 +41,8 @@ type Base = {
   chart?: ChartPanelConfig;
   query?: QueryConfig;
   model?: ModelConfig;
+  macro?: MacroConfig;
+  flow?: FlowConfig;
 };
 
 /** An information-only step. */
@@ -86,6 +88,8 @@ export function task(
     chart: o.chart,
     query: o.query,
     model: o.model,
+    macro: o.macro,
+    flow: o.flow,
     solution: { cells: o.sol, events: o.ev },
     check: (c) => {
       if (c.editing) return false;
@@ -125,6 +129,8 @@ export function custom(
     chart: o.chart,
     query: o.query,
     model: o.model,
+    macro: o.macro,
+    flow: o.flow,
     check: o.check,
     solution: o.sol,
   };

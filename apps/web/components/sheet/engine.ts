@@ -2,6 +2,8 @@
 // ExcelPanda spreadsheet engine: addressing, formulas, formatting, fill.
 // Pure TypeScript with no React, so it can be unit tested on its own.
 // ---------------------------------------------------------------------------
+import * as Fin from './finance';
+import { formatWithPattern } from './numfmt';
 
 // Sheet size is switchable (lesson settings); set before rendering the grid.
 export let COLS = 10;
@@ -21,6 +23,8 @@ export type Style = {
   u?: boolean;
   align?: 'left' | 'center' | 'right';
   fmt?: NumFmt;
+  /** A custom number format such as 0.0,"k" (takes precedence over fmt). */
+  nf?: string;
   dec?: number;
   bg?: string;
   color?: string;
@@ -2334,6 +2338,34 @@ export function buildEvaluator(data: SheetData): Evaluator {
         const fit = linFit(xs, ys);
         return fit.intercept + fit.slope * toNum(args[0]);
       }
+      case 'PV': case 'FV': case 'PMT': case 'NPER': case 'RATE': case 'IPMT': case 'PPMT': case 'CUMIPMT': case 'CUMPRINC':
+      case 'NPV': case 'IRR': case 'XNPV': case 'XIRR': case 'SLN': case 'DDB': case 'EFFECT': case 'NOMINAL': {
+        const n = (i: number, d?: number) => (args[i] === undefined || args[i] === null ? (d ?? 0) : toNum(args[i]));
+        try {
+          switch (name) {
+            case 'FV': need(3, 5); return Fin.fv(n(0), n(1), n(2), n(3), n(4));
+            case 'PV': need(3, 5); return Fin.pv(n(0), n(1), n(2), n(3), n(4));
+            case 'PMT': need(3, 5); return Fin.pmt(n(0), n(1), n(2), n(3), n(4));
+            case 'NPER': need(3, 5); return Fin.nper(n(0), n(1), n(2), n(3), n(4));
+            case 'RATE': need(3, 6); return Fin.rate(n(0), n(1), n(2), n(3), n(4), n(5, 0.1));
+            case 'IPMT': need(4, 6); return Fin.ipmt(n(0), n(1), n(2), n(3), n(4), n(5));
+            case 'PPMT': need(4, 6); return Fin.ppmt(n(0), n(1), n(2), n(3), n(4), n(5));
+            case 'CUMIPMT': need(6); return Fin.cumipmt(n(0), n(1), n(2), n(3), n(4), n(5));
+            case 'CUMPRINC': need(6); return Fin.cumprinc(n(0), n(1), n(2), n(3), n(4), n(5));
+            case 'NPV': need(2, 255); return Fin.npv(n(0), flatNums(args.slice(1)));
+            case 'IRR': need(1, 2); return Fin.irr(flatNums([args[0]]), n(1, 0.1));
+            case 'XNPV': need(3); return Fin.xnpv(n(0), flatNums([args[1]]), flatNums([args[2]]));
+            case 'XIRR': need(2, 3); return Fin.xirr(flatNums([args[0]]), flatNums([args[1]]), n(2, 0.1));
+            case 'SLN': need(3); return Fin.sln(n(0), n(1), n(2));
+            case 'DDB': need(4, 5); return Fin.ddb(n(0), n(1), n(2), n(3), n(4, 2));
+            case 'EFFECT': need(2); return Fin.effect(n(0), n(1));
+            default: need(2); return Fin.nominal(n(0), n(1));
+          }
+        } catch (e) {
+          if (e instanceof Fin.FinError) throw new XlError(e.code);
+          throw e;
+        }
+      }
       case 'NA':
         throw new XlError('#N/A');
       case 'ISNA':
@@ -2342,6 +2374,11 @@ export function buildEvaluator(data: SheetData): Evaluator {
       default: {
         const lam = lambdaNamed(name);
         if (lam) return invoke(lam, args);
+        const udf = userFunctions[name];
+        if (udf) {
+          const flat = args.map((a) => (isRange(a) ? (a.vals[0] ?? null) : isLambda(a) ? null : a)) as Scalar[];
+          return udf(flat);
+        }
         throw new XlError('#NAME?');
       }
     }
@@ -2459,10 +2496,23 @@ export function fmtGeneral(n: number): string {
   return String(Number.parseFloat(n.toPrecision(10)));
 }
 
+/** Worksheet functions written as VBA Function procedures (upper-case names). Set by the macro panel. */
+let userFunctions: Record<string, (args: Scalar[]) => Scalar> = {};
+export function setUserFunctions(fns: Record<string, (args: Scalar[]) => Scalar>) {
+  userFunctions = fns;
+}
+
 export function formatValue(v: Scalar, style: Style | undefined, raw: string): string {
   if (v instanceof XlError) return v.code;
   if (v === null) return '';
   if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
+  if (style?.nf && (typeof v === 'number' || typeof v === 'string')) {
+    try {
+      return formatWithPattern(v, style.nf, formatDate);
+    } catch {
+      /* fall through to the normal display */
+    }
+  }
   if (typeof v === 'string') return v;
   let fmt: NumFmt = style?.fmt ?? 'general';
   const dec = style?.dec;

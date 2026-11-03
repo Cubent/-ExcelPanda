@@ -494,3 +494,141 @@ export function dataTable(data: D, rect: E.Rect, rowInput: string | null, colInp
   }
   return { ...data, cells };
 }
+
+// --- automation-course tools: custom formats, paste special, go to special ----------
+
+const forEach = (rc: E.Rect, fn: (c: number, r: number, k: string) => void) => {
+  for (let r = rc.r1; r <= rc.r2; r++) for (let c = rc.c1; c <= rc.c2; c++) fn(c, r, E.keyOf(c, r));
+};
+const valueText = (v: E.Scalar): string => {
+  if (v === null) return '';
+  if (v instanceof E.XlError) return v.code;
+  if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
+  if (typeof v === 'number') return String(Number.parseFloat(v.toPrecision(12)));
+  return v;
+};
+
+/** Applies (or clears, when `nf` is empty) a custom number format to a block. */
+export function setNumberFormat(data: D, rect: E.Rect, nf: string): D {
+  const styles = { ...data.styles };
+  forEach(rect, (_c, _r, k) => {
+    const cur = { ...styles[k] };
+    if (nf.trim()) {
+      cur.nf = nf;
+      delete cur.fmt;
+    } else delete cur.nf;
+    if (Object.keys(cur).length) styles[k] = cur;
+    else delete styles[k];
+  });
+  return { ...data, styles };
+}
+
+export type PasteWhat = 'all' | 'values' | 'formulas' | 'formats';
+export type PasteOp = 'none' | 'add' | 'subtract' | 'multiply' | 'divide';
+export type ClipLike = { rect: E.Rect; cells: Record<string, string>; styles: Record<string, E.Style> };
+
+/** Paste Special: choose what to paste, an arithmetic operation, and whether to transpose. */
+export function pasteSpecial(data: D, clip: ClipLike, dest: E.Rect, o: { what: PasteWhat; op: PasteOp; transpose: boolean; skipBlanks: boolean }): D {
+  const src = clip.rect;
+  const w = src.c2 - src.c1 + 1;
+  const h = src.r2 - src.r1 + 1;
+  // Values come from the sheet as it is now, so formulas paste as results.
+  const ev = E.buildEvaluator(data);
+  const cells = { ...data.cells };
+  const styles = { ...data.styles };
+  // The target block: the pasted shape, or the whole selection when it is a multiple of it (so one value can scale a range).
+  const outW = o.transpose ? h : w;
+  const outH = o.transpose ? w : h;
+  const dw = dest.c2 - dest.c1 + 1;
+  const dh = dest.r2 - dest.r1 + 1;
+  const tileW = dw % outW === 0 ? dw : outW;
+  const tileH = dh % outH === 0 ? dh : outH;
+  for (let dr = 0; dr < tileH; dr++) {
+    for (let dc = 0; dc < tileW; dc++) {
+      const oc = dc % outW;
+      const or = dr % outH;
+      const sc = o.transpose ? or : oc;
+      const sr = o.transpose ? oc : or;
+      const sk = E.keyOf(src.c1 + sc, src.r1 + sr);
+      const tc = dest.c1 + dc;
+      const tr = dest.r1 + dr;
+      if (!E.inBounds(tc, tr)) continue;
+      const tk = E.keyOf(tc, tr);
+      const raw = clip.cells[sk] ?? '';
+      if (o.skipBlanks && blank(raw)) continue;
+      if (o.what === 'formats') {
+        if (clip.styles[sk]) styles[tk] = clip.styles[sk];
+        else delete styles[tk];
+        continue;
+      }
+      const isF = raw.startsWith('=');
+      const srcVal = isF ? ev.value(sk) : null;
+      let text = o.what === 'values' ? (isF ? valueText(srcVal) : raw) : isF ? E.adjustFormula(raw, tc - (src.c1 + sc), tr - (src.r1 + sr)) : raw;
+      if (o.op !== 'none') {
+        const a = ev.value(tk);
+        const b = isF ? srcVal : Number(raw);
+        const x = typeof a === 'number' ? a : a === null ? 0 : Number.NaN;
+        const y = typeof b === 'number' ? b : Number(b);
+        if (Number.isFinite(x) && Number.isFinite(y)) {
+          const r = o.op === 'add' ? x + y : o.op === 'subtract' ? x - y : o.op === 'multiply' ? x * y : y === 0 ? Number.NaN : x / y;
+          text = Number.isFinite(r) ? valueText(r) : '#DIV/0!';
+        }
+      }
+      if (blank(text)) delete cells[tk];
+      else cells[tk] = text;
+      if (o.what === 'all' && o.op === 'none') {
+        if (clip.styles[sk]) styles[tk] = clip.styles[sk];
+        else delete styles[tk];
+      }
+    }
+  }
+  return afterEdit({ ...data, cells, styles }, Object.keys(cells));
+}
+
+/** Go To Special → Blanks: fill empty cells with the value above, or a fixed value. */
+export function fillBlanks(data: D, rect: E.Rect, how: 'above' | 'value', value = ''): D {
+  const cells = { ...data.cells };
+  for (let c = rect.c1; c <= rect.c2; c++) {
+    for (let r = rect.r1; r <= rect.r2; r++) {
+      const k = E.keyOf(c, r);
+      if (!blank(cells[k])) continue;
+      if (how === 'value') cells[k] = value;
+      else if (r > rect.r1) cells[k] = `=${E.keyOf(c, r - 1)}`;
+    }
+  }
+  return { ...data, cells };
+}
+/** Go To Special → Constants: clear typed values and keep the formulas. */
+export function clearConstants(data: D, rect: E.Rect): D {
+  const cells = { ...data.cells };
+  forEach(rect, (_c, _r, k) => {
+    if (!blank(cells[k]) && !cells[k].startsWith('=')) delete cells[k];
+  });
+  return { ...data, cells };
+}
+/** Go To Special → Formulas, then Paste Values: freeze formulas into their results. */
+export function formulasToValues(data: D, rect: E.Rect): D {
+  const ev = E.buildEvaluator(data);
+  const cells = { ...data.cells };
+  forEach(rect, (_c, _r, k) => {
+    if (cells[k]?.startsWith('=')) {
+      const t = valueText(ev.value(k));
+      if (blank(t)) delete cells[k];
+      else cells[k] = t;
+    }
+  });
+  return { ...data, cells };
+}
+/** Counts for the Go To Special dialog. */
+export function countSpecial(data: D, rect: E.Rect): { blanks: number; formulas: number; constants: number } {
+  let blanks = 0;
+  let formulas = 0;
+  let constants = 0;
+  forEach(rect, (_c, _r, k) => {
+    const raw = data.cells[k];
+    if (blank(raw)) blanks++;
+    else if (raw?.startsWith('=')) formulas++;
+    else constants++;
+  });
+  return { blanks, formulas, constants };
+}

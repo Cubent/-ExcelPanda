@@ -308,6 +308,119 @@ const DATA_DASHBOARDS: U[] = [
   },
 ];
 
+const EXCEL_FINANCE: U[] = [
+  {
+    title: 'Time Value of Money',
+    blurb: 'Interest, loans, NPV and IRR',
+    lessons: [
+      T('Simple & compound interest', 'calculator', 'fin-interest'),
+      T('PV, FV, PMT, NPER & RATE', 'calculator', 'fin-core'),
+      T('Loan schedules', 'grid', 'fin-loan'),
+      T('NPV & IRR', 'sigma', 'fin-npv'),
+      T('XNPV & XIRR', 'sigma', 'fin-xnpv'),
+      T('Unit 1 test', 'trophy', 'fin-unit1-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'Budgets & Forecasts',
+    blurb: 'Layout, variances, rolling forecasts and cash flow',
+    lessons: [
+      T('Budget layout', 'layout', 'fin-budget'),
+      T('Variance analysis', 'list', 'fin-variance'),
+      T('Rolling forecasts', 'branch', 'fin-rolling'),
+      T('Seasonality', 'sparkles', 'fin-seasonality'),
+      T('Cash-flow forecast', 'calculator', 'fin-cashflow'),
+      T('Unit 2 test', 'trophy', 'fin-unit2-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'Financial Statements',
+    blurb: 'Income statement, balance sheet, cash flow and ratios',
+    lessons: [
+      T('Income statement', 'list', 'fin-income'),
+      T('Balance sheet', 'grid', 'fin-balance'),
+      T('Cash-flow statement', 'calculator', 'fin-cfs'),
+      T('Linking the three statements', 'branch', 'fin-link'),
+      T('Financial ratios', 'sigma', 'fin-ratios'),
+      T('Unit 3 test', 'trophy', 'fin-unit3-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'Modelling Best Practice',
+    blurb: 'Audit, checks, names, scenarios and sensitivity',
+    lessons: [
+      T('Audit a model', 'wrench', 'fin-colours'),
+      T('Checks & balances', 'wrench', 'fin-checks'),
+      T('Named ranges & structure', 'search', 'fin-named'),
+      T('Scenario switch', 'branch', 'fin-scenario'),
+      T('Sensitivity analysis', 'grid', 'fin-sensitivity'),
+      T('Unit 4 test', 'trophy', 'fin-unit4-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'Capstones',
+    blurb: 'Startup plan, loan comparison, DCF and a personal planner',
+    lessons: [
+      T('Capstone: startup plan', 'sparkles', 'fin-cap-startup'),
+      T('Capstone: loan comparison', 'search', 'fin-cap-loan'),
+      T('Capstone: DCF valuation', 'sigma', 'fin-cap-dcf'),
+      T('Capstone: personal planner', 'calculator', 'fin-cap-personal'),
+      T('Course final', 'trophy', 'fin-final', 'TEST'),
+    ],
+  },
+];
+
+const EXCEL_AUTOMATION: U[] = [
+  {
+    title: 'Speed Without Code',
+    blurb: 'Styles, number formats, Paste Special, shortcuts and Go To Special',
+    lessons: [
+      T('Templates & styles', 'layout', 'auto-styles'),
+      T('Custom number formats', 'calculator', 'auto-numfmt'),
+      T('Paste Special mastery', 'grid', 'auto-paste'),
+      T('Quick Access & shortcuts', 'sparkles', 'auto-shortcuts'),
+      T('Go To Special', 'search', 'auto-gotospecial'),
+      T('Unit 1 test', 'trophy', 'auto-unit1-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'Macros with the Recorder',
+    blurb: 'Record, run, edit, attach to buttons and keep them safe',
+    lessons: [
+      T('What a macro is', 'sparkles', 'auto-macro-what'),
+      T('Absolute vs relative recording', 'branch', 'auto-macro-rel'),
+      T('Buttons & shortcuts', 'plus', 'auto-macro-buttons'),
+      T('Reading recorded code', 'list', 'auto-macro-read'),
+      T('Macro security', 'wrench', 'auto-macro-security'),
+      T('Unit 2 test', 'trophy', 'auto-unit2-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'VBA Fundamentals',
+    blurb: 'Variables, ranges, loops, custom functions and debugging',
+    lessons: [
+      T('The VBA editor', 'layout', 'auto-vba-editor'),
+      T('Variables & data types', 'calculator', 'auto-vba-vars'),
+      T('Ranges & cells', 'grid', 'auto-vba-ranges'),
+      T('Loops & conditions', 'branch', 'auto-vba-loops'),
+      T('Functions & UDFs', 'sigma', 'auto-vba-udf'),
+      T('Errors & debugging', 'wrench', 'auto-vba-debug'),
+      T('Unit 3 test', 'trophy', 'auto-unit3-test', 'TEST'),
+    ],
+  },
+  {
+    title: 'Modern Automation',
+    blurb: 'Office Scripts, Power Automate and a one-click report',
+    lessons: [
+      T('Office Scripts basics', 'sparkles', 'auto-script-basics'),
+      T('Power Automate flows', 'branch', 'auto-flow'),
+      T('Automating a scheduled refresh', 'wrench', 'auto-refresh-flow'),
+      T('Capstone: one-click monthly report', 'layout', 'auto-capstone'),
+      T('Course final', 'trophy', 'auto-final', 'TEST'),
+    ],
+  },
+];
+
 const XP: Record<string, number> = { LESSON: 10, CHEST: 0, TEST: 25 };
 
 async function seedUnits(courseId: string, units: U[]) {
@@ -421,6 +534,42 @@ async function main() {
     },
   });
   await seedUnits(dashboards.id, DATA_DASHBOARDS);
+
+  const finance = await database.course.upsert({
+    where: { slug: 'excel-finance' },
+    create: {
+      slug: 'excel-finance',
+      title: 'Excel for Finance',
+      description: 'Loans, NPV and IRR, budgets, financial statements and models a bank would trust.',
+      order: 6,
+      published: true,
+    },
+    update: {
+      title: 'Excel for Finance',
+      description: 'Loans, NPV and IRR, budgets, financial statements and models a bank would trust.',
+      order: 6,
+      published: true,
+    },
+  });
+  await seedUnits(finance.id, EXCEL_FINANCE);
+
+  const automation = await database.course.upsert({
+    where: { slug: 'excel-automation' },
+    create: {
+      slug: 'excel-automation',
+      title: 'Excel Automation',
+      description: 'Shortcuts, macros, VBA, Office Scripts and Power Automate: stop doing it by hand.',
+      order: 7,
+      published: true,
+    },
+    update: {
+      title: 'Excel Automation',
+      description: 'Shortcuts, macros, VBA, Office Scripts and Power Automate: stop doing it by hand.',
+      order: 7,
+      published: true,
+    },
+  });
+  await seedUnits(automation.id, EXCEL_AUTOMATION);
 
   const [courses, units, lessons] = await Promise.all([
     database.course.count(),

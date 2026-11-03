@@ -1,14 +1,17 @@
 'use client';
 
-import { ArrowRight, Check, CheckCircle2, Gem, Lightbulb, Settings2, Sparkles, Target, X, Zap } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Gem, Lightbulb, Settings2, Sparkles, Target, X, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as E from '@/components/sheet/engine';
+import type { SheetData } from '@/components/sheet/engine';
 import { SheetGrid, type SheetHandle, type SheetSnapshot } from '@/components/sheet/SheetGrid';
 import { ChartPanel, type ChartState } from './ChartPanel';
 import { PivotPanel, type PivotState } from './PivotPanel';
 import { QueryPanel, type QueryState } from './QueryPanel';
 import { ModelPanel, type ModelState } from './ModelPanel';
+import { MacroPanel, type MacroState } from './MacroPanel';
+import { FlowPanel, type FlowState } from './FlowPanel';
 import { tableToCells } from '@/components/sheet/pq';
 import { macify, useIsMac } from '@/lessons/platform';
 import { getLessonContent } from '@/lessons/registry';
@@ -79,6 +82,8 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
   const [chartState, setChartState] = useState<ChartState | null>(null);
   const [queryState, setQueryState] = useState<QueryState | null>(null);
   const [modelState, setModelState] = useState<ModelState | null>(null);
+  const [macroState, setMacroState] = useState<MacroState | null>(null);
+  const [flowState, setFlowState] = useState<FlowState | null>(null);
   const [view, setView] = useState<SheetView>('sheet');
   const [panelEpoch, setPanelEpoch] = useState(0);
   const [save, setSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -125,20 +130,38 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
   // Remember which step you are on, so a reload picks up where you left off.
   const stepKey = `xp-lesson-step:${contentKey}`;
   const stepLoaded = useRef(false);
+  const dataKey = `xp-lesson-data:${contentKey}`;
+  const restoreData = useRef<SheetData | null>(null);
   useEffect(() => {
     try {
       const n = Number.parseInt(localStorage.getItem(stepKey) ?? '', 10);
-      if (!alreadyDone && Number.isFinite(n) && n > 0 && n < (getLessonContent(contentKey)?.steps.length ?? 0)) setIndex(n);
+      if (!alreadyDone && Number.isFinite(n) && n > 0 && n < (getLessonContent(contentKey)?.steps.length ?? 0)) {
+        // Bring back the sheet as it was, not just the step, so earlier work is still there.
+        try {
+          const saved = JSON.parse(localStorage.getItem(dataKey) ?? 'null') as { index: number; data: SheetData } | null;
+          if (saved && saved.index === n && saved.data?.cells) restoreData.current = { ...E.emptyData(), ...saved.data };
+        } catch {}
+        setIndex(n);
+      }
     } catch {}
     stepLoaded.current = true;
   }, [stepKey, alreadyDone, contentKey]);
   useEffect(() => {
     if (!stepLoaded.current) return;
     try {
-      if (finished) localStorage.removeItem(stepKey);
-      else localStorage.setItem(stepKey, String(index));
+      if (finished) {
+        localStorage.removeItem(stepKey);
+        localStorage.removeItem(dataKey);
+      } else localStorage.setItem(stepKey, String(index));
     } catch {}
-  }, [index, finished, stepKey]);
+  }, [index, finished, stepKey, dataKey]);
+  // Keep a copy of the sheet for the current step so a reload can restore it.
+  useEffect(() => {
+    if (!stepLoaded.current || finished || !snap || restoreData.current) return;
+    try {
+      localStorage.setItem(dataKey, JSON.stringify({ index, data: snap.data }));
+    } catch {}
+  }, [snap, index, finished, dataKey]);
   const [praise, setPraise] = useState<{ text: string; n: number; xp: number } | null>(null);
   const wasDone = useRef(false);
   const praiseCount = useRef(0);
@@ -157,6 +180,8 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
   const chartCfg = step?.chart ?? lesson?.chart;
   const queryCfg = step?.query ?? lesson?.query;
   const modelCfg = step?.model ?? lesson?.model;
+  const macroCfg = step?.macro ?? lesson?.macro;
+  const flowCfg = step?.flow ?? lesson?.flow;
 
   // Start of each step: forget old events, set up the sheet, hand it focus.
   useEffect(() => {
@@ -185,6 +210,12 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
       setChartState(null);
       setQueryState(null);
       setModelState(null);
+      setMacroState(null);
+      setFlowState(null);
+    }
+    if (restoreData.current) {
+      gridRef.current?.reset(restoreData.current);
+      restoreData.current = null;
     }
     gridRef.current?.focus();
     bump((n) => n + 1);
@@ -220,6 +251,8 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
       chart: chartState,
       query: queryState,
       model: modelState,
+      macro: macroState,
+      flow: flowState,
       view,
     };
     try {
@@ -229,7 +262,7 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
     }
     // eventsRef is mutated in place, so depend on the render tick via snap + index.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, snap, pivotState, chartState, queryState, modelState, view, eventsRef.current.size]);
+  }, [step, snap, pivotState, chartState, queryState, modelState, macroState, flowState, view, eventsRef.current.size]);
 
   // Celebrate the moment a step becomes solved.
   useEffect(() => {
@@ -338,15 +371,33 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
       )
     ) : null;
 
+  const back = () => {
+    setPraise(null);
+    wasDone.current = false;
+    setShowHint(false);
+    setIndex((i) => Math.max(0, i - 1));
+  };
   const continueBtn = (cls: string) => (
-    <button
-      type="button"
-      disabled={!done}
-      onClick={next}
-      className={`flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1F4D3A] py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#173d2e] disabled:cursor-not-allowed disabled:bg-[#1F4D3A]/25 disabled:shadow-none ${cls}`}
-    >
-      {index + 1 >= total ? 'Finish lesson' : 'Continue'} <ArrowRight size={16} />
-    </button>
+    <div className={`flex shrink-0 gap-2 ${cls.includes('w-full') ? 'w-full' : ''}`}>
+      {index > 0 && (
+        <button
+          type="button"
+          onClick={back}
+          aria-label="Previous step"
+          className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-[#1F4D3A]/25 bg-white px-4 py-3 text-sm font-semibold text-[#1F4D3A] transition-colors hover:bg-[#1F4D3A]/5"
+        >
+          <ArrowLeft size={16} /> Back
+        </button>
+      )}
+      <button
+        type="button"
+        disabled={!done}
+        onClick={next}
+        className={`flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1F4D3A] py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#173d2e] disabled:cursor-not-allowed disabled:bg-[#1F4D3A]/25 disabled:shadow-none ${cls.includes('w-full') ? 'flex-1' : cls}`}
+      >
+        {index + 1 >= total ? 'Finish lesson' : 'Continue'} <ArrowRight size={16} />
+      </button>
+    </div>
   );
 
   return (
@@ -568,11 +619,13 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
           </div>
         </div>
       ) : (
+        // The scroller spans the full width, so its scrollbar sits at the window edge, away from the content.
+        <div className="sheet-scroll flex min-h-0 flex-1 flex-col overflow-y-auto pr-2 sm:pr-3">
         <div
           className={
             opts.layout === 'side'
-              ? 'flex min-h-0 flex-1 flex-col gap-4 px-4 pb-4 sm:px-6 lg:flex-row'
-              : `mx-auto flex min-h-0 w-full ${autoLarge && !opts.full ? 'max-w-[1240px]' : 'max-w-[1010px]'} flex-1 flex-col px-4 pb-4 sm:px-6`
+              ? `flex flex-1 flex-col gap-4 px-4 pb-6 sm:px-6 lg:flex-row ${big ? 'min-h-0' : ''}`
+              : `mx-auto flex w-full ${autoLarge && !opts.full ? 'max-w-[1240px]' : 'max-w-[1010px]'} flex-1 flex-col px-4 pb-6 sm:px-6 ${big ? 'min-h-0' : ''}`
           }
         >
           {opts.layout === 'side' ? (
@@ -585,8 +638,8 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
             heading(true)
           )}
 
-          <div className={`${opts.layout === 'side' ? `min-h-0 min-w-0 flex-1 ${big ? '' : 'self-start'}` : 'mt-4 min-h-0'} ${big ? 'flex flex-1 flex-col' : ''}`}>
-            {(pivotCfg || chartCfg || queryCfg || modelCfg) && (
+          <div className={`${opts.layout === 'side' ? `min-h-0 min-w-0 flex-1 ${big ? '' : 'shrink-0 self-start'}` : big ? 'mt-4 min-h-0' : 'mt-4 shrink-0'} ${big ? 'flex flex-1 flex-col' : ''}`}>
+            {(pivotCfg || chartCfg || queryCfg || modelCfg || macroCfg || flowCfg) && (
               <div className="mb-2 flex gap-1.5" role="tablist" aria-label="Workbook sheets">
                 {(
                   [
@@ -595,6 +648,8 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
                     chartCfg && ['chart', 'Chart'],
                     queryCfg && ['query', 'Power Query'],
                     modelCfg && ['model', 'Data Model'],
+                    macroCfg && ['macro', macroCfg.lang === 'ts' ? 'Office Script' : 'VBA Editor'],
+                    flowCfg && ['flow', 'Power Automate'],
                   ] as (false | undefined | [SheetView, string])[]
                 )
                   .filter((t): t is [SheetView, string] => !!t)
@@ -655,14 +710,35 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
                 <ModelPanel key={`m${panelEpoch}`} config={modelCfg} onState={setModelState} />
               </div>
             )}
+            {macroCfg && (
+              <div className={view === 'macro' ? 'h-[calc(100dvh-340px)] min-h-[360px] max-h-[640px] overflow-hidden rounded-xl border border-[#1F4D3A]/15 bg-white' : 'hidden'}>
+                <MacroPanel
+                  key={`x${panelEpoch}`}
+                  config={macroCfg}
+                  snap={snap}
+                  onState={setMacroState}
+                  onRun={(patch, selection) => gridRef.current?.applyPatch(patch, selection)}
+                  onUdfs={(fns) => {
+                    E.setUserFunctions(fns);
+                    gridRef.current?.refresh();
+                  }}
+                />
+              </div>
+            )}
+            {flowCfg && (
+              <div className={view === 'flow' ? 'h-[calc(100dvh-340px)] min-h-[360px] max-h-[640px] overflow-hidden rounded-xl border border-[#1F4D3A]/15 bg-white' : 'hidden'}>
+                <FlowPanel key={`f${panelEpoch}`} config={flowCfg} onState={setFlowState} />
+              </div>
+            )}
           </div>
 
           {opts.layout === 'center' && (
-            <div className="mt-4 flex shrink-0 items-center gap-4">
+            <div className="mt-6 flex shrink-0 items-center gap-4 pb-2">
               <div className="min-w-0 flex-1">{feedback}</div>
               {continueBtn('px-8')}
             </div>
           )}
+        </div>
         </div>
       )}
     </div>

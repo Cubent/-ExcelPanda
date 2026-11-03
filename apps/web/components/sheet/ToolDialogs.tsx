@@ -3,8 +3,9 @@
 import { type ReactNode, useMemo, useState } from 'react';
 import * as E from './engine';
 import * as T from './tools';
+import { AutomationDialog, type AutomationKind } from './AutomationDialogs';
 
-export type DialogKind = 'names' | 'sort' | 'dedupe' | 'text2col' | 'find' | 'goalseek' | 'datatable' | 'slicer';
+export type DialogKind = 'names' | 'sort' | 'dedupe' | 'text2col' | 'find' | 'goalseek' | 'datatable' | 'slicer' | AutomationKind;
 
 type Apply = (data: E.SheetData, note: string, event: string) => void;
 type Props = {
@@ -12,13 +13,15 @@ type Props = {
   data: E.SheetData;
   rect: E.Rect;
   active: E.Pos;
+  /** What is on the clipboard, for Paste Special. */
+  clip?: T.ClipLike | null;
   onApply: Apply;
   onClose: () => void;
 };
 
 const BRAND = '#1F4D3A';
 
-function Shell({ title, onClose, children, footer }: { title: string; onClose: () => void; children: ReactNode; footer: ReactNode }) {
+export function Shell({ title, onClose, children, footer }: { title: string; onClose: () => void; children: ReactNode; footer: ReactNode }) {
   return (
     <div className="absolute inset-0 z-[80] flex items-start justify-center bg-[#0F2A1F]/25 p-4 pt-10" onMouseDown={(e) => e.stopPropagation()}>
       <div role="dialog" aria-label={title} className="w-full max-w-[380px] rounded-xl border border-[#1F4D3A]/20 bg-white shadow-[0_20px_50px_-12px_rgba(16,40,28,0.4)]">
@@ -35,7 +38,7 @@ function Shell({ title, onClose, children, footer }: { title: string; onClose: (
   );
 }
 
-const Btn = ({ children, onClick, primary, disabled }: { children: ReactNode; onClick: () => void; primary?: boolean; disabled?: boolean }) => (
+export const Btn = ({ children, onClick, primary, disabled }: { children: ReactNode; onClick: () => void; primary?: boolean; disabled?: boolean }) => (
   <button
     type="button"
     disabled={disabled}
@@ -48,14 +51,14 @@ const Btn = ({ children, onClick, primary, disabled }: { children: ReactNode; on
   </button>
 );
 
-const Check = ({ label, on, set }: { label: string; on: boolean; set: (v: boolean) => void }) => (
+export const Check = ({ label, on, set }: { label: string; on: boolean; set: (v: boolean) => void }) => (
   <label className="flex cursor-pointer items-center gap-2">
     <input type="checkbox" checked={on} onChange={(e) => set(e.target.checked)} className="size-4 accent-[#1F4D3A]" />
     {label}
   </label>
 );
 
-const inputCls = 'w-full rounded-md border border-[#1F4D3A]/25 bg-white px-2 py-1 text-[13px] outline-none focus:border-[#1F4D3A]';
+export const inputCls = 'w-full rounded-md border border-[#1F4D3A]/25 bg-white px-2 py-1 text-[13px] outline-none focus:border-[#1F4D3A]';
 
 /** The block a tool works on: the selection if it spans several cells, else the table or region under the cursor. */
 export function workingRect(data: E.SheetData, rect: E.Rect, active: E.Pos): E.Rect | null {
@@ -70,7 +73,7 @@ const headerName = (data: E.SheetData, rc: E.Rect, c: number, header: boolean) =
   return h ? `${h}` : `Column ${E.colLabel(c)}`;
 };
 
-export function ToolDialog({ kind, data, rect, active, onApply, onClose }: Props) {
+export function ToolDialog({ kind, data, rect, active, clip, onApply, onClose }: Props) {
   const rc = useMemo(() => workingRect(data, rect, active), [data, rect, active]);
 
   // --- Sort ---
@@ -100,6 +103,10 @@ export function ToolDialog({ kind, data, rect, active, onApply, onClose }: Props
   // --- Name Manager ---
   const [nmName, setNmName] = useState('');
   const [nmRefers, setNmRefers] = useState('');
+
+  if (kind === 'numfmt' || kind === 'pastespecial' || kind === 'gotospecial') {
+    return <AutomationDialog kind={kind} data={data} rect={rect} active={active} clip={clip} onApply={onApply} onClose={onClose} />;
+  }
 
   if (kind === 'names') {
     const valid = /^[A-Za-z_][A-Za-z0-9_.]*$/.test(nmName) && !E.parseKey(nmName) && nmRefers.trim() !== '';

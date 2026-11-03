@@ -6,6 +6,8 @@ import type { PivotConfig } from '@/components/sheet/pivot';
 import type { QueryConfig, QueryState } from '@/components/lesson/QueryPanel';
 import type { ModelConfig, ModelState } from '@/components/lesson/ModelPanel';
 import type { PqStep } from '@/components/sheet/pq';
+import type { MacroConfig, MacroState } from '@/components/lesson/MacroPanel';
+import type { FlowConfig, FlowState } from '@/components/lesson/FlowPanel';
 import type { Relationship } from '@/components/sheet/dax';
 import type { ToolName } from '@/components/sheet/SheetGrid';
 
@@ -20,7 +22,9 @@ export type ChartPanelConfig = {
   initial?: Partial<ChartConfig>;
   allow?: { types?: ChartType[]; pivot?: boolean; options?: boolean; axisTitles?: boolean };
 };
-export type SheetView = 'sheet' | 'pivot' | 'chart' | 'query' | 'model';
+export type SheetView = 'sheet' | 'pivot' | 'chart' | 'query' | 'model' | 'macro' | 'flow';
+export type { MacroConfig, MacroState } from '@/components/lesson/MacroPanel';
+export type { FlowConfig, FlowState } from '@/components/lesson/FlowPanel';
 export type { QueryConfig, QueryState } from '@/components/lesson/QueryPanel';
 export type { ModelConfig, ModelState } from '@/components/lesson/ModelPanel';
 
@@ -45,6 +49,9 @@ export type StepCtx = {
   /** Power Query editor and data model state (null until the panel exists). */
   query: QueryState | null;
   model: ModelState | null;
+  /** The macro / script editor and the Power Automate flow builder. */
+  macro: MacroState | null;
+  flow: FlowState | null;
   view: SheetView;
 };
 
@@ -75,6 +82,8 @@ export type LessonStep = {
   chart?: ChartPanelConfig;
   query?: QueryConfig;
   model?: ModelConfig;
+  macro?: MacroConfig;
+  flow?: FlowConfig;
   /** Selection placed when the step starts, e.g. "A3". */
   select?: string;
   /** Test-only: a correct answer used by the automated lesson tests. Never shown to learners. */
@@ -89,6 +98,10 @@ export type LessonStep = {
     pivot?: PivotConfig;
     chart?: Partial<ChartConfig>;
     view?: SheetView;
+    /** Code typed into the editor, a macro to run, recorded macros, and settings. */
+    macro?: { code?: string; run?: string; record?: { name: string; relative: boolean }; buttons?: { label: string; macro: string }[]; click?: string; trust?: 'disable' | 'notify' | 'signed' | 'enable'; fileType?: 'xlsx' | 'xlsm'; shortcuts?: Record<string, string> };
+    /** Power Automate flow built in the flow panel. */
+    flow?: { trigger?: string; recurrence?: { frequency: 'Minute' | 'Hour' | 'Day' | 'Week' | 'Month'; interval: number; hour: number }; steps?: { action: string; setting: string }[]; test?: boolean; on?: boolean };
     /** Steps appended to a query (created from its first step if new), and what to load. */
     query?: { name: string; steps: PqStep[]; remove?: PqStep['op'][]; load?: boolean; params?: Record<string, string> }[];
     /** Relationships, measures and the report fields for the data model. */
@@ -108,6 +121,8 @@ export type LessonContent = {
   chart?: ChartPanelConfig;
   query?: QueryConfig;
   model?: ModelConfig;
+  macro?: MacroConfig;
+  flow?: FlowConfig;
   /** Sheet features available for the whole lesson. */
   meta?: SheetMeta;
   /** Show the formatting toolbar for this lesson (needed for fill colour, alignment). */

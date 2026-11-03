@@ -397,7 +397,7 @@ export function DashboardView({
                 href={`/dashboard/${m.slug}`}
                 className="group flex flex-col overflow-hidden rounded-3xl border-2 border-b-4 border-[#1F4D3A]/20 bg-white transition-all hover:-translate-y-0.5 hover:border-[#1F4D3A]/40 active:translate-y-0.5 active:border-b-2"
               >
-                {mi % 5 === 0 ? (
+                {mi % 7 === 0 ? (
                   <div className="relative h-40 overflow-hidden bg-[#C7F000]/55">
                     <Dots className="absolute inset-0 h-full w-full" />
                     <SheetFigure size={104} className="absolute left-[14%] top-6 -rotate-6 transition-transform group-hover:-rotate-3" />
@@ -405,26 +405,40 @@ export function DashboardView({
                     <FxFigure size={54} className="absolute bottom-3 right-[34%] -rotate-12" />
                     <StarFigure size={30} className="absolute bottom-4 right-4 rotate-12" />
                   </div>
-                ) : mi % 5 === 2 ? (
+                ) : mi % 7 === 2 ? (
                   <div className="relative h-40 overflow-hidden bg-[#D4EDE6]">
                     <Dots className="absolute inset-0 h-full w-full" />
                     <ChartFigure size={112} className="absolute left-[10%] top-4 rotate-3 transition-transform group-hover:rotate-0" />
                     <SheetFigure size={84} className="absolute right-[12%] top-6 -rotate-6" />
                     <StarFigure size={32} className="absolute bottom-4 left-[44%] rotate-12" />
                   </div>
-                ) : mi % 5 === 3 ? (
+                ) : mi % 7 === 3 ? (
                   <div className="relative h-40 overflow-hidden bg-[#FAD9CB]">
                     <Dots className="absolute inset-0 h-full w-full" />
                     <SigmaFigure size={96} className="absolute left-[14%] top-5 -rotate-6 transition-transform group-hover:rotate-0" />
                     <FxFigure size={84} className="absolute right-[14%] top-8 rotate-6" />
                     <StarFigure size={30} className="absolute bottom-4 left-[46%] -rotate-12" />
                   </div>
-                ) : mi % 5 === 4 ? (
+                ) : mi % 7 === 4 ? (
                   <div className="relative h-40 overflow-hidden bg-[#DCE6F7]">
                     <Dots className="absolute inset-0 h-full w-full" />
                     <DashFigure size={116} className="absolute left-[12%] top-3 rotate-3 transition-transform group-hover:rotate-0" />
                     <SigmaFigure size={64} className="absolute right-[16%] top-8 -rotate-6" />
                     <StarFigure size={30} className="absolute bottom-4 left-[52%] rotate-12" />
+                  </div>
+                ) : mi % 7 === 5 ? (
+                  <div className="relative h-40 overflow-hidden bg-[#E6DDF3]">
+                    <Dots className="absolute inset-0 h-full w-full" />
+                    <SigmaFigure size={104} className="absolute left-[14%] top-5 rotate-6 transition-transform group-hover:rotate-0" />
+                    <ChartFigure size={84} className="absolute right-[12%] top-6 -rotate-6" />
+                    <FxFigure size={46} className="absolute bottom-3 left-[46%] rotate-12" />
+                  </div>
+                ) : mi % 7 === 6 ? (
+                  <div className="relative h-40 overflow-hidden bg-[#D9EAD3]">
+                    <Dots className="absolute inset-0 h-full w-full" />
+                    <FxFigure size={96} className="absolute left-[16%] top-5 rotate-6 transition-transform group-hover:rotate-0" />
+                    <DashFigure size={88} className="absolute right-[12%] top-5 -rotate-6" />
+                    <StarFigure size={30} className="absolute bottom-4 left-[48%] -rotate-12" />
                   </div>
                 ) : (
                   <div className="relative h-40 overflow-hidden bg-[#FFE9A8]">

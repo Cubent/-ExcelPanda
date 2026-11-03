@@ -54,11 +54,15 @@ export type SheetSnapshot = {
   editing: boolean;
 };
 
-export type ToolName = 'names' | 'table' | 'totals' | 'sort' | 'filter' | 'dedupe' | 'text2col' | 'flash' | 'find' | 'slicer' | 'goalseek' | 'datatable';
+export type ToolName = 'names' | 'table' | 'totals' | 'sort' | 'filter' | 'dedupe' | 'text2col' | 'flash' | 'find' | 'slicer' | 'goalseek' | 'datatable' | 'numfmt' | 'pastespecial' | 'gotospecial';
 
 export type SheetHandle = {
   /** Merge cells in (only touching cells whose raw text differs). */
   apply(cells: Record<string, string>): void;
+  /** Apply a macro's result: cell text (empty clears) and styles (empty object clears), as one undo step. */
+  applyPatch(patch: { cells: Record<string, string>; styles: Record<string, Style> }, select?: { active: Pos; sel: Rect }): void;
+  /** Recalculate everything (used when a VBA function changes). */
+  refresh(): void;
   /** Replace the whole sheet and clear undo history. */
   reset(data?: SheetData): void;
   /** Set named ranges (merged), extra read-only sheets, conditional formats and dropdown lists. */
@@ -138,6 +142,7 @@ function cleanStyle(st: Style): Style | null {
   if (st.u) out.u = true;
   if (st.align) out.align = st.align;
   if (st.fmt && st.fmt !== 'general') out.fmt = st.fmt;
+  if (st.nf) out.nf = st.nf;
   if (st.dec !== undefined) out.dec = st.dec;
   if (st.bg) out.bg = st.bg;
   if (st.color) out.color = st.color;
@@ -481,6 +486,24 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
       apply(cells) {
         const s = ref.current;
         commit(pushData(s, setCells(s.data, cells)));
+      },
+      applyPatch(patch, select) {
+        const s = ref.current;
+        const styles = { ...s.data.styles };
+        for (const [k, st] of Object.entries(patch.styles)) {
+          const clean = cleanStyle(st);
+          if (clean) styles[k] = clean;
+          else delete styles[k];
+        }
+        let next = pushData(s, { ...s.data, styles });
+        next = pushData(next, setCells(next.data, patch.cells));
+        if (next.past.length >= 2) next = { ...next, past: [...next.past.slice(0, -2), s.data] };
+        if (select) next = { ...next, active: select.active, origin: { c: select.sel.c1, r: select.sel.r1 }, focus: { c: select.sel.c2, r: select.sel.r2 } };
+        commit(next);
+      },
+      refresh() {
+        const s = ref.current;
+        commit({ ...s, data: { ...s.data } });
       },
       reset(data) {
         const base = selectAt(ref.current, ZERO);
@@ -1484,6 +1507,9 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
               has('find') && ['Find & replace', 'Find and replace (Ctrl+H)', () => setDialog('find')],
               has('goalseek') && ['Goal seek', 'What-if: Goal Seek', () => setDialog('goalseek')],
               has('datatable') && ['Data table', 'What-if: Data Table', () => setDialog('datatable')],
+              has('numfmt') && ['Number format', 'Format Cells: custom number format', () => setDialog('numfmt')],
+              has('pastespecial') && ['Paste special', 'Paste Special: values, formats, transpose, operations', () => setDialog('pastespecial')],
+              has('gotospecial') && ['Go to special', 'Fill blanks, clear constants, freeze formulas', () => setDialog('gotospecial')],
             ] as (false | [string, string, () => void])[]
           )
             .filter((b): b is [string, string, () => void] => !!b)
@@ -1870,7 +1896,7 @@ export const SheetGrid = forwardRef<SheetHandle, Props>(function SheetGrid(
         </div>
       </div>
 
-      {dialog && <ToolDialog kind={dialog} data={st.data} rect={rect} active={st.active} onApply={applyTool} onClose={() => setDialog(null)} />}
+      {dialog && <ToolDialog kind={dialog} data={st.data} rect={rect} active={st.active} clip={st.clip} onApply={applyTool} onClose={() => setDialog(null)} />}
       {note && (
         <div role="status" className="pointer-events-none absolute bottom-10 left-3 z-[90] max-w-[80%] rounded-md bg-[#1F4D3A] px-3 py-1.5 text-xs font-semibold text-white shadow-lg">
           {note}
