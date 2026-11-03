@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { StartFreeButton } from '../components/start-free-button';
 import { SiteFooter } from '../components/site-footer';
 import { SiteHeader } from '../components/site-header';
+import { ReviewCard } from './review-card';
 
 const GREEN = '#1F4D3A';
 const LIME = '#C7F000';
@@ -30,78 +31,6 @@ const skills = [
   'Move faster with shortcuts',
 ];
 
-const ExcelMock = () => (
-  <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-[#1F4D3A]/10 bg-white">
-    <div className="flex items-center gap-2 border-b border-[#1F4D3A]/10 bg-[#F3F6EC] px-4 py-3">
-      <span className="size-2.5 rounded-full bg-[#FF8A5B]" />
-      <span className="size-2.5 rounded-full bg-[#C7F000]" />
-      <span className="size-2.5 rounded-full bg-[#1F4D3A]/30" />
-      <span className="ml-3 text-xs text-[#1F4D3A]/60">Lesson 4 · Your first lookup</span>
-    </div>
-    <div className="grid md:grid-cols-[220px_1fr]">
-      <aside className="hidden border-r border-[#1F4D3A]/10 p-4 text-sm md:block">
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[#1F4D3A]/40">Path</p>
-        {['Cells & ranges', 'Basic formulas', 'Absolute refs', 'Your first lookup', 'Pivot tables'].map((t, i) => (
-          <div
-            key={t}
-            className={`mb-1 flex items-center gap-2 rounded-lg px-2 py-1.5 ${
-              i === 3 ? 'bg-[#1F4D3A] text-[#C7F000]' : 'text-[#1F4D3A]/70'
-            }`}
-          >
-            <span className={`size-1.5 rounded-full ${i < 3 ? 'bg-[#C7F000]' : i === 3 ? 'bg-[#C7F000]' : 'bg-[#1F4D3A]/20'}`} />
-            {t}
-          </div>
-        ))}
-      </aside>
-      <div className="p-4 sm:p-6">
-        <div className="mb-4 rounded-xl bg-[#F3F6EC] p-4 text-sm text-[#1F4D3A]">
-          <span className="font-semibold">Goal:</span> Find the price of product <b>A-17</b> using XLOOKUP.
-        </div>
-        <div className="mb-2 flex items-center gap-2 rounded-md border border-[#1F4D3A]/15 px-3 py-1.5 font-mono text-xs">
-          <span className="text-[#1F4D3A]/40">fx</span>
-          =XLOOKUP(A2, Products!A:A, Products!C:C)
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[480px] border-collapse font-mono text-xs">
-            <thead>
-              <tr className="bg-[#F3F6EC] text-[#1F4D3A]/50">
-                {['', 'A', 'B', 'C', 'D'].map((h) => (
-                  <th key={h} className="border border-[#1F4D3A]/10 px-3 py-1.5 font-medium">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                ['1', 'SKU', 'Item', 'Qty', 'Price'],
-                ['2', 'A-17', 'Pens', '40', '$2.40'],
-                ['3', 'B-02', 'Notebooks', '12', '$5.10'],
-                ['4', 'C-33', 'Stapler', '6', '$9.80'],
-              ].map((row, r) => (
-                <tr key={r}>
-                  {row.map((c, i) => (
-                    <td
-                      key={i}
-                      className={`border border-[#1F4D3A]/10 px-3 py-1.5 ${
-                        i === 0 ? 'bg-[#F3F6EC] text-center text-[#1F4D3A]/50' : ''
-                      } ${r === 1 && i === 4 ? 'bg-[#C7F000] font-bold' : ''} ${r === 0 && i > 0 ? 'font-semibold' : ''}`}
-                    >
-                      {c}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-[#1F4D3A]">
-          <span className="grid size-5 place-items-center rounded-full bg-[#C7F000] text-xs">✓</span>
-          Correct! XLOOKUP returned $2.40.
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
 const floaters = [
   { t: 'SUM', c: GREEN, f: LIME, x: 'left-[6%] top-[12%]', r: '-8deg' },
   { t: 'IF', c: '#fff', f: GREEN, x: 'left-[22%] top-[58%]', r: '6deg' },
@@ -116,33 +45,72 @@ const Home = () => (
     <SiteHeader />
 
     {/* Hero */}
-    <section className="mx-auto max-w-4xl px-6 pb-20 pt-20 text-center sm:pt-28">
-      <h1 className="text-5xl font-semibold leading-[1.05] tracking-tight sm:text-7xl">
-        Master Excel,
-        <br />
-        <span className="relative inline-block">
-          hands on.
-          <span className="absolute inset-x-0 bottom-1 -z-10 h-3 rounded-full bg-[#C7F000] sm:h-4" />
-        </span>
-      </h1>
-      <p className="mx-auto mt-6 max-w-xl text-base text-[#1F4D3A]/70 sm:text-lg">
-        Our bite-sized, interactive lessons make Excel skills easy to learn and remember. You learn by doing, not by watching.
-      </p>
-      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <StartFreeButton className="rounded-full bg-[#1F4D3A] px-9 py-4 text-lg font-semibold text-[#C7F000] transition-transform hover:opacity-90">
-          Start learning free
-        </StartFreeButton>
-        <Link href="#paths" className="rounded-full px-7 py-4 text-lg font-semibold text-[#1F4D3A] hover:bg-[#1F4D3A]/5">
-          See the lessons <span className="text-[#FF8A5B]">→</span>
-        </Link>
+    <section className="-mt-[88px]">
+      <div className="relative mx-auto grid items-center gap-10 overflow-hidden bg-[#F3F6EC] px-6 pb-32 pt-48 sm:px-16 lg:px-24">
+        <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
+          <h1 className="text-5xl font-semibold leading-[1.05] tracking-tight sm:text-7xl">
+            Master Excel,
+            <br />
+            <span className="font-light">hands on.</span>
+          </h1>
+          <p className="mt-6 max-w-xl text-lg text-[#1F4D3A]/75 sm:text-xl">
+            Bite-sized, interactive lessons make Excel easy to learn and remember. You learn by doing, not by watching.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <StartFreeButton className="rounded-md bg-[#1F4D3A] px-7 py-3.5 text-base font-semibold text-[#C7F000] transition-opacity hover:opacity-90">
+              Start learning free
+            </StartFreeButton>
+            <Link href="#paths" className="text-base font-semibold underline-offset-4 hover:underline">
+              See the lessons →
+            </Link>
+          </div>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <div className="flex -space-x-3">
+              {[7, 8, 9].map((n) => (
+                <img
+                  key={n}
+                  src={`/animateos-logo (${n}).png`}
+                  alt=""
+                  className="size-10 rounded-full border-2 border-[#F3F6EC] object-cover"
+                />
+              ))}
+            </div>
+            <p className="text-sm font-medium">Join 30,000+ Learners Across 40+ Countries</p>
+          </div>
+        </div>
       </div>
     </section>
-
-    {/* Product mock */}
-    <section className="px-4 sm:px-6">
-      <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-[#EEF3E2] px-4 py-10 sm:px-10 sm:py-16">
-        <ExcelMock />
+    {/* Why ExcelPanda */}
+    <section className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-24 md:grid-cols-2 md:gap-16">
+      <div>
+        <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl">Learn it. Do it. Keep it.</h2>
+        <p className="mt-5 max-w-md text-lg text-[#1F4D3A]/75">
+          Short, real-spreadsheet tasks with instant feedback, so every skill sticks instead of fading by next week.
+        </p>
+        <ul className="mt-7 space-y-4 text-[15px]">
+          {[
+            ['Learn in a ', 'real spreadsheet', ', not from videos.'],
+            ['Get ', 'instant feedback', ' on every formula you write.'],
+            ['Go from ', 'first formula to VBA', ' in seven courses.'],
+          ].map(([a, b, c]) => (
+            <li key={b} className="flex items-center gap-3">
+              <span className="grid size-5 shrink-0 place-items-center rounded-full bg-[#1F4D3A] text-[11px] text-[#C7F000]">✓</span>
+              <span>
+                {a}
+                <strong className="font-semibold">{b}</strong>
+                {c}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <ReviewCard />
       </div>
+
+      <img
+        src="/animateos-logo (5).png"
+        alt="ExcelPanda"
+        className="aspect-square w-full rounded-lg object-cover shadow-2xl shadow-[#1F4D3A]/25"
+      />
     </section>
 
     {/* Big stats with floating chips */}
