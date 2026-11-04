@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
-import { completeOnboarding, saveOnboarding } from './actions';
+import { completeOnboarding } from './actions';
 import { startCheckout } from '@/lib/checkout-client';
 
 // ---------------------------------------------------------------------------
@@ -696,14 +696,14 @@ function OfferScreen({ onFullPrice, onClose }: { onFullPrice: () => void; onClos
 
 // --- main flow --------------------------------------------------------------
 
-export function OnboardingFlow() {
-  const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState<Answers>({});
+export function OnboardingFlow({ initialAnswers, resume }: { initialAnswers?: Answers; resume?: 'paywall' | 'offer' | null }) {
+  const [index, setIndex] = useState(() => (resume ? STEPS.findIndex((s) => s.type === 'paywall') : 0));
+  const [answers, setAnswers] = useState<Answers>(initialAnswers ?? {});
   const [pending, startTransition] = useTransition();
-  const [plan, setPlan] = useState<PlanId>('annual');
+  const [plan, setPlan] = useState<PlanId>(resume === 'offer' ? 'annual_offer' : 'annual');
   const [error, setError] = useState('');
   const [showClose, setShowClose] = useState(false);
-  const [offerOpen, setOfferOpen] = useState(false);
+  const [offerOpen, setOfferOpen] = useState(resume === 'offer');
   const step = STEPS[index];
   const isLast = index === STEPS.length - 1;
 
@@ -755,9 +755,8 @@ export function OnboardingFlow() {
     setError('');
     startTransition(async () => {
       try {
-        const saved = await saveOnboarding(answers);
-        if (!saved.ok) throw new Error('Please sign in again.');
-        await startCheckout(plan);
+        // Nothing is saved as "finished" here: onboarding completes only after the payment succeeds.
+        await startCheckout(plan, { answers, returnTo: offerOpen ? 'offer' : 'paywall' });
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
       }

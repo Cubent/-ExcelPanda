@@ -52,6 +52,7 @@ export async function POST(req: Request) {
       const userId = session.client_reference_id ?? session.metadata?.clerkUserId;
       const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
       if (!userId || !customerId) break;
+      await database.userProfile.updateMany({ where: { clerkUserId: userId, onboardingCompletedAt: null }, data: { onboardingCompletedAt: new Date() } });
 
       if (session.mode === 'payment' && session.payment_status === 'paid' && session.metadata?.plan === 'lifetime') {
         await database.userProfile.update({

@@ -14,5 +14,6 @@ async function go(path: string, body?: unknown) {
   await new Promise(() => {});
 }
 
-export const startCheckout = (plan: CheckoutPlan) => go('/api/stripe/checkout', { plan });
+export const startCheckout = (plan: CheckoutPlan, extra?: { answers?: unknown; returnTo?: 'paywall' | 'offer' }) =>
+  go('/api/stripe/checkout', { plan, ...extra });
 export const openPortal = () => go('/api/stripe/portal');
