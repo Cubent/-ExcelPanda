@@ -774,7 +774,9 @@ export function OnboardingFlow({ initialAnswers, resume }: { initialAnswers?: An
   const minutes = Number(answers.minutes) || 10;
   const hideNav = step.type === 'loading';
   const ctaLabel = pending
-    ? 'Saving…'
+    ? step.type === 'paywall'
+      ? 'Opening checkout…'
+      : 'Saving…'
     : step.type === 'summary'
       ? 'Looks good'
       : step.type === 'trial'
