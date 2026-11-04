@@ -5,7 +5,7 @@ import { notFound, redirect } from 'next/navigation';
 import { LessonPlayer } from '@/components/lesson/LessonPlayer';
 import { getLessonContent } from '@/lessons/registry';
 import { findLesson, getCourseMaps } from '../../(app)/data';
-import { getProfile } from '../../(app)/get-profile';
+import { requireAccess } from '@/lib/require-access';
 import { Btn, Card, Pill } from '../../(app)/ui';
 import { completeLesson } from '../actions';
 
@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function LessonPage({ params }: { params: Promise<{ lessonId: string }> }) {
   const { lessonId: slug } = await params;
-  const { userId } = await getProfile();
+  const { userId } = await requireAccess();
   const maps = await getCourseMaps(userId);
 
   const found = findLesson(maps, slug);

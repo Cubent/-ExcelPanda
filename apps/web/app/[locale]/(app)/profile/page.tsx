@@ -1,5 +1,7 @@
 import { UserProfile } from '@clerk/nextjs';
 import { BookOpen, Calendar, Flame, Gem, Zap } from 'lucide-react';
+import { hasAccess, planLabel } from '@/lib/subscription';
+import { ChoosePlanLink, ManageSubscriptionButton } from '../billing-actions';
 import { getStats } from '../data';
 import { getProfile } from '../get-profile';
 import { Card, IconBox, Page, PageHeader, Pill, SectionTitle } from '../ui';
@@ -19,6 +21,14 @@ export default async function ProfilePage() {
   const stat = await getStats(p.userId);
   const joined = p.joinedAt.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   const minutes = Number(p.minutes);
+  const b = p.billing;
+  const active = hasAccess(b);
+  const fmt = (d: Date | null) => (d ? d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null);
+  const billingRows: [string, string][] = [['Plan', planLabel(b)]];
+  if (b.status === 'trialing' && b.trialEndsAt) billingRows.push(['Trial ends', fmt(b.trialEndsAt) ?? '']);
+  else if (b.status === 'active' && b.currentPeriodEnd) billingRows.push([b.cancelAtPeriodEnd ? 'Access until' : 'Renews on', fmt(b.currentPeriodEnd) ?? '']);
+  if (b.status === 'past_due') billingRows.push(['Status', 'Payment failed, please update your card']);
+  if (b.cancelAtPeriodEnd && b.status === 'trialing') billingRows.push(['Status', 'Cancels when the trial ends']);
 
   const facts: [string, string][] = [
     ['Starting level', LEVEL[p.level ?? ''] ?? '—'],
@@ -44,7 +54,7 @@ export default async function ProfilePage() {
             <span className="flex size-20 items-center justify-center rounded-2xl border-4 border-white bg-[#C7F000] text-3xl font-semibold text-[#1F4D3A]">
               {(p.name ?? 'E')[0]}
             </span>
-            <Pill tone="green">Free plan</Pill>
+            <Pill tone={active ? 'green' : 'gray'}>{planLabel(b)}</Pill>
           </div>
           <h2 className="mt-4 text-2xl font-semibold tracking-tight">{p.name ?? 'Excel learner'}</h2>
           <p className="mt-1 flex items-center gap-1.5 text-sm text-[#1F4D3A]/55">
@@ -74,6 +84,27 @@ export default async function ProfilePage() {
               <span className="text-sm font-semibold">{v}</span>
             </div>
           ))}
+        </div>
+      </Card>
+
+      <SectionTitle>Subscription</SectionTitle>
+      <Card className="!p-0">
+        <div className="divide-y divide-[#1F4D3A]/8">
+          {billingRows.map(([k, v]) => (
+            <div key={k} className="flex items-center justify-between px-6 py-4">
+              <span className="text-sm text-[#1F4D3A]/60">{k}</span>
+              <span className="text-sm font-semibold">{v}</span>
+            </div>
+          ))}
+        </div>
+        <div className="border-t border-[#1F4D3A]/8 px-6 py-4">
+          {b.status === 'lifetime' ? (
+            <p className="text-sm text-[#1F4D3A]/60">You own ExcelPanda for good. No renewals.</p>
+          ) : active || b.status === 'canceled' ? (
+            <ManageSubscriptionButton />
+          ) : (
+            <ChoosePlanLink />
+          )}
         </div>
       </Card>
 

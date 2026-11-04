@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
-import { completeOnboarding } from './actions';
+import { completeOnboarding, saveOnboarding } from './actions';
+import { startCheckout } from '@/lib/checkout-client';
 
 // ---------------------------------------------------------------------------
 // PLACEHOLDER MARKETING NUMBERS — replace with real figures before launch.
@@ -22,7 +23,7 @@ type QuestionStep = {
   options: Option[];
 };
 type ScreenStep = {
-  type: 'name' | 'social' | 'time-chart' | 'growth' | 'loading' | 'summary' | 'review';
+  type: 'name' | 'social' | 'time-chart' | 'growth' | 'loading' | 'summary' | 'review' | 'trial' | 'reminder' | 'paywall';
   id: string;
 };
 type Step = QuestionStep | ScreenStep;
@@ -116,6 +117,9 @@ const STEPS: Step[] = [
   { type: 'loading', id: 'loading' },
   { type: 'summary', id: 'summary' },
   { type: 'review', id: 'review' },
+  { type: 'trial', id: 'trial' },
+  { type: 'reminder', id: 'reminder' },
+  { type: 'paywall', id: 'paywall' },
 ];
 
 const LEVEL_LABEL: Record<string, string> = {
@@ -480,12 +484,226 @@ function ReviewScreen({ name }: { name: string }) {
   );
 }
 
+
+// --- free trial, reminder and paywall (mock checkout: Stripe comes later) -----
+
+type PlanId = 'annual' | 'annual_offer' | 'lifetime' | 'monthly';
+
+const PLANS: { id: Exclude<PlanId, 'annual_offer'>; name: string; blurb: string; price: string; unit: string; badge?: string }[] = [
+  { id: 'annual', name: 'Annual', blurb: '$59.99, billed yearly', price: '$4.99', unit: '/month', badge: 'Best value' },
+  { id: 'lifetime', name: 'Lifetime', blurb: 'Pay once, yours forever', price: '$199', unit: ' one-time' },
+  { id: 'monthly', name: 'Monthly', blurb: 'Flexible, cancel anytime', price: '$19.99', unit: '/month' },
+];
+
+const BENEFITS = [
+  'Every course, from your first formula to VBA',
+  'Practice drills, flashcards and timed challenges',
+  'Real spreadsheet tasks with instant feedback',
+  'Cancel anytime, in two taps',
+];
+
+function TrialScreen() {
+  return (
+    <div className="flex flex-1 flex-col">
+      <div className="text-center">
+        <span className="inline-block rounded-full bg-[#C7F000] px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[#1F4D3A]">
+          7 days free
+        </span>
+        <h1 className="mt-5 text-3xl font-bold leading-tight text-[#1F4D3A] sm:text-4xl">Try everything free for 7 days</h1>
+        <p className="mt-3 text-[#1F4D3A]/60">Full access to every lesson. No payment due today.</p>
+      </div>
+      <div className="relative mt-8 overflow-hidden rounded-3xl bg-[#1F4D3A] p-6 text-white">
+        <div className="absolute -right-10 -top-10 size-40 rounded-full bg-[#C7F000]/15" />
+        <img src="/animateos-logo (4).png" alt="" className="relative size-14 rounded-2xl" />
+        <p className="relative mt-4 text-sm text-white/60">Your free trial includes</p>
+        <ul className="relative mt-3 space-y-3">
+          {BENEFITS.map((b) => (
+            <li key={b} className="flex items-start gap-3 text-[15px] leading-snug">
+              <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-[#C7F000] text-[11px] font-bold text-[#1F4D3A]">✓</span>
+              {b}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function ReminderScreen() {
+  return (
+    <div className="flex flex-1 flex-col items-center text-center">
+      <div className="relative mt-2 grid size-28 place-items-center rounded-full bg-[#C7F000]/30">
+        <span className="text-6xl" style={{ animation: 'ep-bounce 1.6s ease-in-out infinite' }}>🔔</span>
+        <span className="absolute right-1 top-1 grid size-7 place-items-center rounded-full bg-[#FF8A5B] text-sm font-bold text-white">1</span>
+      </div>
+      <h1 className="mt-6 text-3xl font-bold leading-tight text-[#1F4D3A] sm:text-4xl">We&apos;ll remind you before your trial ends</h1>
+      <p className="mt-3 max-w-sm text-[#1F4D3A]/60">No surprise charges. We&apos;ll send you a reminder 2 days before your trial is over.</p>
+      <div className="mt-8 w-full rounded-3xl border-2 border-b-4 border-[#1F4D3A]/10 bg-white p-4 text-left shadow-sm">
+        <div className="flex items-center gap-3">
+          <img src="/animateos-logo (4).png" alt="" className="size-11 rounded-xl" />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between text-xs text-[#1F4D3A]/50">
+              <span className="font-semibold uppercase tracking-wide">ExcelPanda</span>
+              <span>Day 5</span>
+            </div>
+            <p className="mt-0.5 text-sm font-bold text-[#1F4D3A]">Your free trial ends in 2 days</p>
+            <p className="text-sm text-[#1F4D3A]/60">Keep your streak going, or cancel with one tap.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TimelineItem({ icon, day, title, text, last }: { icon: string; day: string; title: string; text: string; last?: boolean }) {
+  return (
+    <div className="flex gap-4">
+      <div className="flex flex-col items-center">
+        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#C7F000] text-sm">{icon}</span>
+        {!last && <span className="my-1 w-0.5 flex-1 rounded-full bg-[#1F4D3A]/15" />}
+      </div>
+      <div className={last ? '' : 'pb-3'}>
+        <p className="text-[11px] font-bold uppercase tracking-widest text-[#1F4D3A]/45">{day}</p>
+        <p className="text-sm font-bold leading-tight text-[#1F4D3A]">{title}</p>
+        <p className="text-xs text-[#1F4D3A]/60">{text}</p>
+      </div>
+    </div>
+  );
+}
+
+function PaywallScreen({
+  plan,
+  onPlan,
+  showClose,
+  onClose,
+}: {
+  plan: PlanId;
+  onPlan: (p: PlanId) => void;
+  showClose: boolean;
+  onClose: () => void;
+}) {
+  const lifetime = plan === 'lifetime';
+  return (
+    <div className="flex flex-1 flex-col">
+      <div className="-mt-6 mb-2 flex h-8 justify-end">
+        {showClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="grid size-8 place-items-center rounded-full bg-[#1F4D3A]/10 text-sm text-[#1F4D3A]/70 hover:bg-[#1F4D3A]/15"
+            style={{ animation: 'ep-fade 400ms both' }}
+          >
+            ✕
+          </button>
+        )}
+      </div>
+      <div className="text-center">
+        <h1 className="text-3xl font-bold leading-tight text-[#1F4D3A] sm:text-4xl">
+          {lifetime ? 'Own ExcelPanda for good' : 'Start your 7-day free trial'}
+        </h1>
+        <p className="mt-2 text-[#1F4D3A]/60">{lifetime ? 'One payment. Every lesson, forever.' : 'Cancel anytime before it ends and you pay nothing.'}</p>
+      </div>
+
+      <div className="mt-5 rounded-2xl bg-[#F3F6EC] p-4">
+        {lifetime ? (
+          <>
+            <TimelineItem icon="🔓" day="Today" title="Unlock everything" text="Instant lifetime access to every course." />
+            <TimelineItem icon="♾️" day="Forever" title="No renewals" text="Pay once. All future lessons included." last />
+          </>
+        ) : (
+          <>
+            <TimelineItem icon="🔓" day="Today" title="Unlock every lesson" text="Start learning right away, free for 7 days." />
+            <TimelineItem icon="🔔" day="Day 5" title="We remind you" text="A reminder lands before your trial ends." />
+            <TimelineItem icon="⭐" day="Day 7" title="Trial ends" text="You are charged only if you keep going." last />
+          </>
+        )}
+      </div>
+
+      <div className="mt-5 flex flex-col gap-2.5" role="radiogroup" aria-label="Choose a plan">
+        {PLANS.map((p) => {
+          const active = plan === p.id;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => onPlan(p.id)}
+              className={`relative flex items-center gap-3 rounded-xl border-2 border-b-4 px-4 py-2.5 text-left transition-colors ${
+                active ? 'border-[#1F4D3A] bg-[#C7F000]/25' : 'border-[#1F4D3A]/15 bg-white hover:bg-[#1F4D3A]/5'
+              }`}
+            >
+              {p.badge && (
+                <span className="absolute -top-2.5 right-3 rounded-full bg-[#1F4D3A] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#C7F000]">
+                  {p.badge}
+                </span>
+              )}
+              <span
+                className={`grid size-5 shrink-0 place-items-center rounded-full border-2 text-[10px] ${
+                  active ? 'border-[#1F4D3A] bg-[#1F4D3A] text-[#C7F000]' : 'border-[#1F4D3A]/25'
+                }`}
+              >
+                {active ? '✓' : ''}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-base font-bold leading-tight text-[#1F4D3A]">{p.name}</span>
+                <span className="block text-xs text-[#1F4D3A]/60">{p.blurb}</span>
+              </span>
+              <span className="shrink-0 text-right text-[#1F4D3A]">
+                <span className="text-lg font-bold">{p.price}</span>
+                <span className="text-xs text-[#1F4D3A]/60">{p.unit}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function OfferScreen({ onFullPrice, onClose }: { onFullPrice: () => void; onClose: () => void }) {
+  return (
+    <div className="flex flex-1 flex-col items-center text-center">
+      <div className="-mt-6 mb-2 flex h-8 w-full justify-end">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close and go to the dashboard"
+          className="grid size-8 place-items-center rounded-full bg-[#1F4D3A]/10 text-sm text-[#1F4D3A]/70 hover:bg-[#1F4D3A]/15"
+        >
+          ✕
+        </button>
+      </div>
+      <span className="rounded-full bg-[#FF8A5B] px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-white">Limited offer</span>
+      <h1 className="mt-5 text-3xl font-bold leading-tight text-[#1F4D3A] sm:text-4xl">Wait, here&apos;s a better deal</h1>
+      <p className="mt-3 max-w-sm text-[#1F4D3A]/60">Get a full year of ExcelPanda for a fraction of the price.</p>
+      <div className="relative mt-8 w-full overflow-hidden rounded-3xl bg-[#1F4D3A] p-7 text-white">
+        <div className="absolute -right-10 -top-10 size-40 rounded-full bg-[#C7F000]/15" />
+        <p className="relative text-7xl font-extrabold leading-none tracking-tight text-[#C7F000] sm:text-8xl">60%</p>
+        <p className="relative mt-1 text-xl font-bold uppercase tracking-widest">off</p>
+        <p className="relative mt-5 text-white/60">
+          <span className="line-through">$59.99</span> <span className="font-semibold text-white">$23.99</span> per year
+        </p>
+        <p className="relative mt-1 text-sm text-white/60">Just $2.00 a month, billed yearly</p>
+      </div>
+      <button type="button" onClick={onFullPrice} className="mt-6 text-sm font-medium text-[#1F4D3A]/60 underline underline-offset-4 hover:text-[#1F4D3A]">
+        I&apos;d like to pay full price
+      </button>
+    </div>
+  );
+}
+
 // --- main flow --------------------------------------------------------------
 
 export function OnboardingFlow() {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
   const [pending, startTransition] = useTransition();
+  const [plan, setPlan] = useState<PlanId>('annual');
+  const [error, setError] = useState('');
+  const [showClose, setShowClose] = useState(false);
+  const [offerOpen, setOfferOpen] = useState(false);
   const step = STEPS[index];
   const isLast = index === STEPS.length - 1;
 
@@ -509,11 +727,45 @@ export function OnboardingFlow() {
     }
   };
 
+  // After 8 seconds on the paywall a close button appears. Closing shows the limited offer once.
+  const onPaywall = step.type === 'paywall';
+  useEffect(() => {
+    setShowClose(false);
+    if (!onPaywall || offerOpen) return;
+    const t = setTimeout(() => setShowClose(true), 8000);
+    return () => clearTimeout(t);
+  }, [onPaywall, offerOpen]);
+
+  const openOffer = () => {
+    setOfferOpen(true);
+    setPlan('annual_offer');
+    setError('');
+  };
+  const fullPrice = () => {
+    setOfferOpen(false);
+    setPlan('annual');
+    setError('');
+  };
+
   const next = () => {
     if (!isLast) {
       setIndex(index + 1);
       return;
     }
+    setError('');
+    startTransition(async () => {
+      try {
+        const saved = await saveOnboarding(answers);
+        if (!saved.ok) throw new Error('Please sign in again.');
+        await startCheckout(plan);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
+      }
+    });
+    return;
+  };
+
+  const goToDashboard = () => {
     startTransition(() => {
       void completeOnboarding(answers);
     });
@@ -522,6 +774,19 @@ export function OnboardingFlow() {
   const summaryAnswers: Answers = answers;
   const minutes = Number(answers.minutes) || 10;
   const hideNav = step.type === 'loading';
+  const ctaLabel = pending
+    ? 'Saving…'
+    : step.type === 'summary'
+      ? 'Looks good'
+      : step.type === 'trial'
+        ? 'Start my free trial'
+        : step.type === 'paywall'
+          ? plan === 'lifetime'
+            ? 'Get lifetime access'
+            : plan === 'annual_offer'
+              ? 'Claim my offer'
+              : 'Start my 7-day free trial'
+          : 'Continue';
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col px-6 py-10">
@@ -598,6 +863,14 @@ export function OnboardingFlow() {
         {step.type === 'review' && (
           <ReviewScreen name={name} />
         )}
+        {step.type === 'trial' && <TrialScreen />}
+        {step.type === 'reminder' && <ReminderScreen />}
+        {step.type === 'paywall' &&
+          (offerOpen ? (
+            <OfferScreen onFullPrice={fullPrice} onClose={goToDashboard} />
+          ) : (
+            <PaywallScreen plan={plan} onPlan={setPlan} showClose={showClose} onClose={openOffer} />
+          ))}
         {step.type === 'social' && <SocialScreen name={name} />}
         {step.type === 'time-chart' && <TimeChartScreen minutes={minutes} />}
         {step.type === 'growth' && <GrowthScreen level={(answers.level as string) ?? 'beginner'} minutes={minutes} />}
@@ -612,8 +885,20 @@ export function OnboardingFlow() {
           onClick={next}
           className="mt-8 rounded-2xl border-b-4 border-black/20 bg-[#1F4D3A] py-4 text-lg font-bold uppercase tracking-wide text-[#C7F000] transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {isLast ? (pending ? 'Saving…' : 'Start learning') : step.type === 'summary' ? 'Looks good' : 'Continue'}
+          {ctaLabel}
         </button>
+      )}
+      {step.type === 'paywall' && (
+        <div className="mt-4 text-center text-xs text-[#1F4D3A]/50">
+          {error && <p className="mb-2 text-sm font-medium text-[#C4562F]">{error}</p>}
+          <p>
+            {plan === 'lifetime'
+              ? 'One-time payment. No subscription.'
+              : plan === 'annual_offer'
+                ? 'Billed today. Cancel anytime.'
+                : 'No payment due today. Cancel anytime.'}
+          </p>
+        </div>
       )}
     </main>
   );

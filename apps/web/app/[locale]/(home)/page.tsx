@@ -134,33 +134,8 @@ const Home = () => (
       </div>
     </section>
 
-    {/* Journeys */}
-    <section id="paths" className="mx-auto max-w-6xl px-6 py-20">
-      <h2 className="mx-auto max-w-2xl text-center text-4xl font-semibold tracking-tight sm:text-5xl">
-        Follow a path from beginner to confident.
-      </h2>
-      <div className="mt-12 grid gap-5 md:grid-cols-2">
-        <div className="rounded-3xl bg-[#1F4D3A] p-8 text-white">
-          <p className="text-xs uppercase tracking-widest text-[#C7F000]">Path 1</p>
-          <h3 className="mt-2 text-2xl font-semibold">Excel Foundations</h3>
-          <p className="mt-2 max-w-sm text-white/70">Cells, formulas, formatting and your first charts. Zero experience required.</p>
-          <div className="mt-8 h-2 rounded-full bg-white/15">
-            <div className="h-2 w-2/3 rounded-full bg-[#C7F000]" />
-          </div>
-        </div>
-        <div className="rounded-3xl bg-[#C7F000] p-8">
-          <p className="text-xs uppercase tracking-widest text-[#1F4D3A]/60">Path 2</p>
-          <h3 className="mt-2 text-2xl font-semibold">Analyst Toolkit</h3>
-          <p className="mt-2 max-w-sm text-[#1F4D3A]/75">Lookups, pivot tables and data cleaning for real reporting work.</p>
-          <div className="mt-8 h-2 rounded-full bg-[#1F4D3A]/15">
-            <div className="h-2 w-1/3 rounded-full bg-[#1F4D3A]" />
-          </div>
-        </div>
-      </div>
-    </section>
-
     {/* Practice to mastery */}
-    <section className="mx-auto max-w-6xl px-6 py-20">
+    <section id="paths" className="mx-auto max-w-6xl px-6 py-20">
       <h2 className="text-center text-4xl font-semibold tracking-tight sm:text-5xl">From practice to mastery.</h2>
       <div className="mt-12 grid gap-5 md:grid-cols-3">
         {steps.map((s, i) => (

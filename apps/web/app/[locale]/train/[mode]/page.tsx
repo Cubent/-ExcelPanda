@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { Flashcards } from '@/components/lesson/Flashcards';
 import { PracticeRunner, type PracticeMode } from '@/components/lesson/PracticeRunner';
 import { CASES } from '@/lessons/cases';
-import { getProfile } from '../../(app)/get-profile';
+import { requireAccess } from '@/lib/require-access';
 
 export const metadata = { title: 'Practice – ExcelPanda' };
 export const dynamic = 'force-dynamic';
@@ -16,7 +16,7 @@ export default async function TrainPage({ params, searchParams }: { params: Prom
   const { mode } = await params;
   const { c } = await searchParams;
   if (!MODES.includes(mode)) notFound();
-  const { userId } = await getProfile();
+  const { userId } = await requireAccess();
 
   if (mode === 'flashcards') return <Flashcards />;
 

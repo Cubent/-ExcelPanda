@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { StartFreeButton } from './start-free-button';
+import { HeaderAuth } from './header-auth';
 
 export const SiteLogo = ({ className = '', light = false }: { className?: string; light?: boolean }) => (
   <Link href="/" className={`flex items-center gap-2 ${className}`}>
@@ -25,9 +25,7 @@ export const SiteHeader = () => (
           Lessons
         </Link>
       </nav>
-      <StartFreeButton className="rounded-full bg-[#C7F000] px-6 py-2.5 text-base font-semibold text-[#1F4D3A] transition-colors hover:bg-[#d6ff1a]">
-        Start free
-      </StartFreeButton>
+      <HeaderAuth />
     </div>
   </header>
 );

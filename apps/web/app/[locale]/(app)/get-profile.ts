@@ -29,5 +29,12 @@ export const getProfile = cache(async () => {
     minutes: str('minutes'),
     role: str('role'),
     joinedAt: profile.createdAt,
+    billing: {
+      plan: profile.plan,
+      status: profile.subscriptionStatus,
+      trialEndsAt: profile.trialEndsAt,
+      currentPeriodEnd: profile.currentPeriodEnd,
+      cancelAtPeriodEnd: profile.cancelAtPeriodEnd,
+    },
   };
 });

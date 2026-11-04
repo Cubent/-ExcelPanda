@@ -1,18 +1,20 @@
-import { UserButton } from '@clerk/nextjs';
 import { Flame, Gem, Zap } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { SiteLogo } from '../components/site-header';
 import { BottomNav, SidebarNav } from './nav-links';
+import { SidebarProfile } from './sidebar-profile';
 import { Stat } from './ui';
 
 // Shell shared by every signed-in page: sidebar on desktop, top bar and
 // bottom nav on mobile.
 export function AppShell({
   name,
+  plan,
   stats,
   children,
 }: {
   name?: string;
+  plan?: string;
   stats: { streak: number; xp: number; gems: number };
   children: ReactNode;
 }) {
@@ -38,13 +40,7 @@ export function AppShell({
             <SiteLogo />
           </div>
           <SidebarNav />
-          <div className="mt-auto flex items-center gap-3 rounded-xl border border-[#1F4D3A]/10 bg-[#F7F8F4] px-3.5 py-3">
-            <UserButton />
-            <div className="min-w-0 leading-tight">
-              <p className="truncate text-sm font-semibold">{name ?? 'You'}</p>
-              <p className="text-xs text-[#1F4D3A]/50">Free plan</p>
-            </div>
-          </div>
+          <SidebarProfile name={name} plan={plan} />
         </aside>
 
         <div className="flex min-w-0 flex-1">{children}</div>

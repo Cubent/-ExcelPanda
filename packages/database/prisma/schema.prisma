@@ -368,6 +368,16 @@ model UserProfile {
   xp                    Int       @default(0)
   gems                  Int       @default(0)
   onboardingCompletedAt DateTime?
+
+  // Billing (Stripe). plan: annual | monthly | lifetime. subscriptionStatus: trialing | active | past_due | canceled | lifetime.
+  stripeCustomerId      String?   @unique
+  stripeSubscriptionId  String?
+  plan                  String?
+  subscriptionStatus    String?
+  trialEndsAt           DateTime?
+  currentPeriodEnd      DateTime?
+  cancelAtPeriodEnd     Boolean   @default(false)
+
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
