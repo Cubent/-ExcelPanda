@@ -206,6 +206,7 @@ export const post: BlogPost = {
   publishedAt: '2026-11-04T10:10:00+01:00',
   updatedAt: '2026-11-04T10:10:00+01:00',
   author: { name: 'ExcelPanda Team', url: 'https://www.excelpanda.org' },
+  heroImage: '/blog/learn-excel-fast-hero.png',
   category: 'Learning plans',
   keywords: ['learn Excel fast', 'learn Excel in 30 days', 'Excel study plan', 'Excel for beginners', 'how to learn Excel'],
   readingMinutes: 6,

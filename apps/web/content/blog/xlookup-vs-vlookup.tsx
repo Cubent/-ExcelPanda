@@ -194,6 +194,7 @@ export const post: BlogPost = {
   publishedAt: '2026-11-04T10:05:00+01:00',
   updatedAt: '2026-11-04T10:05:00+01:00',
   author: { name: 'ExcelPanda Team', url: 'https://www.excelpanda.org' },
+  heroImage: '/blog/xlookup-vs-vlookup-hero.png',
   category: 'Formulas',
   keywords: ['XLOOKUP vs VLOOKUP', 'XLOOKUP', 'VLOOKUP', 'Excel lookup functions', 'replace VLOOKUP with XLOOKUP'],
   readingMinutes: 6,

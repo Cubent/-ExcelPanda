@@ -59,6 +59,14 @@ const faqs: BlogFaq[] = [
 
 const Body = () => (
   <>
+    <Callout title="Learn with our hands-on platform" tone="tip">
+      <p>
+        The best way to get ready for a hands-on exam is to practise by doing. On ExcelPanda you work in a real spreadsheet, one small
+        task at a time, with instant feedback on every formula.{' '}
+        <Link href={signup('top-of-post')}>Start your free trial</Link>.
+      </p>
+    </Callout>
+
     <Callout title="The short version">
       <p>
         MO-201 is Microsoft’s hands-on Excel Expert exam, built on Office 2019. About a third of the marks sit in advanced formulas
@@ -225,6 +233,7 @@ export const post: BlogPost = {
   publishedAt: '2026-11-04T10:00:00+01:00',
   updatedAt: '2026-11-04T10:00:00+01:00',
   author: { name: 'ExcelPanda Team', url: 'https://www.excelpanda.org' },
+  heroImage: '/blog/mo-201-hero.png',
   category: 'Certification',
   keywords: ['MO-201', 'MO-201 exam', 'Excel Expert exam', 'MOS Excel Expert', 'Microsoft Excel certification', 'MO-201 study guide'],
   readingMinutes: 8,

@@ -17,6 +17,7 @@ import type {
 } from '@repo/seo/json-ld';
 import { createMetadata } from '@repo/seo/metadata';
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { SiteFooter } from '../../components/site-footer';
@@ -122,6 +123,17 @@ const BlogPostPage = async ({ params }: BlogPostPageProperties) => {
             scroll container, which would break position:sticky on anything nested inside. */}
         <article className="overflow-x-clip">
           <header className="relative isolate overflow-hidden bg-[#1F4D3A]">
+            <Image
+              src={post.heroImage ?? '/blog/default-hero.png'}
+              alt=""
+              fill
+              priority
+              quality={70}
+              sizes="100vw"
+              className="-z-20 object-cover"
+            />
+            {/* Dark green cover so the picture stays a soft backdrop behind the white text. */}
+            <div aria-hidden className="absolute inset-0 -z-10 bg-[#1F4D3A]/80" />
             <div className="mx-auto max-w-3xl px-6 py-12 sm:py-20">
               <nav aria-label="Breadcrumb" className="text-xs text-white/60">
                 <ol className="flex flex-wrap items-center gap-1.5">

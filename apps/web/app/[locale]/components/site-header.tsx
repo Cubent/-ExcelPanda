@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { HeaderAuth } from './header-auth';
+import { HeaderShell } from './header-shell';
 
 export const SiteLogo = ({ className = '', light = false }: { className?: string; light?: boolean }) => (
   <Link href="/" className={`flex items-center gap-2 ${className}`}>
@@ -12,12 +13,10 @@ export const SiteLogo = ({ className = '', light = false }: { className?: string
   </Link>
 );
 
-// Floating pill header, shared by the homepage and the blog.
+// Floating pill header, shared by the homepage, the blog and the legal pages.
 export const SiteHeader = () => (
-  <header className="sticky top-4 z-50 mx-auto mt-4 w-[min(94%,900px)]">
-    <div className="relative flex items-center justify-between rounded-full bg-[#1F4D3A] py-3 pl-6 pr-3">
-      <SiteLogo light />
-      <HeaderAuth />
-    </div>
-  </header>
+  <HeaderShell>
+    <SiteLogo light />
+    <HeaderAuth />
+  </HeaderShell>
 );
