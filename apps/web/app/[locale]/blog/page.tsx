@@ -6,11 +6,11 @@ import { SiteFooter } from '../components/site-footer';
 import { SiteHeader } from '../components/site-header';
 
 export const metadata: Metadata = createMetadata({
-  title: 'USMLE Study Guides and Question Bank Reviews',
+  title: 'Excel Guides and Study Plans',
   description:
-    'Guides for USMLE Step 1, Step 2 CK and Step 3 preparation, including question bank comparisons, study strategy and how to use spaced repetition.',
+    'Practical Excel guides: certification prep, formula comparisons and step-by-step learning plans from the team behind ExcelPanda.',
   path: '/blog',
-  keywords: ['USMLE study guides', 'USMLE question bank comparison', 'USMLE preparation blog'],
+  keywords: ['Excel guides', 'learn Excel', 'Excel study plan', 'Excel tutorials'],
   robots: BLOG_INDEXABLE ? undefined : { index: false, follow: false },
   alternates: {
     canonical: `${SITE_URL}/blog`,
@@ -27,7 +27,7 @@ const BlogIndexPage = () => {
       <main className="mx-auto max-w-3xl px-6 py-14 sm:py-20">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#FF8A5B]">Blog</p>
         <h1 className="font-[family-name:var(--font-display)] mt-3 text-3xl font-bold tracking-tight text-[#1F4D3A] sm:text-4xl">
-          USMLE study guides and question bank reviews
+          Excel guides and study plans
         </h1>
         <p className="mt-4 text-lg leading-relaxed text-gray-600">
           Practical Excel guides from the team behind ExcelPanda.

@@ -17,7 +17,6 @@ import type {
 } from '@repo/seo/json-ld';
 import { createMetadata } from '@repo/seo/metadata';
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { SiteFooter } from '../../components/site-footer';
@@ -122,20 +121,7 @@ const BlogPostPage = async ({ params }: BlogPostPageProperties) => {
             by a scrollbar's width on desktop; clip contains that without turning this into a
             scroll container, which would break position:sticky on anything nested inside. */}
         <article className="overflow-x-clip">
-          <header className="relative isolate overflow-hidden bg-[#000C3F]">
-            <Image
-              src={post.heroImage ?? '/MedPrep (1).png'}
-              alt=""
-              fill
-              priority
-              quality={70}
-              sizes="100vw"
-              className="-z-20 object-cover"
-            />
-            <div
-              aria-hidden
-              className="absolute inset-0 -z-10 bg-gradient-to-b from-[#000C3F]/75 via-[#000C3F]/55 to-[#000C3F]/85"
-            />
+          <header className="relative isolate overflow-hidden bg-[#1F4D3A]">
             <div className="mx-auto max-w-3xl px-6 py-12 sm:py-20">
               <nav aria-label="Breadcrumb" className="text-xs text-white/60">
                 <ol className="flex flex-wrap items-center gap-1.5">
@@ -152,7 +138,7 @@ const BlogPostPage = async ({ params }: BlogPostPageProperties) => {
                   </li>
                 </ol>
               </nav>
-              <p className="mt-6 text-xs font-semibold uppercase tracking-[0.22em] text-[#FF8A5B]">
+              <p className="mt-6 text-xs font-semibold uppercase tracking-[0.22em] text-[#C7F000]">
                 {post.category}
               </p>
               <h1 className="font-[family-name:var(--font-display)] mt-3 text-3xl font-bold leading-tight tracking-tight text-white sm:text-5xl">

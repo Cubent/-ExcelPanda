@@ -49,9 +49,19 @@ import { post as twoPassesQbank } from './two-passes-through-a-usmle-question-ba
 import { post as usmleStep1Syllabus } from './usmle-step-1-syllabus';
 import { post as usmleStep2CkSyllabus } from './usmle-step-2-ck-syllabus';
 import { post as usmleStep3Syllabus } from './usmle-step-3-syllabus';
+import { post as mo201Prep } from './mo-201-excel-expert-exam-prep';
+import { post as xlookupVsVlookup } from './xlookup-vs-vlookup';
+import { post as learnExcelFast } from './learn-excel-fast-30-day-plan';
 import type { BlogPost } from './types';
 
-export const posts: BlogPost[] = [
+/** The ExcelPanda blog. */
+export const posts: BlogPost[] = [mo201Prep, xlookupVsVlookup, learnExcelFast];
+
+/**
+ * Posts carried over from the previous USMLE product. They are kept on disk but not published: add them back to
+ * `posts` only if you want them on the site again.
+ */
+export const legacyPosts: BlogPost[] = [
   doVsUsmle,
   abimPassRate,
   imIte,
