@@ -5,7 +5,8 @@ import { notFound, redirect } from 'next/navigation';
 import { LessonPlayer } from '@/components/lesson/LessonPlayer';
 import { getLessonContent } from '@/lessons/registry';
 import { findLesson, getCourseMaps } from '../../(app)/data';
-import { requireAccess } from '@/lib/require-access';
+import { markLocked } from '@/lib/subscription';
+import { getProfile } from '../../(app)/get-profile';
 import { Btn, Card, Pill } from '../../(app)/ui';
 import { completeLesson } from '../actions';
 
@@ -14,12 +15,14 @@ export const dynamic = 'force-dynamic';
 
 export default async function LessonPage({ params }: { params: Promise<{ lessonId: string }> }) {
   const { lessonId: slug } = await params;
-  const { userId } = await requireAccess();
-  const maps = await getCourseMaps(userId);
+  const { userId, billing } = await getProfile();
+  const maps = markLocked(await getCourseMaps(userId), billing);
 
   const found = findLesson(maps, slug);
   if (!found) notFound();
   const { unit, node, map } = found;
+  // Premium courses and units need a plan. Send free users back to the dashboard, where the paywall opens.
+  if (unit.locked) redirect('/dashboard?upgrade=1');
   const courseHref = `/dashboard/${map.slug}`;
   // The next lesson on the timeline (it may be in the next unit).
   const flat = map.units.flatMap((u) => u.nodes);

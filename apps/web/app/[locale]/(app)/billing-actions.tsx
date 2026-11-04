@@ -36,7 +36,7 @@ export function ManageSubscriptionButton({ className = '' }: { className?: strin
 
 export const ChoosePlanLink = () => (
   <Link href="/subscribe" className={`${btn} bg-[#C7F000] text-[#1F4D3A] hover:bg-[#d4f526]`}>
-    Choose a plan
+    Upgrade
   </Link>
 );
 

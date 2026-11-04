@@ -2,6 +2,7 @@ import { Flame, Gem, Zap } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { SiteLogo } from '../components/site-header';
 import { BottomNav, SidebarNav } from './nav-links';
+import { PaywallProvider } from './paywall-modal';
 import { SidebarProfile } from './sidebar-profile';
 import { Stat } from './ui';
 
@@ -19,6 +20,7 @@ export function AppShell({
   children: ReactNode;
 }) {
   return (
+    <PaywallProvider>
     <div className="min-h-screen bg-[#F7F8F4] text-[#1F4D3A]">
       <style>{`
         @keyframes dash-float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-5px) } }
@@ -48,5 +50,6 @@ export function AppShell({
 
       <BottomNav />
     </div>
+    </PaywallProvider>
   );
 }

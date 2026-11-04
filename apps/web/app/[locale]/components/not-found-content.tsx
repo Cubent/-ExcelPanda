@@ -2,16 +2,6 @@ import Link from 'next/link';
 import { SiteFooter } from './site-footer';
 import { SiteHeader } from './site-header';
 
-const popularPages = [
-  { label: 'Step 1 Qbank', href: '/usmle-step-1-question-bank' },
-  { label: 'Step 2 CK Qbank', href: '/usmle-step-2-question-bank' },
-  { label: 'Step 3 Qbank', href: '/usmle-step-3-question-bank' },
-  { label: 'ABIM Qbank', href: '/abim-internal-medicine-question-bank' },
-  { label: 'Blog', href: '/blog' },
-  { label: 'FAQ', href: '/#faq' },
-  { label: 'Contact', href: '/contact' },
-];
-
 /** The 404 page: site header, a short message with a few ways back, and the site footer. */
 export const NotFoundContent = () => (
   <div className="min-h-screen bg-white">
@@ -48,23 +38,6 @@ export const NotFoundContent = () => (
         >
           Contact support
         </Link>
-      </div>
-
-      <div className="mt-14 w-full border-t border-gray-200 pt-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
-          Popular pages
-        </p>
-        <div className="mt-4 flex flex-wrap justify-center gap-3">
-          {popularPages.map((page) => (
-            <Link
-              key={page.href}
-              href={page.href}
-              className="inline-flex items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-[#1F4D3A] hover:text-[#1F4D3A]"
-            >
-              {page.label}
-            </Link>
-          ))}
-        </div>
       </div>
     </main>
 

@@ -30,6 +30,8 @@ export type MapUnit = {
   title: string;
   blurb: string;
   nodes: MapNode[];
+  /** Premium unit the user has not unlocked. Set by the page, not stored. */
+  locked?: boolean;
 };
 export type CourseMap = {
   courseId: string;
@@ -42,6 +44,8 @@ export type CourseMap = {
   completed: number;
   unitsDone: number;
   current: MapNode | null;
+  /** Premium course the user has not unlocked. Set by the page, not stored. */
+  locked?: boolean;
 };
 
 // First published course, with per-lesson state for this user. Lessons unlock
@@ -196,45 +200,6 @@ export const getStats = cache(async (userId: string): Promise<Stats> => {
     todayIndex: Math.round((today.getTime() - weekStart.getTime()) / DAY_MS),
     lessonsDone,
   };
-});
-
-// ---------------------------------------------------------------------------
-// Leaderboard (this week's XP)
-// ---------------------------------------------------------------------------
-
-export type Ranked = { id: string; name: string; xp: number; me: boolean; rank: number };
-
-export const getLeaderboard = cache(async (userId: string): Promise<Ranked[]> => {
-  const rows = await database.userActivityDay.groupBy({
-    by: ['clerkUserId'],
-    where: { date: { gte: weekStartUtc() } },
-    _sum: { xp: true },
-    orderBy: { _sum: { xp: 'desc' } },
-    take: 20,
-  });
-
-  const ids = new Set(rows.map((r) => r.clerkUserId));
-  ids.add(userId); // always show the viewer, even with 0 XP this week
-
-  const profiles = await database.userProfile.findMany({
-    where: { clerkUserId: { in: [...ids] } },
-    select: { clerkUserId: true, answers: true },
-  });
-  const nameOf = (id: string) => {
-    const a = (profiles.find((p) => p.clerkUserId === id)?.answers ?? {}) as Record<string, unknown>;
-    return typeof a.name === 'string' && a.name.trim() ? a.name.trim() : 'Learner';
-  };
-
-  const list = rows.map((r) => ({ id: r.clerkUserId, xp: r._sum.xp ?? 0 }));
-  if (!list.some((r) => r.id === userId)) list.push({ id: userId, xp: 0 });
-
-  return list.map((r, i) => ({
-    id: r.id,
-    name: r.id === userId ? 'You' : nameOf(r.id),
-    xp: r.xp,
-    me: r.id === userId,
-    rank: i + 1,
-  }));
 });
 
 // Courses that are not published yet, shown as "coming soon" cards.

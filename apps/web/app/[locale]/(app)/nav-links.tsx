@@ -1,6 +1,6 @@
 'use client';
 
-import { Dumbbell, Map as MapIcon, Medal, Target, UserRound } from 'lucide-react';
+import { Dumbbell, Map as MapIcon, Target, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -8,7 +8,6 @@ const NAV = [
   { label: 'Learn', icon: MapIcon, href: '/dashboard' },
   { label: 'Practice', icon: Dumbbell, href: '/practice' },
   { label: 'Quests', icon: Target, href: '/quests' },
-  { label: 'Leaderboard', icon: Medal, href: '/leaderboard' },
   { label: 'Profile', icon: UserRound, href: '/profile' },
 ];
 

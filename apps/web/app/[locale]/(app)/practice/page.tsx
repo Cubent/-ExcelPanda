@@ -2,6 +2,7 @@ import {
   ArrowRight,
   Keyboard,
   Layers,
+  Lock,
   Puzzle,
   Sigma,
   Timer,
@@ -9,8 +10,10 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
+import { hasAccess, markLocked } from '@/lib/subscription';
 import { getCourseMaps } from '../data';
 import { getProfile } from '../get-profile';
+import { OpenPaywallOnMount, PremiumLink } from '../paywall-modal';
 import { Btn, Card, IconBox, Page, PageHeader, Pill, SectionTitle, type Tone } from '../ui';
 
 export const metadata = { title: 'Practice – ExcelPanda' };
@@ -24,13 +27,16 @@ const MODES: { icon: LucideIcon; tone: Tone; title: string; blurb: string; href:
   { icon: Keyboard, tone: 'gray', title: 'Shortcut trainer', blurb: 'Learn the keyboard moves that save hours.', href: '/train/shortcuts', cta: 'Train shortcuts' },
 ];
 
-export default async function PracticePage() {
-  const { userId } = await getProfile();
-  const maps = await getCourseMaps(userId);
+export default async function PracticePage({ searchParams }: { searchParams: Promise<{ upgrade?: string }> }) {
+  const { upgrade } = await searchParams;
+  const { userId, billing } = await getProfile();
+  const locked = !hasAccess(billing);
+  const maps = markLocked(await getCourseMaps(userId), billing).filter((m) => !m.locked);
   const current = (maps.find((m) => m.completed > 0 && m.current) ?? maps.find((m) => m.current))?.current ?? null;
 
   return (
     <Page>
+      {upgrade && <OpenPaywallOnMount />}
       <PageHeader title="Practice" subtitle="Short sessions, steady progress. Practice earns no XP, so there is no pressure." />
 
       <div
@@ -65,12 +71,27 @@ export default async function PracticePage() {
           <Card key={m.title} className="flex flex-col">
             <div className="flex items-start justify-between">
               <IconBox icon={m.icon} tone={m.tone} />
+              {locked && (
+                <Pill tone="amber">
+                  <Lock size={12} /> Premium
+                </Pill>
+              )}
             </div>
             <h3 className="mt-5 text-base font-semibold">{m.title}</h3>
             <p className="mt-1 flex-1 text-sm leading-relaxed text-[#1F4D3A]/60">{m.blurb}</p>
-            <Btn variant="secondary" className="mt-5 w-full" href={m.href}>
-              {m.cta} <ArrowRight size={16} />
-            </Btn>
+            {locked ? (
+              <PremiumLink
+                locked
+                href={m.href}
+                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#1F4D3A]/15 bg-white px-5 py-2.5 text-sm font-semibold text-[#1F4D3A] shadow-sm transition-colors hover:bg-[#1F4D3A]/5"
+              >
+                <Lock size={15} /> Unlock
+              </PremiumLink>
+            ) : (
+              <Btn variant="secondary" className="mt-5 w-full" href={m.href}>
+                {m.cta} <ArrowRight size={16} />
+              </Btn>
+            )}
           </Card>
         ))}
       </div>

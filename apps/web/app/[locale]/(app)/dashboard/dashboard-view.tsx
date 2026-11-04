@@ -32,12 +32,12 @@ import {
   type CourseMap,
   type MapNode,
   type MapUnit,
-  type Ranked,
   type Stats,
 } from '../data';
 import type { ReactNode } from 'react';
 import { ChartFigure, DashFigure, Dots, FxFigure, PandaFigure, SheetFigure, SigmaFigure, StarFigure } from './art';
 import { Bar, Btn, Card, IconBox, Label, Pill, SectionTitle, Stat, type Tone } from '../ui';
+import { PremiumLink } from '../paywall-modal';
 
 // Lucide icon per lesson `icon` key stored in the database.
 const ICONS: Record<string, LucideIcon> = {
@@ -63,7 +63,7 @@ const WIGGLE = [0, 90, 150, 90, 0, -90, -150, -90];
 
 // --- path -------------------------------------------------------------------
 
-function PathNode({ node, offset, mascot }: { node: MapNode; offset: number; mascot?: boolean }) {
+function PathNode({ node, offset, mascot, premium }: { node: MapNode; offset: number; mascot?: boolean; premium?: boolean }) {
   const { state } = node;
   const big = node.kind === 'TEST';
   const size = big ? 92 : 84;
@@ -106,9 +106,9 @@ function PathNode({ node, offset, mascot }: { node: MapNode; offset: number; mas
           {icon}
         </span>
       ) : (
-        <Link href={`/lesson/${node.slug}`} aria-label={node.title} className={cls} style={style}>
+        <PremiumLink locked={premium} href={`/lesson/${node.slug}`} aria-label={node.title} className={cls} style={style}>
           {icon}
-        </Link>
+        </PremiumLink>
       )}
 
       <span
@@ -123,7 +123,7 @@ function PathNode({ node, offset, mascot }: { node: MapNode; offset: number; mas
   );
 }
 
-export function UnitSection({ unit, first }: { unit: MapUnit; first: boolean }) {
+export function UnitSection({ unit, first, premium }: { unit: MapUnit; first: boolean; premium?: boolean }) {
   const locked = unit.nodes.every((n) => n.state === 'locked');
   const currentIdx = unit.nodes.findIndex((n) => n.state === 'current');
   const done = unit.nodes.filter((n) => n.state === 'done').length;
@@ -143,7 +143,11 @@ export function UnitSection({ unit, first }: { unit: MapUnit; first: boolean }) 
           <p className="mt-0.5 text-sm text-white/75">{unit.blurb}</p>
         </div>
         <span className="hidden items-center gap-1.5 rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur sm:flex">
-          {locked ? (
+          {premium ? (
+            <>
+              <Lock size={15} /> Premium
+            </>
+          ) : locked ? (
             <>
               <Lock size={15} /> Locked
             </>
@@ -157,7 +161,7 @@ export function UnitSection({ unit, first }: { unit: MapUnit; first: boolean }) 
 
       <div className="mt-12 flex flex-col items-stretch gap-6 pb-2 [--wig:0.4] sm:[--wig:0.7] lg:[--wig:1]">
         {unit.nodes.map((node, i) => (
-          <PathNode key={node.id} node={node} offset={WIGGLE[i % WIGGLE.length]} mascot={i === currentIdx} />
+          <PathNode key={node.id} node={node} offset={WIGGLE[i % WIGGLE.length]} mascot={i === currentIdx} premium={premium} />
         ))}
       </div>
     </section>
@@ -180,10 +184,10 @@ function EmptyPath() {
 
 const WEEK = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-type RailProps = { map: CourseMap | null; stats: Stats; board: Ranked[] };
+type RailProps = { map: CourseMap | null; stats: Stats };
 
 /** Shared page frame: main column on the left, stats rail on the right. */
-export function DashboardLayout({ map, stats, board, children }: RailProps & { children: ReactNode }) {
+export function DashboardLayout({ map, stats, children }: RailProps & { children: ReactNode }) {
   const pct = map && map.total > 0 ? Math.round((map.completed / map.total) * 100) : 0;
   const remaining = map ? map.total - map.completed : 0;
 
@@ -191,11 +195,6 @@ export function DashboardLayout({ map, stats, board, children }: RailProps & { c
     { icon: Zap, tone: 'amber', label: `Earn ${DAILY_XP_GOAL} XP`, value: Math.min(stats.todayXp, DAILY_XP_GOAL), max: DAILY_XP_GOAL },
     { icon: Target, tone: 'teal', label: `Finish ${DAILY_LESSON_GOAL} lessons`, value: Math.min(stats.todayLessons, DAILY_LESSON_GOAL), max: DAILY_LESSON_GOAL },
   ];
-
-  // Show the top of the board, plus the viewer if they are further down.
-  const top = board.slice(0, 4);
-  const me = board.find((p) => p.me);
-  const shown = me && !top.some((p) => p.me) ? [...top.slice(0, 3), me] : top;
 
   return (
     <div className="flex w-full">
@@ -270,34 +269,6 @@ export function DashboardLayout({ map, stats, board, children }: RailProps & { c
           </div>
         </Card>
 
-        <Card className="!p-5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[15px] font-semibold">This week</h3>
-            <Link href="/leaderboard" className="flex items-center text-xs font-semibold text-[#1D766B]">
-              Leaderboard <ChevronRight size={14} />
-            </Link>
-          </div>
-          <div className="mt-3 flex flex-col gap-0.5">
-            {shown.map((p) => (
-              <div
-                key={p.id}
-                className="flex items-center gap-3 rounded-xl px-2.5 py-2"
-                style={p.me ? { background: 'rgba(31,77,58,0.07)' } : undefined}
-              >
-                <span className="w-4 text-center text-xs font-semibold text-[#1F4D3A]/40">{p.rank}</span>
-                <span
-                  className="flex size-8 items-center justify-center rounded-full text-xs font-semibold text-white"
-                  style={{ background: p.me ? '#1F4D3A' : '#2A9D8F' }}
-                >
-                  {p.name[0]}
-                </span>
-                <span className="flex-1 text-[13px] font-semibold">{p.name}</span>
-                <span className="text-xs font-medium text-[#1F4D3A]/55">{p.xp} XP</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-
         <div
           className="rounded-2xl p-5 text-white shadow-sm"
           style={{ background: 'linear-gradient(135deg,#1F4D3A,#143326)' }}
@@ -321,10 +292,10 @@ export function DashboardLayout({ map, stats, board, children }: RailProps & { c
 
 // --- course map page -------------------------------------------------------
 
-export function CourseView({ map, stats, board }: RailProps & { map: CourseMap }) {
+export function CourseView({ map, stats }: RailProps & { map: CourseMap }) {
   const pct = map.total > 0 ? Math.round((map.completed / map.total) * 100) : 0;
   return (
-    <DashboardLayout map={map} stats={stats} board={board}>
+    <DashboardLayout map={map} stats={stats}>
       <Link href="/dashboard" className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-[#1F4D3A]/60 hover:text-[#1F4D3A]">
         <ArrowLeft size={16} /> All courses
       </Link>
@@ -335,7 +306,7 @@ export function CourseView({ map, stats, board }: RailProps & { map: CourseMap }
         </p>
       </div>
       {map.units.map((unit, i) => (
-        <UnitSection key={unit.id} unit={unit} first={i === 0} />
+        <UnitSection key={unit.id} unit={unit} first={i === 0} premium={unit.locked} />
       ))}
     </DashboardLayout>
   );
@@ -347,17 +318,17 @@ export function DashboardView({
   name,
   maps,
   stats,
-  board,
   upcoming,
 }: Omit<RailProps, 'map'> & { name?: string; maps: CourseMap[]; upcoming: { id: string; title: string; description: string }[] }) {
   // Pick up the course you have started, otherwise the first one with something left to do.
-  const active = maps.find((m) => m.completed > 0 && m.current) ?? maps.find((m) => m.current) ?? maps[0] ?? null;
+  const usable = maps.filter((m) => !m.locked);
+  const active = usable.find((m) => m.completed > 0 && m.current) ?? usable.find((m) => m.current) ?? usable[0] ?? maps[0] ?? null;
   const pct = active && active.total > 0 ? Math.round((active.completed / active.total) * 100) : 0;
   const next = active?.current ?? null;
   const nextUnit = next ? active?.units.find((u) => u.nodes.some((n) => n.id === next.id)) : null;
 
   return (
-    <DashboardLayout map={active} stats={stats} board={board}>
+    <DashboardLayout map={active} stats={stats}>
       <div className="mb-7">
         <h1 className="text-[28px] font-semibold leading-tight tracking-tight">
           {name ? `Welcome back, ${name}` : 'Welcome back'}
@@ -370,9 +341,10 @@ export function DashboardView({
       </div>
 
       {next && nextUnit && (
-        <Link
+        <PremiumLink
+          locked={nextUnit.locked}
           href={`/lesson/${next.slug}`}
-          className="mb-9 flex items-center gap-4 rounded-2xl bg-[#1F4D3A] p-5 text-white shadow-sm transition-transform hover:-translate-y-0.5"
+          className="mb-9 flex w-full items-center gap-4 rounded-2xl bg-[#1F4D3A] p-5 text-white shadow-sm transition-transform hover:-translate-y-0.5"
         >
           <PandaFigure size={56} className="shrink-0" />
           <div className="min-w-0 flex-1">
@@ -380,9 +352,9 @@ export function DashboardView({
             <h2 className="truncate text-lg font-semibold tracking-tight">{next.title}</h2>
           </div>
           <span className="flex shrink-0 items-center gap-1 rounded-xl bg-[#C7F000] px-4 py-2 text-sm font-semibold text-[#1F4D3A]">
-            Start <ChevronRight size={16} />
+            {nextUnit.locked ? <Lock size={14} /> : null} Start <ChevronRight size={16} />
           </span>
-        </Link>
+        </PremiumLink>
       )}
 
       <section>
@@ -392,8 +364,9 @@ export function DashboardView({
             const mpct = m.total > 0 ? Math.round((m.completed / m.total) * 100) : 0;
             const status = m.completed >= m.total && m.total > 0 ? 'Complete' : m.completed > 0 ? 'In progress' : 'New';
             return (
-              <Link
+              <PremiumLink
                 key={m.courseId}
+                locked={m.locked}
                 href={`/dashboard/${m.slug}`}
                 className="group flex flex-col overflow-hidden rounded-3xl border-2 border-b-4 border-[#1F4D3A]/20 bg-white transition-all hover:-translate-y-0.5 hover:border-[#1F4D3A]/40 active:translate-y-0.5 active:border-b-2"
               >
@@ -451,7 +424,13 @@ export function DashboardView({
                 <div className="flex flex-1 flex-col p-5">
                   <div className="flex items-center justify-between gap-3">
                     <h3 className="text-xl font-semibold tracking-tight">{m.title}</h3>
-                    <Pill tone={status === 'New' ? 'gray' : 'lime'}>{status}</Pill>
+                    {m.locked ? (
+                      <Pill tone="amber">
+                        <Lock size={12} /> Premium
+                      </Pill>
+                    ) : (
+                      <Pill tone={status === 'New' ? 'gray' : 'lime'}>{status}</Pill>
+                    )}
                   </div>
                   <p className="mt-1 text-[13px] leading-relaxed text-[#1F4D3A]/60">{m.description}</p>
                   <p className="mt-3 text-xs font-medium text-[#1F4D3A]/50">
@@ -462,10 +441,18 @@ export function DashboardView({
                     <p className="mt-2 text-xs font-medium text-[#1F4D3A]/50">{mpct}% complete</p>
                   </div>
                   <span className="mt-4 flex items-center justify-center rounded-2xl border-b-4 border-[#0F2A1F] bg-[#1F4D3A] py-3 text-sm font-bold uppercase tracking-wide text-white group-hover:bg-[#245a43]">
-                    {m.completed > 0 ? 'Continue' : 'Start'}
+                    {m.locked ? (
+                      <>
+                        <Lock size={15} className="mr-2" /> Unlock
+                      </>
+                    ) : m.completed > 0 ? (
+                      'Continue'
+                    ) : (
+                      'Start'
+                    )}
                   </span>
                 </div>
-              </Link>
+              </PremiumLink>
             );
           })}
           {upcoming.map((c, i) => (

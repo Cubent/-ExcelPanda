@@ -1,11 +1,12 @@
 import { database } from '@repo/database';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { Flashcards } from '@/components/lesson/Flashcards';
 import { PracticeRunner, type PracticeMode } from '@/components/lesson/PracticeRunner';
 import { CASES } from '@/lessons/cases';
-import { requireAccess } from '@/lib/require-access';
+import { hasAccess } from '@/lib/subscription';
+import { getProfile } from '../../(app)/get-profile';
 
 export const metadata = { title: 'Practice – ExcelPanda' };
 export const dynamic = 'force-dynamic';
@@ -16,7 +17,9 @@ export default async function TrainPage({ params, searchParams }: { params: Prom
   const { mode } = await params;
   const { c } = await searchParams;
   if (!MODES.includes(mode)) notFound();
-  const { userId } = await requireAccess();
+  const { userId, billing } = await getProfile();
+  // Practice modes are premium. Free users go back to Practice, where the paywall opens.
+  if (!hasAccess(billing)) redirect('/practice?upgrade=1');
 
   if (mode === 'flashcards') return <Flashcards />;
 
