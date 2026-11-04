@@ -7,15 +7,17 @@ export function HeaderShell({ children }: { children: ReactNode }) {
   const [small, setSmall] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setSmall(window.scrollY > 24);
+    // Two thresholds, so small scroll jitter near the top can never flip the header back and forth.
+    const onScroll = () => setSmall((was) => (was ? window.scrollY > 8 : window.scrollY > 40));
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   return (
-    // The outer bar keeps a fixed height so shrinking the pill never moves the page below it.
-    <header className="pointer-events-none sticky top-0 z-50 h-[88px]">
+    // The outer bar keeps a fixed height, and flow-root stops the pill's top margin from collapsing out of it,
+    // so neither the white gap above the page nor a layout shift on scroll can happen.
+    <header className="pointer-events-none sticky top-0 z-50 flow-root h-[88px]">
     <div
       className={`pointer-events-auto mx-auto transition-all duration-300 ease-out ${
         small ? 'mt-2 w-[min(92%,640px)]' : 'mt-4 w-[min(94%,900px)]'

@@ -121,7 +121,7 @@ const BlogPostPage = async ({ params }: BlogPostPageProperties) => {
         {/* overflow-x-clip (not hidden): ComparisonTable's full-bleed w-screen trick overflows
             by a scrollbar's width on desktop; clip contains that without turning this into a
             scroll container, which would break position:sticky on anything nested inside. */}
-        <article className="overflow-x-clip">
+        <article className="-mt-[88px] overflow-x-clip">
           <header className="relative isolate overflow-hidden bg-[#1F4D3A]">
             <Image
               src={post.heroImage ?? '/blog/default-hero.png'}
@@ -134,7 +134,7 @@ const BlogPostPage = async ({ params }: BlogPostPageProperties) => {
             />
             {/* Dark green cover so the picture stays a soft backdrop behind the white text. */}
             <div aria-hidden className="absolute inset-0 -z-10 bg-[#1F4D3A]/80" />
-            <div className="mx-auto max-w-3xl px-6 py-12 sm:py-20">
+            <div className="mx-auto max-w-3xl px-6 pb-12 pt-36 sm:pb-20 sm:pt-44">
               <nav aria-label="Breadcrumb" className="text-xs text-white/60">
                 <ol className="flex flex-wrap items-center gap-1.5">
                   <li>
