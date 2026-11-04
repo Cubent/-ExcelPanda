@@ -60,9 +60,6 @@ const Home = () => (
             <StartFreeButton className="rounded-md bg-[#1F4D3A] px-7 py-3.5 text-base font-semibold text-[#C7F000] transition-opacity hover:opacity-90">
               Start learning free
             </StartFreeButton>
-            <Link href="#paths" className="text-base font-semibold underline-offset-4 hover:underline">
-              See the lessons →
-            </Link>
           </div>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <div className="flex -space-x-3">
