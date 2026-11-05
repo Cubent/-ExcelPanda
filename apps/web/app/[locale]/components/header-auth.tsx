@@ -27,11 +27,11 @@ export function HeaderAuth() {
     };
   }, [open]);
 
-  if (!isLoaded) return <span aria-hidden className="h-12 w-32" />;
+  if (!isLoaded) return <span aria-hidden className="h-9 w-28 sm:h-12 sm:w-32" />;
 
   if (!isSignedIn) {
     return (
-      <StartFreeButton className="rounded-full bg-[#C7F000] px-6 py-2.5 text-base font-semibold text-[#1F4D3A] transition-colors hover:bg-[#d6ff1a]">
+      <StartFreeButton className="rounded-full bg-[#C7F000] px-4 py-2 text-sm font-semibold text-[#1F4D3A] transition-colors hover:bg-[#d6ff1a] sm:px-6 sm:py-2.5 sm:text-base">
         Start free
       </StartFreeButton>
     );
@@ -42,10 +42,10 @@ export function HeaderAuth() {
   const initial = (name || '?').charAt(0).toUpperCase();
 
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex items-center gap-2 sm:gap-2.5">
       <Link
         href="/dashboard"
-        className="rounded-full bg-[#C7F000] px-6 py-2.5 text-base font-semibold text-[#1F4D3A] transition-colors hover:bg-[#d6ff1a]"
+        className="rounded-full bg-[#C7F000] px-3.5 py-1.5 text-sm font-semibold text-[#1F4D3A] transition-colors hover:bg-[#d6ff1a] sm:px-6 sm:py-2.5 sm:text-base"
       >
         Dashboard
       </Link>
@@ -59,9 +59,9 @@ export function HeaderAuth() {
           className="block rounded-full outline-none ring-[#C7F000] focus-visible:ring-2"
         >
           {user?.imageUrl ? (
-            <img src={user.imageUrl} alt="" className="size-12 rounded-full border-2 border-[#C7F000] object-cover" />
+            <img src={user.imageUrl} alt="" className="size-9 rounded-full border-2 border-[#C7F000] object-cover sm:size-12" />
           ) : (
-            <span className="grid size-12 place-items-center rounded-full bg-[#C7F000] text-lg font-semibold text-[#1F4D3A]">{initial}</span>
+            <span className="grid size-9 place-items-center rounded-full bg-[#C7F000] text-base font-semibold text-[#1F4D3A] sm:size-12 sm:text-lg">{initial}</span>
           )}
         </button>
         {open && (

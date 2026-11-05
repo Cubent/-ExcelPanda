@@ -29,7 +29,7 @@ export function HeaderShell({ children }: { children: ReactNode }) {
         className={`relative flex items-center justify-between rounded-full bg-[#1F4D3A] transition-all duration-300 ease-out ${
           small
             ? 'py-1.5 pl-4 pr-1.5 shadow-lg shadow-[#1F4D3A]/25 [&>a:first-child>span]:text-base [&>a:first-child_img]:size-8 [&>a:last-child]:px-4 [&>a:last-child]:py-1.5 [&>a:last-child]:text-sm [&>div>a]:px-4 [&>div>a]:py-1.5 [&>div>a]:text-sm [&_button_img]:size-9 [&_button_span]:size-9'
-            : 'py-3 pl-6 pr-3 [&>a:first-child_img]:size-10'
+            : 'py-2 pl-4 pr-2 sm:py-3 sm:pl-6 sm:pr-3 [&>a:first-child>span]:max-sm:text-base [&>a:first-child_img]:max-sm:size-8 [&>a:first-child_img]:sm:size-10'
         } [&>a:first-child_img]:transition-all [&>a:first-child_img]:duration-300`}
       >
         {children}
