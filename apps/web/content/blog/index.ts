@@ -52,10 +52,13 @@ import { post as usmleStep3Syllabus } from './usmle-step-3-syllabus';
 import { post as mo201Prep } from './mo-201-excel-expert-exam-prep';
 import { post as xlookupVsVlookup } from './xlookup-vs-vlookup';
 import { post as learnExcelFast } from './learn-excel-fast-30-day-plan';
+import { post as pivotTutorial } from './pivottable-tutorial-for-beginners';
+import { post as ifExplained } from './excel-if-function-explained';
+import { post as shortcuts } from './excel-keyboard-shortcuts';
 import type { BlogPost } from './types';
 
 /** The ExcelPanda blog. */
-export const posts: BlogPost[] = [mo201Prep, xlookupVsVlookup, learnExcelFast];
+export const posts: BlogPost[] = [mo201Prep, xlookupVsVlookup, learnExcelFast, pivotTutorial, ifExplained, shortcuts];
 
 /**
  * Posts carried over from the previous USMLE product. They are kept on disk but not published: add them back to
