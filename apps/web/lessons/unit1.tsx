@@ -1,6 +1,7 @@
 import * as E from '@/components/sheet/engine';
 import { Cell, K } from './kbd';
 import type { LessonContent } from './types';
+import { OnlyMac, OnlyWindows } from './platform';
 
 const SHOP = {
   A1: 'Item',
@@ -73,12 +74,18 @@ export const cellsRanges: LessonContent = {
       body: (
         <>
           <p>
-            You are on <Cell>B2</Cell>. Hold <K>Ctrl</K> + <K>Shift</K> and press <K>↓</K>.
+            You are on <Cell>B2</Cell>.{' '}
+            <OnlyWindows>
+              Hold <K>Ctrl</K> + <K>Shift</K> and press <K>↓</K>.
+            </OnlyWindows>
+            <OnlyMac>
+              Hold <K>⌘ Cmd</K> + <K>⌃ Control</K> + <K>Shift</K> and press <K>↓</K>.
+            </OnlyMac>
           </p>
           <p>It selects everything down to the last filled cell. No dragging, even on 10,000 rows.</p>
         </>
       ),
-      hint: 'Hold Ctrl and Shift together, then tap the down arrow.',
+      hint: 'Hold the modifier keys and Shift together, then tap the down arrow.',
       success: 'B2:B4 is selected: the whole column of quantities in one move.',
       select: 'B2',
       check: (c) => c.events.has('ctrl+shift+down') && c.selection === 'B2:B4',
