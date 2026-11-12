@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Gem, Lightbulb, Settings2, Sparkles, Target, X, Zap } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Gem, Lightbulb, Settings2, Sparkles, Target, X, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as E from '@/components/sheet/engine';
@@ -650,20 +650,6 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
               ))}
             </div>
             {save === 'error' && <p className="mt-4 text-sm font-semibold text-[#C0392B]">We couldn't save your XP. Check your connection and try again.</p>}
-
-            <div className="mt-8 text-left">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1F4D3A]/45">What you practised</p>
-              <div className="mt-2.5 flex flex-wrap gap-2">
-                {steps
-                  .filter((s, i) => s.check && (!practice || solvedSet.current.has(i)))
-                  .map((s) => (
-                    <span key={s.id} className="inline-flex items-center gap-1.5 rounded-full border border-[#1F4D3A]/10 bg-white px-3 py-1.5 text-xs font-medium text-[#1F4D3A]/80">
-                      <CheckCircle2 size={13} className="text-[#2A9D8F]" />
-                      {t(s.title)}
-                    </span>
-                  ))}
-              </div>
-            </div>
 
             {save === 'error' ? (
               <button
