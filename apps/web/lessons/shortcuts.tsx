@@ -2,6 +2,7 @@
 import * as E from '@/components/sheet/engine';
 import { custom, grid } from './dsl';
 import { Cell, K } from './kbd';
+import { OnlyMac, OnlyWindows } from './platform';
 import type { LessonContent } from './types';
 
 const DATA = grid([['Item', 'Qty', 'Price'], ['Pen', 10, 2.5], ['Book', 4, 12], ['Bag', 2, 30], ['Mug', 6, 8]]);
@@ -23,8 +24,8 @@ export const shortcutTrainer: LessonContent = {
     }),
     custom({
       id: 'sc-jump', title: 'Jump down a column',
-      body: <p>The numbers run down column A. From <Cell>A1</Cell>, get to the last one in a <strong>single jump</strong> with <K>Ctrl</K> + <K>↓</K>.</p>,
-      hint: 'Ctrl+Arrow hops to the edge of a block of data.',
+      body: <p>The numbers run down column A. From <Cell>A1</Cell>, get to the last one in a <strong>single jump</strong> with <OnlyWindows><K>Ctrl</K> + <K>↓</K></OnlyWindows><OnlyMac><K>⌘ Cmd</K> + <K>⌃ Control</K> + <K>↓</K></OnlyMac>.</p>,
+      hint: 'Modifier + Arrow hops to the edge of a block of data.',
       success: 'A12 in one keystroke instead of eleven.',
       seed: COLUMN, fresh: true, select: 'A1',
       check: (c) => c.activeKey === 'A12',
