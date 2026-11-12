@@ -118,7 +118,13 @@ export const meetTheGrid: LessonContent = {
       body: (
         <>
           <p>
-            You are on <Cell>A3</Cell>. Hold <K>Ctrl</K> and press <K>↓</K> (the down arrow).
+            You are on <Cell>A3</Cell>.{' '}
+            <OnlyWindows>
+              Hold <K>Ctrl</K> and press <K>↓</K> (the down arrow).
+            </OnlyWindows>
+            <OnlyMac>
+              Hold <K>⌃ Control</K> and <K>⌘ Cmd</K> together and press <K>↓</K> (the down arrow).
+            </OnlyMac>
           </p>
           <p>
             Instead of moving one cell, you leap to the end of your data. On a sheet with thousands of rows this saves
@@ -187,12 +193,12 @@ export const meetTheGrid: LessonContent = {
             </summary>
             <div className="px-3.5 pb-3.5">
               <p>
-                On a Mac the shortcut key is <K>⌘ Cmd</K>, not Ctrl. Hold <K>⌘ Cmd</K>, then tap <K>↓</K>.
+                On a Mac, hold <K>⌃ Control</K> and <K>⌘ Cmd</K> together, then tap <K>↓</K>.
               </p>
               <p className="mt-2 text-[#1F4D3A]/70">
-                Plain <K>Ctrl</K> + <K>↓</K> is taken by macOS (it shows all your open windows), so it will not reach the
-                sheet. The other shortcuts in this course swap the same way: <K>⌘</K> + <K>B</K> for bold, <K>⌘</K> +{' '}
-                <K>Z</K> for undo, <K>⌘</K> + <K>C</K> to copy.
+                Plain <K>⌃ Control</K> + <K>↓</K> is taken by macOS (it shows all your open windows), so it will not reach
+                the sheet. Adding <K>⌘ Cmd</K> gets around that. Most other shortcuts in this course just swap Ctrl for{' '}
+                <K>⌘ Cmd</K>: <K>⌘</K> + <K>B</K> for bold, <K>⌘</K> + <K>Z</K> for undo, <K>⌘</K> + <K>C</K> to copy.
               </p>
               <ul className="mt-2 list-disc space-y-1 pl-5 text-[#1F4D3A]/70">
                 <li>
@@ -208,8 +214,8 @@ export const meetTheGrid: LessonContent = {
           </OnlyMac>
         </>
       ),
-      hint: 'Hold Ctrl first, then tap the down arrow.',
-      success: 'You jumped straight to the last number. Ctrl + Arrow is one of the most useful shortcuts in Excel.',
+      hint: 'Hold the modifier keys first, then tap the down arrow.',
+      success: 'You jumped straight to the last number. Jumping with an arrow key is one of the most useful shortcuts in Excel.',
       seed: DATA,
       fresh: true,
       select: 'A3',
