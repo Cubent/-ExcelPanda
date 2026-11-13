@@ -121,11 +121,17 @@ export const cellsRanges: LessonContent = {
       title: 'Back to the start',
       body: (
         <p>
-          Press <K>Ctrl</K> + <K>Home</K> to jump back to <Cell>A1</Cell> from anywhere.
+          <OnlyWindows>
+            Press <K>Ctrl</K> + <K>Home</K> to jump back to <Cell>A1</Cell> from anywhere.
+          </OnlyWindows>
+          <OnlyMac>
+            Hold <K>⌘ Cmd</K> + <K>Fn</K> and press <K>←</K> (that is Home on a MacBook) to jump back to <Cell>A1</Cell> from
+            anywhere.
+          </OnlyMac>
         </p>
       ),
-      hint: 'Hold Ctrl and tap Home.',
-      success: 'Lost in a big sheet? Ctrl + Home always takes you back.',
+      hint: 'Hold the modifier keys and tap Home (on a MacBook: Fn + left arrow).',
+      success: 'Lost in a big sheet? The Home jump always takes you back to A1.',
       select: 'D8',
       check: (c) => c.events.has('ctrl+home') && c.activeKey === 'A1',
     },
