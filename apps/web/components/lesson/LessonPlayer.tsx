@@ -105,6 +105,7 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
   const [, bump] = useState(0);
   const [index, setIndex] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [introAck, setIntroAck] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [snap, setSnap] = useState<SheetSnapshot | null>(null);
   const [pivotState, setPivotState] = useState<PivotState | null>(null);
@@ -527,6 +528,8 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
     setShowHint(false);
     setIndex((i) => Math.max(0, i - 1));
   };
+  // First step of a lesson: show an explicit "Understood" button so the learner knows what to do next.
+  const needsAck = index === 0 && !practice && !!step.check && !done && !introAck;
   const continueBtn = (cls: string) => (
     <div className={`flex shrink-0 gap-2 ${cls.includes('w-full') ? 'w-full' : ''}`}>
       {index > 0 && !practice && (
@@ -546,11 +549,11 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
       )}
       <button
         type="button"
-        disabled={!done}
-        onClick={next}
+        disabled={!done && !needsAck}
+        onClick={needsAck ? () => setIntroAck(true) : next}
         className={`flex shrink-0 items-center justify-center gap-2 rounded-2xl border-2 border-b-4 border-[#0F2A1F] bg-[#1F4D3A] py-3 text-sm font-extrabold uppercase tracking-wide text-white transition-all hover:-translate-y-0.5 hover:bg-[#245a43] active:translate-y-0.5 active:border-b-2 disabled:translate-y-0 disabled:cursor-not-allowed disabled:border-[#1F4D3A]/10 disabled:bg-[#1F4D3A]/10 disabled:text-[#1F4D3A]/35 disabled:hover:bg-[#1F4D3A]/10 ${cls.includes('w-full') ? 'flex-1' : cls}`}
       >
-        {index + 1 >= total ? 'Finish lesson' : 'Continue'} <ArrowRight size={16} />
+        {needsAck || (index === 0 && !practice && !step.check) ? 'Understood' : index + 1 >= total ? 'Finish lesson' : 'Continue'} <ArrowRight size={16} />
       </button>
     </div>
   );
