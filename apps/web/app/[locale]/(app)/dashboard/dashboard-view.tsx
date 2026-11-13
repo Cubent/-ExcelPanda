@@ -313,6 +313,34 @@ export function CourseView({ map, stats }: RailProps & { map: CourseMap }) {
 
 // --- overview: courses ------------------------------------------------------
 
+// Difficulty of each course (1 = beginner, 2 = intermediate, 3 = advanced). Unknown courses fall back to their position.
+const LEVELS: Record<string, 1 | 2 | 3> = {
+  'excel-basics': 1,
+  'formulas-functions': 1,
+  'data-analysis-pivots': 2,
+  'data-dashboards': 2,
+  'excel-finance': 2,
+  'advanced-formulas': 3,
+  'excel-automation': 3,
+};
+const LEVEL_NAMES = ['Beginner', 'Intermediate', 'Advanced'] as const;
+const LEVEL_COLORS = ['#58CC02', '#FFB800', '#FF4B4B'] as const;
+
+/** Duolingo-style difficulty meter: three bars that fill up with the level. */
+function LevelMeter({ level }: { level: 1 | 2 | 3 }) {
+  const color = LEVEL_COLORS[level - 1];
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide" style={{ color }}>
+      <span className="flex items-end gap-0.5" aria-hidden>
+        {[1, 2, 3].map((b) => (
+          <span key={b} className="w-1 rounded-full" style={{ height: 6 + b * 3, background: b <= level ? color : '#1F4D3A22' }} />
+        ))}
+      </span>
+      {LEVEL_NAMES[level - 1]}
+    </span>
+  );
+}
+
 export function DashboardView({
   name,
   maps,
@@ -433,9 +461,12 @@ export function DashboardView({
                     )}
                   </div>
                   <p className="mt-1 text-[13px] leading-relaxed text-[#1F4D3A]/60">{m.description}</p>
-                  <p className="mt-3 text-xs font-medium text-[#1F4D3A]/50">
-                    {m.units.length} units · {m.total} lessons
-                  </p>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs font-medium text-[#1F4D3A]/50">
+                      {m.units.length} units · {m.total} lessons
+                    </p>
+                    <LevelMeter level={LEVELS[m.slug] ?? (Math.min(3, Math.floor((mi * 3) / Math.max(maps.length, 1)) + 1) as 1 | 2 | 3)} />
+                  </div>
                   <div className="mt-4">
                     <Bar value={m.completed} max={Math.max(m.total, 1)} height={8} />
                     <p className="mt-2 text-xs font-medium text-[#1F4D3A]/50">{mpct}% complete</p>
