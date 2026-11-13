@@ -507,6 +507,15 @@ export function DashboardView({
               </div>
             </div>
           ))}
+          {(maps.length > 0 || upcoming.length > 0) && (
+            <div className="flex min-h-[18rem] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[#1F4D3A]/20 bg-[#1F4D3A]/[0.03] p-6 text-center">
+              <StarFigure size={36} className="rotate-12 opacity-50" />
+              <h3 className="mt-3 text-lg font-semibold tracking-tight text-[#1F4D3A]/60">More courses coming</h3>
+              <p className="mt-1 max-w-[16rem] text-[13px] leading-relaxed text-[#1F4D3A]/45">
+                We are adding new courses all the time. Check back soon.
+              </p>
+            </div>
+          )}
         </div>
         {maps.length === 0 && upcoming.length === 0 && <EmptyPath />}
       </section>
