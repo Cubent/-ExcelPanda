@@ -99,6 +99,16 @@ export function OpenPaywallOnMount() {
   return null;
 }
 
+/** A button that opens the paywall popup. */
+export function PaywallButton({ className, children }: { className?: string; children: ReactNode }) {
+  const { open } = usePaywall();
+  return (
+    <button type="button" onClick={open} className={className}>
+      {children}
+    </button>
+  );
+}
+
 /** A normal link, or a button that opens the paywall when the destination is premium. */
 export function PremiumLink({
   locked,

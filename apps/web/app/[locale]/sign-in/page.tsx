@@ -53,6 +53,8 @@ export default async function SignInPage() {
                 footerAction: 'bg-white',
                 otpCodeFieldInput: '!bg-[#F1F3F0] !border-[#1F4D3A]/20 !text-black',
                 otpCodeField: 'bg-transparent',
+                socialButtonsBlockButton: '!bg-[#F1F3F0] hover:!bg-[#E6E9E5] !border-[#1F4D3A]/10',
+                socialButtonsBlockButtonText: '!text-[#111111] !font-semibold',
               },
             }}
           />

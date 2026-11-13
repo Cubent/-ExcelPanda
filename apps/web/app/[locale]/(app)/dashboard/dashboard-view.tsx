@@ -37,7 +37,8 @@ import {
 import type { ReactNode } from 'react';
 import { ChartFigure, DashFigure, Dots, FxFigure, PandaFigure, SheetFigure, SigmaFigure, StarFigure } from './art';
 import { Bar, Btn, Card, IconBox, Label, Pill, SectionTitle, Stat, type Tone } from '../ui';
-import { PremiumLink } from '../paywall-modal';
+import { PaywallButton, PremiumLink } from '../paywall-modal';
+import { StartOrResume } from '../resume-label';
 
 // Lucide icon per lesson `icon` key stored in the database.
 const ICONS: Record<string, LucideIcon> = {
@@ -63,7 +64,7 @@ const WIGGLE = [0, 90, 150, 90, 0, -90, -150, -90];
 
 // --- path -------------------------------------------------------------------
 
-function PathNode({ node, offset, mascot, premium }: { node: MapNode; offset: number; mascot?: boolean; premium?: boolean }) {
+function PathNode({ node, offset, mascot, premium, resume }: { node: MapNode; offset: number; mascot?: boolean; premium?: boolean; resume?: boolean }) {
   const { state } = node;
   const big = node.kind === 'TEST';
   const size = big ? 92 : 84;
@@ -96,7 +97,7 @@ function PathNode({ node, offset, mascot, premium }: { node: MapNode; offset: nu
           className="absolute -top-11 z-10 rounded-lg bg-[#1F4D3A] px-3.5 py-1.5 text-xs font-semibold tracking-wide text-white shadow-md"
           style={{ animation: 'dash-float 1.8s ease-in-out infinite' }}
         >
-          Start
+          <StartOrResume contentKey={node.contentKey} resume={resume} />
           <span className="absolute -bottom-1 left-1/2 size-2.5 -translate-x-1/2 rotate-45 bg-[#1F4D3A]" />
         </div>
       )}
@@ -123,7 +124,7 @@ function PathNode({ node, offset, mascot, premium }: { node: MapNode; offset: nu
   );
 }
 
-export function UnitSection({ unit, first, premium }: { unit: MapUnit; first: boolean; premium?: boolean }) {
+export function UnitSection({ unit, first, premium, resume }: { unit: MapUnit; first: boolean; premium?: boolean; resume?: boolean }) {
   const locked = unit.nodes.every((n) => n.state === 'locked');
   const currentIdx = unit.nodes.findIndex((n) => n.state === 'current');
   const done = unit.nodes.filter((n) => n.state === 'done').length;
@@ -142,26 +143,24 @@ export function UnitSection({ unit, first, premium }: { unit: MapUnit; first: bo
           <h2 className="mt-1 text-xl font-semibold tracking-tight">{unit.title}</h2>
           <p className="mt-0.5 text-sm text-white/75">{unit.blurb}</p>
         </div>
-        <span className="hidden items-center gap-1.5 rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur sm:flex">
-          {premium ? (
-            <>
-              <Lock size={15} /> Premium
-            </>
-          ) : locked ? (
-            <>
-              <Lock size={15} /> Locked
-            </>
-          ) : (
-            <>
-              <BookOpen size={15} /> Guide
-            </>
-          )}
-        </span>
+        {(premium || locked) && (
+          <span className="hidden items-center gap-1.5 rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur sm:flex">
+            {premium ? (
+              <>
+                <Lock size={15} /> Premium
+              </>
+            ) : (
+              <>
+                <Lock size={15} /> Locked
+              </>
+            )}
+          </span>
+        )}
       </div>
 
       <div className="mt-12 flex flex-col items-stretch gap-6 pb-2 [--wig:0.4] sm:[--wig:0.7] lg:[--wig:1]">
         {unit.nodes.map((node, i) => (
-          <PathNode key={node.id} node={node} offset={WIGGLE[i % WIGGLE.length]} mascot={i === currentIdx} premium={premium} />
+          <PathNode key={node.id} node={node} offset={WIGGLE[i % WIGGLE.length]} mascot={i === currentIdx} premium={premium} resume={resume} />
         ))}
       </div>
     </section>
@@ -198,7 +197,7 @@ export function DashboardLayout({ map, stats, children }: RailProps & { children
 
   return (
     <div className="flex w-full">
-      <main className="min-w-0 flex-1 px-4 pb-32 pt-9 lg:px-12 lg:pb-16">
+      <main className="min-w-0 flex-1 overflow-x-clip px-4 pb-32 pt-9 lg:px-12 lg:pb-16">
         <div className="mx-auto w-full max-w-[820px]">{children}</div>
       </main>
 
@@ -275,15 +274,15 @@ export function DashboardLayout({ map, stats, children }: RailProps & { children
         >
           <div className="flex items-center justify-between">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#C7F000]">ExcelPanda Pro</p>
-            <Pill tone="lime">Soon</Pill>
+            <Pill tone="lime">7 days free</Pill>
           </div>
           <h3 className="mt-1.5 text-lg font-semibold tracking-tight">Master Excel faster</h3>
           <p className="mt-1 text-[13px] leading-relaxed text-white/70">
             Unlimited lessons, mistake review and completion certificates.
           </p>
-          <Btn variant="lime" className="mt-4 w-full" disabled>
-            Coming soon
-          </Btn>
+          <PaywallButton className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#C7F000] px-5 py-2.5 text-sm font-semibold text-[#1F4D3A] shadow-sm transition-colors hover:bg-[#d4f526]">
+            Start free trial
+          </PaywallButton>
         </div>
       </aside>
     </div>
@@ -306,7 +305,7 @@ export function CourseView({ map, stats }: RailProps & { map: CourseMap }) {
         </p>
       </div>
       {map.units.map((unit, i) => (
-        <UnitSection key={unit.id} unit={unit} first={i === 0} premium={unit.locked} />
+        <UnitSection key={unit.id} unit={unit} first={i === 0} premium={unit.locked} resume={map.completed > 0} />
       ))}
     </DashboardLayout>
   );
@@ -326,12 +325,13 @@ export function DashboardView({
   const pct = active && active.total > 0 ? Math.round((active.completed / active.total) * 100) : 0;
   const next = active?.current ?? null;
   const nextUnit = next ? active?.units.find((u) => u.nodes.some((n) => n.id === next.id)) : null;
+  const isFirstTime = maps.every((m) => m.completed === 0);
 
   return (
     <DashboardLayout map={active} stats={stats}>
       <div className="mb-7">
         <h1 className="text-[28px] font-semibold leading-tight tracking-tight">
-          {name ? `Welcome back, ${name}` : 'Welcome back'}
+          {isFirstTime ? 'Welcome' : 'Welcome back'}{name ? `, ${name}` : ''}
         </h1>
         {active && (
           <p className="mt-1.5 text-[15px] text-[#1F4D3A]/60">
@@ -348,11 +348,11 @@ export function DashboardView({
         >
           <PandaFigure size={56} className="shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-white/60">Continue where you left off</p>
+            <p className="text-xs font-medium text-white/60">{isFirstTime ? 'Start your first lesson' : 'Continue where you left off'}</p>
             <h2 className="truncate text-lg font-semibold tracking-tight">{next.title}</h2>
           </div>
           <span className="flex shrink-0 items-center gap-1 rounded-xl bg-[#C7F000] px-4 py-2 text-sm font-semibold text-[#1F4D3A]">
-            {nextUnit.locked ? <Lock size={14} /> : null} Start <ChevronRight size={16} />
+            {nextUnit.locked ? <Lock size={14} /> : null} <StartOrResume contentKey={next.contentKey} resume={!!active && active.completed > 0} /> <ChevronRight size={16} />
           </span>
         </PremiumLink>
       )}

@@ -202,7 +202,13 @@ function TimeChartScreen({ minutes }: { minutes: number }) {
             const active = m === minutes;
             const h = Math.max(46, (w / max) * BAR_MAX);
             return (
-              <div key={m} className="flex flex-1 flex-col items-center justify-end">
+              <div
+                key={m}
+                className={`flex-1 flex-col items-center justify-end ${
+                  // Mobile shows 4 bars: drop the 1 hr bar, or the 5 min bar when 1 hr is selected.
+                  (m === 60 && minutes !== 60) || (m === 5 && minutes === 60) ? 'hidden sm:flex' : 'flex'
+                }`}
+              >
                 <div className="mb-2 h-6">
                   {active && (
                     <span className="rounded-full bg-[#1F4D3A] px-2.5 py-1 text-xs font-bold text-[#C7F000]">You</span>
@@ -756,7 +762,7 @@ export function OnboardingFlow({ initialAnswers, resume }: { initialAnswers?: An
     startTransition(async () => {
       try {
         // Nothing is saved as "finished" here: onboarding completes only after the payment succeeds.
-        await startCheckout(plan, { answers, returnTo: offerOpen ? 'offer' : 'paywall' });
+        await startCheckout(plan, { answers, returnTo: 'offer' });
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
       }

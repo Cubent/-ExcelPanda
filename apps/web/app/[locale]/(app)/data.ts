@@ -1,6 +1,7 @@
 import 'server-only';
 import { database } from '@repo/database';
 import { cache } from 'react';
+import { getLessonContent } from '@/lessons/registry';
 
 // ---------------------------------------------------------------------------
 // Course map
@@ -16,6 +17,8 @@ export type MapNode = {
   slug: string;
   title: string;
   icon: string;
+  /** Key of the written lesson content (used to tell if a lesson was started). */
+  contentKey?: string | null;
   kind: 'LESSON' | 'CHEST' | 'TEST';
   xp: number;
   state: NodeState;
@@ -80,7 +83,8 @@ export const getCourseMaps = cache(async (userId: string): Promise<CourseMap[]> 
   let unitsDone = 0;
 
   const units: MapUnit[] = course.units.map((u) => {
-    const nodes: MapNode[] = u.lessons.map((l) => {
+    // Lessons with no written content (they would open a "coming soon" page) stay off the path.
+    const nodes: MapNode[] = u.lessons.filter((l) => !!getLessonContent(l.contentKey)).map((l) => {
       let state: NodeState;
       if (done.has(l.id)) {
         state = 'done';
@@ -93,7 +97,7 @@ export const getCourseMaps = cache(async (userId: string): Promise<CourseMap[]> 
       let slug = l.title.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'lesson';
       if (usedSlugs.has(slug)) slug = `${slug}-${course.slug}`;
       usedSlugs.add(slug);
-      const node: MapNode = { id: l.id, slug, title: l.title, icon: l.icon, kind: l.kind, xp: l.xp, state, open: UNLOCK_ALL || state !== 'locked' };
+      const node: MapNode = { id: l.id, slug, title: l.title, icon: l.icon, contentKey: l.contentKey, kind: l.kind, xp: l.xp, state, open: UNLOCK_ALL || state !== 'locked' };
       if (state === 'current') current = node;
       total += 1;
       if (state === 'done') completed += 1;
@@ -107,7 +111,7 @@ export const getCourseMaps = cache(async (userId: string): Promise<CourseMap[]> 
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '') || `unit-${u.order}`;
     return { id: u.id, slug, number: u.order, title: u.title, blurb: u.blurb, nodes };
-  });
+  }).filter((u) => u.nodes.length > 0);
 
   return { courseId: course.id, slug: course.slug, title: course.title, description: course.description, units, total, completed, unitsDone, current };
   });

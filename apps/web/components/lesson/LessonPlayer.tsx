@@ -17,6 +17,7 @@ import { macify, useIsMac } from '@/lessons/platform';
 import { getLessonContent } from '@/lessons/registry';
 import { setSheetSize } from '@/components/sheet/engine';
 import { playComplete, playNext, playSuccess } from './sounds';
+import { nodeToText, TutorButton, TutorSidebar, type TutorContext } from './TutorPanel';
 import type { LessonContent, SheetView, StepCtx } from '@/lessons/types';
 
 const PRAISE = ['Well done!', 'Nice one!', 'Perfect!', 'You nailed it!', 'Spot on!', 'Great job!', 'Excellent!', 'Boom, correct!'];
@@ -27,6 +28,8 @@ const ANIM_CSS = `
 @keyframes xp-ring{0%{transform:scale(.8);opacity:.9}100%{transform:scale(1.5);opacity:0}}
 @keyframes xp-rise{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
 @keyframes xp-spin{0%{transform:scale(0) rotate(0)}100%{transform:scale(1) rotate(360deg)}}
+@keyframes panda-shuffle{0%,60%,100%{transform:rotate(0) translateX(0)}10%{transform:rotate(-7deg) translateX(-3px)}20%{transform:rotate(7deg) translateX(3px)}30%{transform:rotate(-6deg) translateX(-3px)}40%{transform:rotate(6deg) translateX(3px)}50%{transform:rotate(-3deg)}}
+@keyframes panda-pop{0%{opacity:0;transform:translateY(-8px) scale(.9)}100%{opacity:1;transform:none}}
 @keyframes xp-fall{0%{opacity:1;transform:translate3d(0,-10vh,0) rotate(0)}100%{opacity:0;transform:translate3d(var(--dx),105vh,0) rotate(var(--rot))}}
 `;
 
@@ -52,7 +55,7 @@ function Confetti() {
 }
 
 type Opts = { layout: 'center' | 'side'; toolbar: boolean; status: boolean; full: boolean; sound: boolean };
-const DEFAULT_OPTS: Opts = { layout: 'center', toolbar: false, status: true, full: false, sound: true };
+const DEFAULT_OPTS: Opts = { layout: 'side', toolbar: false, status: true, full: false, sound: true };
 
 type Props = {
   contentKey: string;
@@ -116,6 +119,41 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
   const [earned, setEarned] = useState({ xp: 0, gems: 0 });
   const [opts, setOpts] = useState<Opts>(DEFAULT_OPTS);
   const [menu, setMenu] = useState(false);
+  const [tutorOpen, setTutorOpen] = useState(false);
+  // After 2 minutes on a step without solving it, nudge the learner towards the tutor.
+  const [nudge, setNudge] = useState(false);
+  const [debugOpen, setDebugOpen] = useState(false);
+  // In the side-panel layout the compact sheet gets as many columns as fit, so there is no empty strip on its right.
+  const [sideCols, setSideCols] = useState(10);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const measure = () => {
+      const w = window.innerWidth;
+      // Page padding (48) + side panel (380) + gap (16) + row header (46); below the lg breakpoint the panel stacks on top.
+      const avail = w >= 1024 ? w - 48 - 380 - 16 - 46 : w - 32 - 46;
+      setSideCols(Math.max(10, Math.min(20, Math.floor(avail / 92))));
+    };
+    const onResize = () => {
+      clearTimeout(timer);
+      timer = setTimeout(measure, 200);
+    };
+    measure();
+    window.addEventListener('resize', onResize);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', onResize);
+    };
+  }, []);
+  // Changing the column count remounts the grid: put the learner's work straight back.
+  const snapRef = useRef<SheetSnapshot | null>(null);
+  snapRef.current = snap;
+  const lastCols = useRef(sideCols);
+  useEffect(() => {
+    if (lastCols.current === sideCols) return;
+    lastCols.current = sideCols;
+    const data = snapRef.current?.data;
+    if (data) setTimeout(() => gridRef.current?.reset(data), 0);
+  }, [sideCols]);
   const loaded = useRef(false);
   useEffect(() => {
     try {
@@ -152,7 +190,7 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
   const big = opts.full || autoLarge;
   if (opts.full) setSheetSize(26, 100);
   else if (autoLarge) setSheetSize(largeSize.cols, largeSize.rows);
-  else setSheetSize(10, 14);
+  else setSheetSize(opts.layout === 'side' ? sideCols : 10, 14);
   // Remember which step you are on, so a reload picks up where you left off.
   const stepKey = `xp-lesson-step:${contentKey}`;
   const stepLoaded = useRef(false);
@@ -341,6 +379,53 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
   }, []);
 
 
+  // What the AI tutor is told about where the learner is right now.
+  const tutorCtxRef = useRef<() => TutorContext>(() => ({ lesson: '', unit: '', stepNumber: 0, stepTotal: 0, stepTitle: '', stepText: '', solved: false }));
+  tutorCtxRef.current = () => {
+    const cells: Record<string, string> = {};
+    if (snap) {
+      for (const [k, v] of Object.entries(snap.data.cells)) if (v !== '' && Object.keys(cells).length < 60) cells[k] = v;
+    }
+    return {
+      lesson: lesson?.title ?? '',
+      unit: unitTitle,
+      stepNumber: index + 1,
+      stepTotal: steps.length,
+      stepTitle: step?.title ?? '',
+      stepText: step ? nodeToText(step.body) : '',
+      hint: step?.hint,
+      solved: !!step?.check && done,
+      selection: snap ? E.rectLabel(snap.rect) : undefined,
+      activeCell: snap ? E.keyOf(snap.active.c, snap.active.r) : undefined,
+      cells,
+    };
+  };
+  const getTutorContext = useCallback(() => tutorCtxRef.current(), []);
+  const closeTutor = useCallback(() => {
+    setTutorOpen(false);
+    setTimeout(() => gridRef.current?.focus(), 0);
+  }, []);
+
+  // Shows for 5 seconds, then comes back every 2 minutes until the step is solved.
+  useEffect(() => {
+    setNudge(false);
+    if (finished || tutorOpen || done) return;
+    let hide: ReturnType<typeof setTimeout> | undefined;
+    const show = () => {
+      setNudge(true);
+      clearTimeout(hide);
+      hide = setTimeout(() => setNudge(false), 5000);
+    };
+    const every = setInterval(show, 120_000);
+    return () => {
+      clearInterval(every);
+      clearTimeout(hide);
+    };
+  }, [index, finished, tutorOpen, done]);
+  useEffect(() => {
+    if (done || tutorOpen) setNudge(false);
+  }, [done, tutorOpen]);
+
   // Practice countdown: when it reaches zero the session ends.
   useEffect(() => {
     if (!practice?.limitSec || finished) return;
@@ -391,15 +476,18 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
 
   const heading = (center: boolean) => (
     <div className={center ? 'shrink-0 text-center' : ''}>
-      <div className={`flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1F4D3A]/50 ${center ? 'justify-center' : ''}`}>
-        <span>{unitTitle}</span>
-        <span>·</span>
-        <span>
+      <div className={`flex flex-wrap items-center gap-2 ${center ? 'justify-center' : ''}`}>
+        <span className="rounded-full border-2 border-b-4 border-[#98BA00] bg-[#C7F000] px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wider text-[#1F4D3A]">
           Step {index + 1} of {total}
         </span>
+        <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1F4D3A]/45">{unitTitle}</span>
       </div>
-      <h1 className={`font-semibold leading-tight tracking-tight ${center ? 'mt-2 text-2xl' : 'mt-3 text-2xl'}`}>{t(step.title)}</h1>
-      <div className={`space-y-2 text-[15px] leading-relaxed text-[#1F4D3A]/80 ${center ? 'mx-auto mt-2 max-w-2xl' : 'mt-4 space-y-3'}`}>{step.body}</div>
+      <h1 className={`font-extrabold leading-tight tracking-tight text-[#1F4D3A] ${center ? 'mt-3 text-3xl' : 'mt-4 text-[28px]'}`}>{t(step.title)}</h1>
+      <div
+        className={`space-y-2.5 text-base leading-relaxed text-[#1F4D3A]/80 [&_strong]:font-bold [&_strong]:text-[#1F4D3A] [&_code]:rounded-md [&_code]:border [&_code]:border-[#1F4D3A]/10 [&_code]:bg-[#1F4D3A]/[0.06] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.9em] [&_code]:font-semibold [&_code]:text-[#14594F] ${center ? 'mx-auto mt-3 max-w-2xl' : 'mt-4 space-y-3'}`}
+      >
+        {step.body}
+      </div>
     </div>
   );
 
@@ -446,13 +534,13 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
           type="button"
           onClick={back}
           aria-label="Previous step"
-          className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-[#1F4D3A]/25 bg-white px-4 py-3 text-sm font-semibold text-[#1F4D3A] transition-colors hover:bg-[#1F4D3A]/5"
+          className="flex shrink-0 items-center justify-center gap-1.5 rounded-2xl border-2 border-b-4 border-[#1F4D3A]/15 bg-white px-4 py-3 text-sm font-extrabold uppercase tracking-wide text-[#1F4D3A] transition-all hover:-translate-y-0.5 hover:bg-[#1F4D3A]/5 active:translate-y-0.5 active:border-b-2"
         >
           <ArrowLeft size={16} /> Back
         </button>
       )}
       {practice && step.check && !done && (
-        <button type="button" onClick={skip} className="flex shrink-0 items-center justify-center rounded-xl border border-[#1F4D3A]/25 bg-white px-4 py-3 text-sm font-semibold text-[#1F4D3A]/70 transition-colors hover:bg-[#1F4D3A]/5">
+        <button type="button" onClick={skip} className="flex shrink-0 items-center justify-center rounded-2xl border-2 border-b-4 border-[#1F4D3A]/15 bg-white px-4 py-3 text-sm font-extrabold uppercase tracking-wide text-[#1F4D3A]/70 transition-all hover:-translate-y-0.5 hover:bg-[#1F4D3A]/5 active:translate-y-0.5 active:border-b-2">
           Skip
         </button>
       )}
@@ -460,7 +548,7 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
         type="button"
         disabled={!done}
         onClick={next}
-        className={`flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1F4D3A] py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#173d2e] disabled:cursor-not-allowed disabled:bg-[#1F4D3A]/25 disabled:shadow-none ${cls.includes('w-full') ? 'flex-1' : cls}`}
+        className={`flex shrink-0 items-center justify-center gap-2 rounded-2xl border-2 border-b-4 border-[#0F2A1F] bg-[#1F4D3A] py-3 text-sm font-extrabold uppercase tracking-wide text-white transition-all hover:-translate-y-0.5 hover:bg-[#245a43] active:translate-y-0.5 active:border-b-2 disabled:translate-y-0 disabled:cursor-not-allowed disabled:border-[#1F4D3A]/10 disabled:bg-[#1F4D3A]/10 disabled:text-[#1F4D3A]/35 disabled:hover:bg-[#1F4D3A]/10 ${cls.includes('w-full') ? 'flex-1' : cls}`}
       >
         {index + 1 >= total ? 'Finish lesson' : 'Continue'} <ArrowRight size={16} />
       </button>
@@ -505,10 +593,44 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
         </div>
       )}
       {finished && <Confetti />}
-      <Link href="/dashboard" className="flex shrink-0 items-center gap-2 px-4 pt-3 sm:px-6">
-        <img src="/animateos-logo (4).png" alt="ExcelPanda logo" className="size-7 rounded-lg object-cover" />
-        <span className="text-[15px] font-semibold tracking-tight">ExcelPanda</span>
-      </Link>
+      {process.env.NODE_ENV !== 'production' && !finished && (
+        <div className="fixed bottom-3 left-3 z-[80] text-xs" onKeyDown={(e) => e.stopPropagation()}>
+          {debugOpen && (
+            <div className="mb-2 flex w-48 flex-col gap-1 rounded-xl border-2 border-[#1F4D3A]/15 bg-white p-2 shadow-lg">
+              <p className="px-1 font-bold uppercase tracking-wider text-[#1F4D3A]/50">
+                Step {index + 1}/{total} {done ? '· solved' : ''}
+              </p>
+              <button type="button" onClick={() => { setNudge(true); setTimeout(() => setNudge(false), 5000); }} className="rounded-lg bg-[#1F4D3A]/8 px-2 py-1.5 text-left font-semibold hover:bg-[#1F4D3A]/15">
+                Show Panda nudge
+              </button>
+              <button type="button" onClick={() => setIndex((i) => Math.max(0, i - 1))} disabled={index === 0} className="rounded-lg bg-[#1F4D3A]/8 px-2 py-1.5 text-left font-semibold hover:bg-[#1F4D3A]/15 disabled:opacity-40">
+                Previous step
+              </button>
+              <button type="button" onClick={() => setIndex((i) => Math.min(total - 1, i + 1))} disabled={index >= total - 1} className="rounded-lg bg-[#1F4D3A]/8 px-2 py-1.5 text-left font-semibold hover:bg-[#1F4D3A]/15 disabled:opacity-40">
+                Skip step (no XP)
+              </button>
+              <button type="button" onClick={() => setIndex(total - 1)} className="rounded-lg bg-[#1F4D3A]/8 px-2 py-1.5 text-left font-semibold hover:bg-[#1F4D3A]/15">
+                Jump to last step
+              </button>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => setDebugOpen((o) => !o)}
+            className="rounded-xl border-2 border-b-4 border-[#1F4D3A]/20 bg-white px-3 py-1.5 font-extrabold uppercase tracking-wide text-[#1F4D3A]/70 hover:bg-[#1F4D3A]/5"
+          >
+            Debug
+          </button>
+        </div>
+      )}
+      <TutorSidebar open={tutorOpen} onClose={closeTutor} getContext={getTutorContext} stepLabel={`${lesson?.title ?? unitTitle} · Step ${Math.min(index + 1, steps.length)} of ${steps.length}`} />
+      <div className="relative z-40 flex shrink-0 items-center justify-between gap-3 px-4 pt-3 sm:px-6">
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <img src="/animateos-logo (4).png" alt="ExcelPanda logo" className="size-7 rounded-lg object-cover" />
+          <span className="text-[15px] font-semibold tracking-tight">ExcelPanda</span>
+        </Link>
+        <TutorButton onClick={() => { setNudge(false); setTutorOpen((o) => !o); }} open={tutorOpen} nudge={nudge} onDismissNudge={() => setNudge(false)} />
+      </div>
       <header className="flex items-center gap-4 px-4 pb-3 pt-2 sm:px-6">
         <Link
           href={courseHref}
@@ -664,7 +786,7 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
                 {nextLesson && (
                   <Link
                     href={nextLesson.href}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1F4D3A] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#173d2e]"
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-b-4 border-[#98BA00] bg-[#C7F000] px-5 py-3.5 text-sm font-extrabold uppercase tracking-wide text-[#1F4D3A] transition-all hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0.5 active:border-b-2"
                   >
                     <span className="truncate">Next lesson: {nextLesson.title}</span> <ArrowRight size={16} className="shrink-0" />
                   </Link>
@@ -674,7 +796,7 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
                   className={
                     nextLesson
                       ? 'flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#1F4D3A]/15 px-5 py-3 text-sm font-semibold text-[#1F4D3A] transition-colors hover:bg-[#1F4D3A]/5'
-                      : 'flex w-full items-center justify-center gap-2 rounded-xl bg-[#1F4D3A] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#173d2e]'
+                      : 'flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-b-4 border-[#98BA00] bg-[#C7F000] px-5 py-3.5 text-sm font-extrabold uppercase tracking-wide text-[#1F4D3A] transition-all hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0.5 active:border-b-2'
                   }
                 >
                   {practice ? 'Back to practice' : 'Back to your path'} {!nextLesson && <ArrowRight size={16} />}
@@ -736,7 +858,7 @@ export function LessonPlayer({ contentKey, unitTitle, xp, alreadyDone, courseHre
               </div>
             )}
             <div className={view === 'sheet' ? (big ? 'min-h-0 flex-1' : '') : 'hidden'}>
-              <SheetGrid key={big ? `full-${opts.full ? 'all' : largeSize.cols}` : 'compact'} ref={gridRef} autoFocus toolbar={opts.toolbar || !!lesson.toolbar} statusBar={opts.status} noScroll={!big} fit={!big} tools={step.tools ?? lesson.tools} onState={setSnap} onEvent={onEvent} />
+              <SheetGrid key={big ? `full-${opts.full ? 'all' : largeSize.cols}` : `compact-${opts.layout === 'side' ? sideCols : 10}`} ref={gridRef} autoFocus toolbar={opts.toolbar || !!lesson.toolbar} statusBar={opts.status} noScroll={!big} fit={!big} tools={step.tools ?? lesson.tools} onState={setSnap} onEvent={onEvent} />
             </div>
             {pivotCfg && (
               <div className={view === 'pivot' ? 'h-[calc(100dvh-390px)] min-h-[300px] max-h-[460px] overflow-hidden rounded-xl border border-[#1F4D3A]/15 bg-white' : 'hidden'}>
