@@ -1,6 +1,6 @@
 'use client';
 
-import { Dumbbell, Map as MapIcon, Target, UserRound } from 'lucide-react';
+import { Dumbbell, LifeBuoy, Map as MapIcon, Target, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -9,6 +9,7 @@ const NAV = [
   { label: 'Practice', icon: Dumbbell, href: '/practice' },
   { label: 'Quests', icon: Target, href: '/quests' },
   { label: 'Profile', icon: UserRound, href: '/profile' },
+  { label: 'Support', icon: LifeBuoy, href: '/support' },
 ];
 
 function useActive() {
@@ -43,9 +44,10 @@ export function SidebarNav() {
 
 export function BottomNav() {
   const isActive = useActive();
+  const tabs = NAV.filter((n) => n.href !== '/support');
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 flex justify-around border-t border-[#1F4D3A]/10 bg-white/95 px-2 py-2 backdrop-blur lg:hidden">
-      {NAV.map(({ label, icon: Icon, href }) => {
+      {tabs.map(({ label, icon: Icon, href }) => {
         const active = isActive(href);
         return (
           <Link

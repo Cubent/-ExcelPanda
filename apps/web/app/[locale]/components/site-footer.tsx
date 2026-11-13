@@ -13,6 +13,7 @@ export const SiteFooter = () => (
       <ul className="flex flex-col gap-3 text-sm text-white/70">
         <li><Link href="/" className="hover:text-[#C7F000]">Home</Link></li>
         <li><Link href="/blog" className="hover:text-[#C7F000]">Blog</Link></li>
+        <li><Link href="/contact" className="hover:text-[#C7F000]">Support</Link></li>
         <li><Link href="/legal/privacy" className="hover:text-[#C7F000]">Privacy</Link></li>
         <li><Link href="/legal/terms" className="hover:text-[#C7F000]">Terms</Link></li>
       </ul>
